@@ -263,7 +263,7 @@ pub const GAMES: &[Game] = &[
             "2.30.00 (Japan, Export)",
         )],
         native: Size::new(1920, 1080),
-        support: Support::Unverified("Not verified in a race yet."),
+        support: Support::Unverified("Stopped at Error 4104 in our tests; under investigation."),
     },
     Game {
         id: GameId::TheArcade3,
@@ -282,7 +282,7 @@ pub const GAMES: &[Game] = &[
             "2.31.00 Rev. 1",
         )],
         native: Size::new(1920, 1080),
-        support: Support::Unverified("Not verified in a race yet."),
+        support: Support::Ready,
     },
     Game {
         id: GameId::TheArcade5,
@@ -301,7 +301,9 @@ pub const GAMES: &[Game] = &[
             "3.10.00 Rev. 1",
         )],
         native: Size::new(1920, 1080),
-        support: Support::Unverified("Not verified in a race yet."),
+        support: Support::Unverified(
+            "Starts, but stayed on Initializing in our tests; may not reach the attract.",
+        ),
     },
 ];
 

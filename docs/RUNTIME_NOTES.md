@@ -111,6 +111,10 @@ keys sent to the session's own Xwayland.
 | ID5 at `--render 3840x2160 --output 3840x2160` | loader reports `RESOLUTION: 3840x2160`, 4K frames; whether the 3D renders at 4K or is scaled up is not settled (edges look soft in a crop) |
 | ID6 | **race played**: steering calibration, Legend chapter 1, race 114 km/h, game over, next credit to car select (steered to Honda) |
 | ID7 | **race played**: countdown, Akina vs Keisuke, 97 km/h, continue screen, mileage. 2 coins per credit (free play is not on in this profile). |
+| ID8 | **race played**: Legend of the Street ep. 1, Akina vs Itsuki, 93 km/h, result, tuning, continue (English menus) |
+| THE ARCADE Season 3 | **race played** as a guest: steering calibration, guest play, Story, Akina vs Akiyama at 114 km/h, continue, terms of use, Aime/guest prompt |
+| THE ARCADE Season 5 | boots (keychip, I/O board, ALL.Net, the local game server answers `Alive/Get`, `Boot/GetConfigData`, `Boot/Bookkeep`, `Boot/getGachaData`), then stays on "Initializing" for 8 minutes. windowsarcadeloader's Season 5 profile applies nine fixed `IndRun.dll` byte patches without checking the original bytes; this dump's `IndRun.dll` (sha256 `e853f70c…`, 2 468 352 bytes) may differ from the one they were made for. Not solved. |
+| Zero Ver.2, first run | "Error 4104 Unexpected Error Occurred": its top-level `IniD0_AppError.log` (and account files) were links into the read-only library. Small top-level files are now copied into the runtime (the game writes there), but **Error 4104 stays** (rerun: on screen by 60 s; the game's log only shows `outputEventLog`). The payload's servers start (aimedb, allnet, billing, gs, userdb); the English texts load. Not solved. Lead: the dump ships TeknoParrot's segatools `idzhook.dll`/`idzio.dll`, which windowsarcadeloader reimplements. |
 | Stop after `--seconds` | game, gamescope and Wine gone; 0 leftover processes found by the session tag |
 
 ## gamescope options
