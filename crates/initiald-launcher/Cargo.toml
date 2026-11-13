@@ -1,0 +1,22 @@
+[package]
+name = "initiald-launcher"
+description = "One launcher for the Initial D arcade series"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "initiald-launcher"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+rea-launcher.workspace = true
+rea-launcher-native.workspace = true
+initiald-core = { path = "../initiald-core" }
+signal-hook = "0.3"
+
+[dev-dependencies]
+tempfile = "3"
