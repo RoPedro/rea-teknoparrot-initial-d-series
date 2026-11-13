@@ -97,11 +97,15 @@ pub fn plan(game: &Game, src: &Path, items: &[Item], rt: &Path) -> Vec<Op> {
     if matches!(game.route, Route::Flycast { .. }) {
         return ops;
     }
+    let dest = rt.join(game.game_folder());
+    if dest != rt {
+        ops.push(Op::Dir(dest.clone()));
+    }
     for it in items {
         if skip(game.route, &it.name) {
             continue;
         }
-        let (from, to) = (src.join(&it.name), rt.join(&it.name));
+        let (from, to) = (src.join(&it.name), dest.join(&it.name));
         if copied(game.route, it) {
             ops.push(Op::CopyOnce { from, to });
         } else {
@@ -160,11 +164,11 @@ fn symlink(_target: &Path, _at: &Path) -> io::Result<()> {
     Err(io::Error::other("symlinks are only made on Linux"))
 }
 
-/// Links in the runtime whose target is gone (a dump moved): removed so a
-/// re-plan can link the new place.
-pub fn dangling(rt: &Path) -> io::Result<Vec<PathBuf>> {
+/// Links in a runtime folder whose target is gone (a dump moved): removed
+/// so a re-plan can link the new place.
+pub fn dangling(dir: &Path) -> io::Result<Vec<PathBuf>> {
     let mut v = Vec::new();
-    for e in fs::read_dir(rt)? {
+    for e in fs::read_dir(dir)? {
         let p = e?.path();
         if fs::symlink_metadata(&p)?.file_type().is_symlink() && fs::metadata(&p).is_err() {
             v.push(p);
@@ -211,6 +215,9 @@ mod tests {
             })
             .collect();
         assert_eq!(linked, ["InitialD0_DX11_Nu.exe"]);
+        // Zero's files go in package\, as on the cabinet
+        assert!(ops.iter().any(|o| matches!(o, Op::Link { at, .. }
+            if at == Path::new("/rt/zero/package/InitialD0_DX11_Nu.exe"))));
         assert!(
             ops.iter()
                 .any(|o| matches!(o, Op::CopyOnce { to, .. } if to.ends_with("data")))
@@ -225,18 +232,19 @@ mod tests {
         fs::write(src.join("IniD0_AppError.log"), b"old").unwrap();
         fs::write(src.join("idzhook.dll"), b"dll").unwrap();
         let ops = plan(game(GameId::Zero), &src, &list(&src).unwrap(), &rt);
+        let pkg = rt.join("package");
         // an older launcher linked the log: replaced by a copy
-        fs::create_dir_all(&rt).unwrap();
+        fs::create_dir_all(&pkg).unwrap();
         symlink(
             &src.join("IniD0_AppError.log"),
-            &rt.join("IniD0_AppError.log"),
+            &pkg.join("IniD0_AppError.log"),
         )
         .unwrap();
         apply(&ops).unwrap();
-        let log = rt.join("IniD0_AppError.log");
+        let log = pkg.join("IniD0_AppError.log");
         assert!(!fs::symlink_metadata(&log).unwrap().file_type().is_symlink());
         assert!(
-            fs::symlink_metadata(rt.join("idzhook.dll"))
+            fs::symlink_metadata(pkg.join("idzhook.dll"))
                 .unwrap()
                 .file_type()
                 .is_symlink()

@@ -24,8 +24,10 @@ data dir, `emu.cfg`: `rend.Resolution = 2160`, `rend.WideScreen = yes`,
 |---|---|
 | Boots, game id `INITIAL D` | yes |
 | 3840×2160 internal, 16:9 | yes: intro ("Created by Sega Rosso") full width at 3840×2160 |
-| Ver.2 / Ver.3 Export | not run yet |
-| Input, race | not run yet |
+| Input, race (through the launcher, its keyboard map `mappings/SDL_Keyboard_arcade.cfg`, keys sent to the session's Xwayland) | **race played**: coin (5), start (Enter), card prompt → no, AE86, Legend of the Streets, Myogi vs Cole up to 58 km/h, time up, continue, second race vs Zack at 67 km/h |
+| Ver.2 Export, same keys | **race played**: Legend of the Streets, Akina, 91 km/h, time up, game over, attract |
+| Ver.3 Export, same keys | **race played**: AE86 automatic, Myogi 3 laps, 116 km/h, time up, continue, game over |
+| Stop | Flycast does not exit on SIGTERM within the grace time: killed, no leftover process |
 
 ## Lindbergh — lindbergh-loader (`0af606d`, built from source)
 
@@ -113,8 +115,11 @@ keys sent to the session's own Xwayland.
 | ID7 | **race played**: countdown, Akina vs Keisuke, 97 km/h, continue screen, mileage. 2 coins per credit (free play is not on in this profile). |
 | ID8 | **race played**: Legend of the Street ep. 1, Akina vs Itsuki, 93 km/h, result, tuning, continue (English menus) |
 | THE ARCADE Season 3 | **race played** as a guest: steering calibration, guest play, Story, Akina vs Akiyama at 114 km/h, continue, terms of use, Aime/guest prompt |
-| THE ARCADE Season 5 | boots (keychip, I/O board, ALL.Net, the local game server answers `Alive/Get`, `Boot/GetConfigData`, `Boot/Bookkeep`, `Boot/getGachaData`), then stays on "Initializing" for 8 minutes. windowsarcadeloader's Season 5 profile applies nine fixed `IndRun.dll` byte patches without checking the original bytes; this dump's `IndRun.dll` (sha256 `e853f70c…`, 2 468 352 bytes) may differ from the one they were made for. Not solved. |
-| Zero Ver.2, first run | "Error 4104 Unexpected Error Occurred": its top-level `IniD0_AppError.log` (and account files) were links into the read-only library. Small top-level files are now copied into the runtime (the game writes there), but **Error 4104 stays** (rerun: on screen by 60 s; the game's log only shows `outputEventLog`). The payload's servers start (aimedb, allnet, billing, gs, userdb); the English texts load. Not solved. Lead: the dump ships TeknoParrot's segatools `idzhook.dll`/`idzio.dll`, which windowsarcadeloader reimplements. |
+| THE ARCADE Season 5, first start | boots (keychip, I/O board, ALL.Net, the local game server answers `Alive/Get`, `Boot/GetConfigData`, `Boot/Bookkeep`, `Boot/getGachaData`, the same calls as Season 3), then stays on "Initializing" for 8 minutes. Not the `IndRun.dll` patches: every patch site in this dump holds the instructions the profile describes (the game's two `call 0x37fa60`, IndRun's `ja`, `je`s, prologue and code tail). windowsarcadeloader logs "no E:\sysfile.dat yet (amdaemon's first start): DIP switches and free play from the next one". |
+| THE ARCADE Season 5, second start | **race played**: guest play, Story chapter 1, Akina, 50 km/h |
+| THE ARCADE Season 5, fresh runtime, launcher restart | the session waits for `AMFS/sysfile.dat` (written about a minute in), stops the game 10 s later and starts it again: steering calibration (Start taken), car select (AE86), chapter 1, race at 46 km/h, failed, continue, terms of use, card prompt. 0 leftover processes after each start. |
+| Zero Ver.2, `package\` layout | **Error 4104 gone.** Its cause, in amdaemon's own log (`Y:\amdaemon.log`): `Cannot open "config_wal.json"`, then `Invalid app config`. windowsarcadeloader's profile expects the cabinet's layout (the program in `package\`, where it writes `config_wal.json` for amdaemon); the runtime now puts the dump's files in `package/`, the drives at the root. The game boots to "Please do not touch the steering wheel…", then STEER ADJUSTMENTS, and stays there: Start (JVS switch 0x80, logged by amdaemon and the game as `buttons 0x1000`) is not taken, also on a second start; wheel and pedals at rest (JVS 0x8000 / 0). Not solved. |
+| Zero Ver.2, first run (flat layout, before the fix) | "Error 4104 Unexpected Error Occurred": its top-level `IniD0_AppError.log` (and account files) were links into the read-only library. Small top-level files are now copied into the runtime (the game writes there), but **Error 4104 stays** (rerun: on screen by 60 s; the game's log only shows `outputEventLog`). The payload's servers start (aimedb, allnet, billing, gs, userdb); the English texts load. Not solved. Lead: the dump ships TeknoParrot's segatools `idzhook.dll`/`idzio.dll`, which windowsarcadeloader reimplements. |
 | Stop after `--seconds` | game, gamescope and Wine gone; 0 leftover processes found by the session tag |
 
 ## gamescope options

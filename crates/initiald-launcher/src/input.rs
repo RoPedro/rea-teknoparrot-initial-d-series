@@ -275,6 +275,7 @@ pub fn stick_deadzone(fraction: f32) -> u16 {
 /// per line, inputs held until the next line; `-` releases everything.
 /// Inputs are the cabinet's buttons by key (`start`, `view`, `coin`,
 /// `gear_up`…), `accel`, `brake`, `steer=<-1..1>`.
+#[derive(Clone)]
 pub struct Script {
     steps: Vec<(f64, Read)>,
 }

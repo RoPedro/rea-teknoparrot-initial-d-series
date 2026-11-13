@@ -92,6 +92,40 @@ pub struct Game {
     pub support: Support,
 }
 
+impl Game {
+    /// Where the game's files go inside its runtime folder, relative to the
+    /// runtime. windowsarcadeloader's Zero Ver.2 profile expects the
+    /// cabinet's layout: the program in `package\` (its `config_wal.json`
+    /// is put there for amdaemon), the drives at the root.
+    pub fn game_folder(&self) -> &'static str {
+        match self.id {
+            GameId::Zero => "package",
+            _ => "",
+        }
+    }
+
+    /// A file the game's first start writes, relative to the runtime. While
+    /// it is missing the game is started a second time once it appears:
+    /// Season 5's first boot stays on "Initializing" (windowsarcadeloader
+    /// sets the DIP switches and free play from amdaemon's system file,
+    /// which amdaemon writes on that first boot).
+    pub fn first_start_marker(&self) -> Option<&'static str> {
+        match self.id {
+            GameId::TheArcade5 => Some("AMFS/sysfile.dat"),
+            _ => None,
+        }
+    }
+
+    /// The program for windowsarcadeloader's `.windowsloader` file, a
+    /// Windows path relative to the runtime.
+    pub fn loader_path(&self) -> String {
+        match self.game_folder() {
+            "" => self.main_file.to_string(),
+            d => format!("{d}\\{}", self.main_file),
+        }
+    }
+}
+
 const fn sha(d: &'static str, label: &'static str) -> Edition {
     Edition {
         ident: Ident::Sha256(d),
@@ -121,7 +155,7 @@ pub const GAMES: &[Game] = &[
             "Export, Rev. A (GDS-0025A)",
         )],
         native: Size::new(640, 480),
-        support: Support::Unverified("Not verified in a race yet."),
+        support: Support::Ready,
     },
     Game {
         id: GameId::Id2,
@@ -137,7 +171,7 @@ pub const GAMES: &[Game] = &[
             "Export (GDS-0027)",
         )],
         native: Size::new(640, 480),
-        support: Support::Unverified("Not verified in a race yet."),
+        support: Support::Ready,
     },
     Game {
         id: GameId::Id3,
@@ -153,7 +187,7 @@ pub const GAMES: &[Game] = &[
             "Export (GDS-0033)",
         )],
         native: Size::new(640, 480),
-        support: Support::Unverified("Not verified in a race yet."),
+        support: Support::Ready,
     },
     Game {
         id: GameId::Id4,
@@ -263,7 +297,9 @@ pub const GAMES: &[Game] = &[
             "2.30.00 (Japan, Export)",
         )],
         native: Size::new(1920, 1080),
-        support: Support::Unverified("Stopped at Error 4104 in our tests; under investigation."),
+        support: Support::Unverified(
+            "Boots, but its steering calibration screen did not take Start in our tests.",
+        ),
     },
     Game {
         id: GameId::TheArcade3,
@@ -301,9 +337,7 @@ pub const GAMES: &[Game] = &[
             "3.10.00 Rev. 1",
         )],
         native: Size::new(1920, 1080),
-        support: Support::Unverified(
-            "Starts, but stayed on Initializing in our tests; may not reach the attract.",
-        ),
+        support: Support::Ready,
     },
 ];
 
@@ -362,6 +396,25 @@ mod tests {
         assert_eq!(g.id, GameId::Id3);
         assert!(matches!(e.ident, Ident::ChdSha1(_)));
         assert!(identify("00").is_none());
+    }
+
+    #[test]
+    fn windowsarcadeloader_gets_zero_in_its_package_folder() {
+        assert_eq!(
+            game(GameId::Zero).loader_path(),
+            "package\\InitialD0_DX11_Nu.exe"
+        );
+        assert_eq!(game(GameId::Id6).loader_path(), "id6_dump_.exe");
+    }
+
+    #[test]
+    fn only_season_5_is_started_twice_on_its_first_run() {
+        assert_eq!(
+            game(GameId::TheArcade5).first_start_marker(),
+            Some("AMFS/sysfile.dat")
+        );
+        let with_marker = GAMES.iter().filter(|g| g.first_start_marker().is_some());
+        assert_eq!(with_marker.count(), 1);
     }
 
     #[test]

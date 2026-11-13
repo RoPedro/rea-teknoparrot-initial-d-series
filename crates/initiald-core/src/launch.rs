@@ -171,6 +171,19 @@ pub fn flycast_cfg(render_h: u32) -> String {
     )
 }
 
+/// Flycast's keyboard for the NAOMI 2 games (key codes are USB HID
+/// usages): 5 coin, Enter start, arrows steer and shift, Z gas, X brake,
+/// A view change, F1 test, F2 service. Pads use Flycast's own mapping.
+/// Written under both names Flycast reads (`_arcade` for NAOMI games).
+pub const FLYCAST_KEYBOARD: &str = "# Written by the launcher before every start.\n\
+[emulator]\ndead_zone = 10\nmapping_name = Keyboard\nversion = 3\n\n\
+[digital]\n\
+bind0 = 34:btn_d\nbind1 = 40:btn_start\nbind2 = 58:btn_z\nbind3 = 59:btn_c\n\
+bind4 = 82:btn_dpad1_up\nbind5 = 81:btn_dpad1_down\n\
+bind6 = 80:btn_analog_left\nbind7 = 79:btn_analog_right\n\
+bind8 = 29:btn_trigger_right\nbind9 = 27:btn_trigger_left\n\
+bind10 = 4:btn_a\nbind11 = 22:btn_b\n";
+
 /// The profile layer the launcher gives windowsarcadeloader for one game:
 /// the runner, a prefix with native XACT (the RingEdge games' sound thread
 /// crashes on Wine's own), no ReShade or gamescope of its own (the launcher
@@ -235,6 +248,12 @@ pub fn plan(
         }
         Route::Flycast { set } => {
             files.push((rt.join("config/flycast/emu.cfg"), flycast_cfg(size.h)));
+            for name in ["SDL_Keyboard.cfg", "SDL_Keyboard_arcade.cfg"] {
+                files.push((
+                    rt.join("config/flycast/mappings").join(name),
+                    FLYCAST_KEYBOARD.to_string(),
+                ));
+            }
             if let Some(bios) = &places.naomi2_bios {
                 links.push((rt.join("data/flycast/naomi2.zip"), bios.clone()));
             }
@@ -263,7 +282,7 @@ pub fn plan(
             let root = &places.wal_root;
             files.push((
                 rt.join(format!("{profile}.windowsloader")),
-                format!("{}\n", game.main_file),
+                format!("{}\n", game.loader_path()),
             ));
             let layer = root.join(format!("layer-{}.yaml", game.slug));
             files.push((layer.clone(), wal_layer(game, size)));
@@ -437,6 +456,14 @@ mod tests {
         assert_eq!(p.game_size, Size::new(3840, 2160));
         assert_eq!(p.game.args, ["/roms/naomi2/initdexp.zip"]);
         assert_eq!(p.links[0].1, PathBuf::from("/bios/naomi2.zip"));
+        // the keyboard map, under the name Flycast reads for arcade games
+        assert!(
+            p.files
+                .iter()
+                .any(|(f, t)| f.ends_with("mappings/SDL_Keyboard_arcade.cfg")
+                    && t.contains("34:btn_d")
+                    && t.contains("40:btn_start"))
+        );
     }
 
     #[test]

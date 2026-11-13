@@ -36,9 +36,12 @@ pub enum Display {
 pub struct Prepared {
     pub plan: Plan,
     pub runtime: PathBuf,
+    /// [`Game::first_start_marker`] in the runtime, when the game has one.
+    pub first_start: Option<PathBuf>,
 }
 
 /// What drives the game.
+#[derive(Clone)]
 pub enum Feed {
     /// The input thread (pads and wheels through SDL).
     Devices {
@@ -123,9 +126,11 @@ pub fn prepare(
     }
     let items =
         runtime::list(&entry.dir).with_context(|| format!("reading {}", entry.dir.display()))?;
-    if rt.is_dir() {
-        for d in runtime::dangling(&rt)? {
-            fs::remove_file(d)?;
+    for dir in [rt.clone(), rt.join(game.game_folder())] {
+        if dir.is_dir() {
+            for d in runtime::dangling(&dir)? {
+                fs::remove_file(d)?;
+            }
         }
     }
     runtime::apply(&runtime::plan(game, &entry.dir, &items, &rt))
@@ -162,7 +167,12 @@ pub fn prepare(
         });
     }
     runtime::apply(&links)?;
-    Ok(Prepared { plan, runtime: rt })
+    let first_start = game.first_start_marker().map(|m| rt.join(m));
+    Ok(Prepared {
+        plan,
+        runtime: rt,
+        first_start,
+    })
 }
 
 /// The command line: gamescope, then bubblewrap with every library folder
@@ -183,14 +193,45 @@ pub fn command_line(plan: &Plan, libraries: &[PathBuf], bwrap: bool) -> Vec<Stri
     v
 }
 
+/// How one start of the game ended.
+enum Ended {
+    Exited(ExitStatus),
+    /// The first start wrote its marker: start again.
+    FirstStartDone,
+}
+
 /// Run the game until it exits or `stop` is set; then stop everything the
-/// session started. Returns the game's exit status.
+/// session started. A game on its first start (see
+/// [`Game::first_start_marker`]) is started again, once, as soon as that
+/// start has written its marker. Returns the game's exit status.
 pub fn run(paths: &Paths, p: &Prepared, feed: Feed, stop: Arc<AtomicBool>) -> Result<ExitStatus> {
+    let log_path = p.runtime.join("session.log");
+    let log = Arc::new(Mutex::new(fs::File::create(&log_path)?));
+    let marker = p.first_start.as_ref().filter(|m| !m.exists());
+    if let Ended::Exited(st) = run_once(paths, p, feed.clone(), &stop, &log, marker)? {
+        return Ok(st);
+    }
+    writeln!(
+        log.lock().unwrap(),
+        "# first start done (system file written): starting again"
+    )?;
+    match run_once(paths, p, feed, &stop, &log, None)? {
+        Ended::Exited(st) => Ok(st),
+        Ended::FirstStartDone => unreachable!("no marker on the second start"),
+    }
+}
+
+fn run_once(
+    paths: &Paths,
+    p: &Prepared,
+    feed: Feed,
+    stop: &AtomicBool,
+    log: &Arc<Mutex<fs::File>>,
+    marker: Option<&PathBuf>,
+) -> Result<Ended> {
     let libraries = paths.config().libraries;
     let bwrap = which("bwrap").is_some();
     let argv = command_line(&p.plan, &libraries, bwrap);
-    let log_path = p.runtime.join("session.log");
-    let log = Arc::new(Mutex::new(fs::File::create(&log_path)?));
     let tag = p.runtime.to_string_lossy().into_owned();
     let mut cmd = Command::new(&argv[0]);
     cmd.args(&argv[1..])
@@ -215,7 +256,7 @@ pub fn run(paths: &Paths, p: &Prepared, feed: Feed, stop: Arc<AtomicBool>) -> Re
         _ => None,
     };
     if let Some(stdout) = child.stdout.take() {
-        let log = Arc::clone(&log);
+        let log = Arc::clone(log);
         std::thread::spawn(move || {
             for line in BufReader::new(stdout).lines().map_while(Result::ok) {
                 if line.starts_with("out ") {
@@ -244,11 +285,22 @@ pub fn run(paths: &Paths, p: &Prepared, feed: Feed, stop: Arc<AtomicBool>) -> Re
     }
     let start = Instant::now();
     let mut last_line = String::new();
+    // the marker seen: the moment to restart (a few seconds later, so the
+    // file is complete)
+    let mut marker_at: Option<Instant> = None;
+    let mut first_start_done = false;
     let status = loop {
         if let Some(st) = child.try_wait()? {
             break st;
         }
-        if stop.load(Ordering::SeqCst) {
+        if let Some(m) = marker {
+            match marker_at {
+                None if m.exists() => marker_at = Some(Instant::now()),
+                Some(t) if t.elapsed() > Duration::from_secs(10) => first_start_done = true,
+                _ => {}
+            }
+        }
+        if stop.load(Ordering::SeqCst) || first_start_done {
             if let Some((sink, _, _)) = script_sink.as_mut() {
                 let _ = writeln!(sink, "quit");
             }
@@ -277,7 +329,11 @@ pub fn run(paths: &Paths, p: &Prepared, feed: Feed, stop: Arc<AtomicBool>) -> Re
         log.lock().unwrap(),
         "# exit: {status}; stopped {left} leftover process(es)"
     )?;
-    Ok(status)
+    Ok(if first_start_done && !stop.load(Ordering::SeqCst) {
+        Ended::FirstStartDone
+    } else {
+        Ended::Exited(status)
+    })
 }
 
 fn signal_group(pgid: i32, sig: &str) {
