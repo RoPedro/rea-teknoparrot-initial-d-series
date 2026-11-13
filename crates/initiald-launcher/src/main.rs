@@ -3,6 +3,7 @@
 mod input;
 mod paths;
 mod session;
+mod ui;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -20,6 +21,7 @@ use crate::session::{Display, Feed};
 const USAGE: &str = "\
 initiald-launcher — the Initial D arcade series
 
+  initiald-launcher                      open the window (games, settings, controls)
   initiald-launcher --library <folder>   add a folder with your games (repeatable)
   initiald-launcher --naomi2-bios <file> where your naomi2.zip is (Ver. 1–3)
   initiald-launcher --list               list the games found and their state
@@ -154,6 +156,7 @@ fn main() -> ExitCode {
                 Found::Known { game, edition } => {
                     let state = match game.support {
                         Support::Ready => "ready".to_string(),
+                        Support::Unverified(note) => format!("starts; {note}"),
                         Support::Blocked(why) => format!("not yet: {why}"),
                     };
                     println!(
@@ -189,7 +192,13 @@ fn main() -> ExitCode {
         return play(&paths, slug, &args);
     }
     if args.libraries.is_empty() && args.bios.is_none() && args.game.is_none() {
-        print!("{USAGE}");
+        return match ui::run(paths) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(e) => {
+                eprintln!("{e:#}");
+                ExitCode::FAILURE
+            }
+        };
     }
     ExitCode::SUCCESS
 }

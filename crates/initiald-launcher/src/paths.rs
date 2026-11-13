@@ -5,7 +5,7 @@
 //!   `runtimes/` (one per game, saves included), `wal/` (windowsarcadeloader's
 //!   root: its Wine prefix and profile layers), `launcher.log`;
 //! - components (`$INITIALD_COMPONENTS`, else `components/` beside the
-//!   program): `lindbergh/`, `wal/`, `runner/`, `shaders/`.
+//!   program): `lindbergh/`, `wal/`, `runner/`, `shaders/`, `art/`, `fonts/`.
 
 use std::path::{Path, PathBuf};
 
@@ -91,6 +91,27 @@ impl Paths {
     }
     pub fn log(&self) -> PathBuf {
         self.data.join("launcher.log")
+    }
+    /// A picture of the hub (`<slug>.jpg`, `<slug>-tile.jpg`).
+    pub fn art(&self, name: &str) -> PathBuf {
+        self.asset("art").join(name)
+    }
+    pub fn fonts(&self) -> PathBuf {
+        self.asset("fonts")
+    }
+    /// `components/<dir>`; from a development build also the repository's
+    /// own `assets/<dir>` when the program sits beside no `components/`.
+    fn asset(&self, dir: &str) -> PathBuf {
+        let packaged = self.components.join(dir);
+        if cfg!(debug_assertions) && !packaged.is_dir() {
+            let dev = Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../assets")
+                .join(dir);
+            if dev.is_dir() {
+                return dev;
+            }
+        }
+        packaged
     }
     pub fn components(&self) -> Components {
         Components {

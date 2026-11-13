@@ -21,6 +21,25 @@ pub enum Op {
         target: PathBuf,
         at: PathBuf,
     },
+    /// A copy the game owns from then on: made once (replacing a link an
+    /// older launcher left), never overwritten.
+    CopyOnce {
+        from: PathBuf,
+        to: PathBuf,
+    },
+}
+
+/// Top-level files of a Windows game below this size are copied, not
+/// linked: the games write their logs and account files there
+/// (Zero's `IniD0_AppError.log`, `playaccount.dat`), and the library is
+/// read-only while they run.
+const SMALL: u64 = 4 * 1024 * 1024;
+
+fn copied(route: Route, it: &Item) -> bool {
+    let code = [".exe", ".dll", ".manifest"]
+        .iter()
+        .any(|x| it.name.to_ascii_lowercase().ends_with(x));
+    matches!(route, Route::Wal { .. }) && !it.dir && it.size < SMALL && !code
 }
 
 /// One entry of the game folder.
@@ -28,15 +47,18 @@ pub enum Op {
 pub struct Item {
     pub name: String,
     pub dir: bool,
+    pub size: u64,
 }
 
 pub fn list(dir: &Path) -> io::Result<Vec<Item>> {
     let mut v = Vec::new();
     for e in fs::read_dir(dir)? {
         let e = e?;
+        let m = fs::metadata(e.path())?;
         v.push(Item {
             name: e.file_name().to_string_lossy().into_owned(),
-            dir: fs::metadata(e.path())?.is_dir(),
+            dir: m.is_dir(),
+            size: m.len(),
         });
     }
     v.sort_by(|a, b| a.name.cmp(&b.name));
@@ -79,10 +101,15 @@ pub fn plan(game: &Game, src: &Path, items: &[Item], rt: &Path) -> Vec<Op> {
         if skip(game.route, &it.name) {
             continue;
         }
-        ops.push(Op::Link {
-            target: src.join(&it.name),
-            at: rt.join(&it.name),
-        });
+        let (from, to) = (src.join(&it.name), rt.join(&it.name));
+        if copied(game.route, it) {
+            ops.push(Op::CopyOnce { from, to });
+        } else {
+            ops.push(Op::Link {
+                target: from,
+                at: to,
+            });
+        }
     }
     ops
 }
@@ -108,6 +135,15 @@ pub fn apply(ops: &[Op]) -> io::Result<()> {
                     )));
                 }
                 Err(_) => symlink(target, at)?,
+            },
+            Op::CopyOnce { from, to } => match fs::symlink_metadata(to) {
+                Ok(m) if !m.file_type().is_symlink() => {}
+                found => {
+                    if found.is_ok() {
+                        fs::remove_file(to)?;
+                    }
+                    fs::copy(from, to)?;
+                }
             },
         }
     }
@@ -148,6 +184,7 @@ mod tests {
             .map(|n| Item {
                 name: n.to_string(),
                 dir: false,
+                size: if n.ends_with(".exe") { 30 << 20 } else { 100 },
             })
             .collect()
     }
@@ -173,7 +210,41 @@ mod tests {
                 _ => None,
             })
             .collect();
-        assert_eq!(linked, ["InitialD0_DX11_Nu.exe", "data"]);
+        assert_eq!(linked, ["InitialD0_DX11_Nu.exe"]);
+        assert!(
+            ops.iter()
+                .any(|o| matches!(o, Op::CopyOnce { to, .. } if to.ends_with("data")))
+        );
+    }
+
+    #[test]
+    fn small_files_of_a_windows_game_are_copied_once_and_kept() {
+        let t = tempfile::tempdir().unwrap();
+        let (src, rt) = (t.path().join("dump"), t.path().join("rt"));
+        fs::create_dir_all(&src).unwrap();
+        fs::write(src.join("IniD0_AppError.log"), b"old").unwrap();
+        fs::write(src.join("idzhook.dll"), b"dll").unwrap();
+        let ops = plan(game(GameId::Zero), &src, &list(&src).unwrap(), &rt);
+        // an older launcher linked the log: replaced by a copy
+        fs::create_dir_all(&rt).unwrap();
+        symlink(
+            &src.join("IniD0_AppError.log"),
+            &rt.join("IniD0_AppError.log"),
+        )
+        .unwrap();
+        apply(&ops).unwrap();
+        let log = rt.join("IniD0_AppError.log");
+        assert!(!fs::symlink_metadata(&log).unwrap().file_type().is_symlink());
+        assert!(
+            fs::symlink_metadata(rt.join("idzhook.dll"))
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
+        fs::write(&log, b"the game's").unwrap();
+        apply(&ops).unwrap();
+        assert_eq!(fs::read(&log).unwrap(), b"the game's");
+        assert_eq!(fs::read(src.join("IniD0_AppError.log")).unwrap(), b"old");
     }
 
     #[test]

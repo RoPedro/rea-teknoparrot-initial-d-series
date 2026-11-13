@@ -13,10 +13,13 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = "1"
+eframe = { version = "0.37.0", default-features = false, features = ["glow", "default_fonts", "x11", "wayland"] }
+image = { version = "0.25", default-features = false, features = ["jpeg"] }
 rea-launcher.workspace = true
 rea-launcher-native.workspace = true
 initiald-core = { path = "../initiald-core" }
 signal-hook = "0.3"
 
 [dev-dependencies]
+rea-launcher-ui = { workspace = true, features = ["testing"] }
 tempfile = "3"

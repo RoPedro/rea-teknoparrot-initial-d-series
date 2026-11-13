@@ -84,4 +84,38 @@ folders (`AMFS`, `AppData`, `Y`) inside that folder, never in the library.
 | Runner: system Wine 11.21 (wow64), no winetricks verbs | boots: keychip/PCP, JVS on COM4 (837-14572 identity), card daemon on COM2, drive board COM1 opened |
 | Display path `WAL_RINGEDGE_CG_FIX=auto` (off on NVIDIA) | crash 1.5 s after JVS init: read of 0x100 at `id6_dump_.exe+0x6a376a` |
 | `WAL_RINGEDGE_CG_FIX=1` | shaders translated (`cgfix\`), crash at start: read of 0x4 at `+0x7e6256` |
-| GE-Proton 11-12 (upstream's runner) | pending |
+| GE-Proton 11-12 (upstream's runner), no verbs, tests silent (`PULSE_SERVER` to nowhere) | crash in `xaudio2_3.dll+0x13e24`: no audio device |
+| GE-Proton 11-12, private PipeWire with a null sink | boots in about 2 minutes, 3D attract on NVIDIA with `WAL_RINGEDGE_CG_FIX=auto` (off); crashes in `msvcr90.dll+0x1362d` on the sound thread when the first race loads |
+| GE-Proton 11-12, null sink, prefix with winetricks `xact` (native XACT/XAudio2) | **race played**: card prompt → no card → AE86 → Legend chapter 1 → Akina vs Keisuke, 122 km/h, steering both ways |
+
+Two first-boot screens need an input before the attract: a "Card Stocker
+Cleaning" prompt on later boots (backup data counts card uses; cancelled
+with View Change), and ID7/ID8's steering calibration (Start).
+
+Audio for headless tests: a private PipeWire (own runtime dir, a
+`support.null-audio-sink`, WirePlumber with every hardware monitor off),
+`.work/probe/null-audio.sh`. Never the desktop's sound server.
+
+## Through the launcher (`initiald-launcher --play <game> --headless`, 2026-11-13)
+
+Isolated data folder, components from `scripts/build-components.sh` (the
+lindbergh part rebuilt from scratch by the script: identical file list),
+windowsarcadeloader with `patches/wal` (`--input-pipe`). Input for the
+Windows games from `--input-script` through the launcher's pipe (the
+payload logged every change: `input: P1 buttons …`); for the Lindbergh games,
+keys sent to the session's own Xwayland.
+
+| Game | Result |
+|---|---|
+| ID5 | **race played**: licence → car → Legend mode → story intro → Lake Akina vs Iketani. Menu panels partly drawn as white boxes (licence buttons, maker preview) on both GPU paths. |
+| ID5 at `--render 3840x2160 --output 3840x2160` | loader reports `RESOLUTION: 3840x2160`, 4K frames; whether the 3D renders at 4K or is scaled up is not settled (edges look soft in a crop) |
+| ID6 | **race played**: steering calibration, Legend chapter 1, race 114 km/h, game over, next credit to car select (steered to Honda) |
+| ID7 | **race played**: countdown, Akina vs Keisuke, 97 km/h, continue screen, mileage. 2 coins per credit (free play is not on in this profile). |
+| Stop after `--seconds` | game, gamescope and Wine gone; 0 leftover processes found by the session tag |
+
+## gamescope options
+
+| Option | Seen |
+|---|---|
+| CRT effect (`--crt lottes`, `assets/shaders/crt-lottes.fx`) | gamescope looks effects up by name under `$XDG_DATA_HOME/gamescope/reshade/Shaders`; headless screenshots show no effect either way (by path or by name), no load error logged. **Not verified**: needs a check on a real screen. Not offered in the window until then. |
+| FSR / NIS | **not verified** (headless gamescope can't use FSR; same as the Wangan launcher) |

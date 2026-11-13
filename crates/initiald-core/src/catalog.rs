@@ -43,6 +43,8 @@ pub enum Route {
 pub enum Support {
     /// Verified in the real game (a race played), see docs/RUNTIME_NOTES.md.
     Ready,
+    /// Starts, but no race was verified yet; the text says what is known.
+    Unverified(&'static str),
     /// Known not to work yet; the text says why, for the player.
     Blocked(&'static str),
 }
@@ -119,7 +121,7 @@ pub const GAMES: &[Game] = &[
             "Export, Rev. A (GDS-0025A)",
         )],
         native: Size::new(640, 480),
-        support: Support::Blocked("Not verified in a race yet."),
+        support: Support::Unverified("Not verified in a race yet."),
     },
     Game {
         id: GameId::Id2,
@@ -135,7 +137,7 @@ pub const GAMES: &[Game] = &[
             "Export (GDS-0027)",
         )],
         native: Size::new(640, 480),
-        support: Support::Blocked("Not verified in a race yet."),
+        support: Support::Unverified("Not verified in a race yet."),
     },
     Game {
         id: GameId::Id3,
@@ -151,7 +153,7 @@ pub const GAMES: &[Game] = &[
             "Export (GDS-0033)",
         )],
         native: Size::new(640, 480),
-        support: Support::Blocked("Not verified in a race yet."),
+        support: Support::Unverified("Not verified in a race yet."),
     },
     Game {
         id: GameId::Id4,
@@ -185,7 +187,7 @@ pub const GAMES: &[Game] = &[
             "Export 2.0",
         )],
         native: Size::new(1360, 768),
-        support: Support::Blocked("Not verified in a race yet."),
+        support: Support::Ready,
     },
     Game {
         id: GameId::Id6,
@@ -223,7 +225,7 @@ pub const GAMES: &[Game] = &[
             "Japan (SBYD)",
         )],
         native: Size::new(1360, 768),
-        support: Support::Blocked("Not verified in a race yet."),
+        support: Support::Ready,
     },
     Game {
         id: GameId::Id8,
@@ -242,7 +244,7 @@ pub const GAMES: &[Game] = &[
             "Japan (SBZZ)",
         )],
         native: Size::new(1360, 768),
-        support: Support::Blocked("Not verified in a race yet."),
+        support: Support::Ready,
     },
     Game {
         id: GameId::Zero,
@@ -261,7 +263,7 @@ pub const GAMES: &[Game] = &[
             "2.30.00 (Japan, Export)",
         )],
         native: Size::new(1920, 1080),
-        support: Support::Blocked("Not verified in a race yet."),
+        support: Support::Unverified("Not verified in a race yet."),
     },
     Game {
         id: GameId::TheArcade3,
@@ -280,7 +282,7 @@ pub const GAMES: &[Game] = &[
             "2.31.00 Rev. 1",
         )],
         native: Size::new(1920, 1080),
-        support: Support::Blocked("Not verified in a race yet."),
+        support: Support::Unverified("Not verified in a race yet."),
     },
     Game {
         id: GameId::TheArcade5,
@@ -299,7 +301,7 @@ pub const GAMES: &[Game] = &[
             "3.10.00 Rev. 1",
         )],
         native: Size::new(1920, 1080),
-        support: Support::Blocked("Not verified in a race yet."),
+        support: Support::Unverified("Not verified in a race yet."),
     },
 ];
 

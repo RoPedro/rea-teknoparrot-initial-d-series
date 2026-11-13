@@ -151,20 +151,17 @@ pub fn prepare(
         }
         fs::write(file, text).with_context(|| format!("writing {}", file.display()))?;
     }
+    let mut links = Vec::new();
     for (at, target) in &plan.links {
         if let Some(d) = at.parent() {
-            fs::create_dir_all(d)?;
+            links.push(runtime::Op::Dir(d.to_path_buf()));
         }
-        match fs::read_link(at) {
-            Ok(t) if &t == target => {}
-            Ok(_) => {
-                fs::remove_file(at)?;
-                std::os::unix::fs::symlink(target, at)?;
-            }
-            Err(_) if at.exists() => bail!("{} exists and is not a link", at.display()),
-            Err(_) => std::os::unix::fs::symlink(target, at)?,
-        }
+        links.push(runtime::Op::Link {
+            target: target.clone(),
+            at: at.clone(),
+        });
     }
+    runtime::apply(&links)?;
     Ok(Prepared { plan, runtime: rt })
 }
 
