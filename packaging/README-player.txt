@@ -31,6 +31,11 @@ What it needs on Windows
 
 - Windows 10 or 11, 64-bit. Initial D 4 and 5 (Sega Lindbergh, Linux
   programs) are Linux-only.
+- Microsoft's DirectX End-User Runtime (June 2010), for the sound of
+  Initial D 6, 7 and 8.
+- Zero and THE ARCADE map the cabinet's E: and Y: drives while they run;
+  a drive letter your PC already uses is hidden for that time and given
+  back when the game ends.
 
 Controls
 --------

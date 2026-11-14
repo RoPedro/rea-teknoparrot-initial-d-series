@@ -146,3 +146,22 @@ private null sink; the screen captured with `grim -o DP-1` 55 s in (the
 | NIS (`-F nis --sharpness 5`) | **works**: 15.6 on the same crop |
 | CRT effect (`--crt lottes`) | **does not work here.** gamescope looks effects up by name only, under `$HOME/.local/share/gamescope/reshade/Shaders` (an absolute path is appended to that folder; `XDG_DATA_HOME` is ignored): the launcher now runs gamescope with a `HOME` in the runtime that links the shader, and gamescope loads it ("Using technique: CRT"), then logs `vkAllocateMemory failed` and shows the picture unchanged. The same failure with a trivial invert effect on `glxgears`: gamescope 3.17's ReShade on this NVIDIA driver (615.78), not the shader. Not offered in the window; kept on the command line for other GPUs. Headless gamescope logs neither message. |
 | A windowed run that hung | once in five visible runs Hyprland reported the gamescope window "not responding" and the capture showed the desktop; the retry was fine. Not reproduced. |
+
+## Windows version, under Wine (2026-11-14)
+
+The Windows build (`initiald-launcher.exe`, the windowsarcadeloader host
+build `arcade-launcher.exe` from `patches/wal/0003`, Flycast 2.7 win64) run
+with GE-Proton 11-12's Wine, a copy of the launcher's Linux prefix (native
+XACT), headless gamescope, a null audio sink; library paths as `Z:\...`.
+Not yet run on a Windows PC.
+
+| Check | Result |
+|---|---|
+| `--list` | all eleven found and identified; ID4 / ID5 "a Sega Lindbergh game: … Linux" |
+| Hub window | renders (1280×720), ID4 / ID5 tiles locked |
+| Ver. 1 (Flycast win64) | reads the runtime's `flycast\emu.cfg`, the BIOS copy in `flycast\data\`, boots to "KICKBACK INITIALIZE"; EEPROM saved in `flycast\data\` |
+| ID6 (RingEdge) | **race played** from the input script: steering adjustment, car purchase, Akina at 169 km/h; stop: the runner ends the game when its input closes, 0 leftovers |
+| Zero Ver. 2, `DefineDosDevice` E:/Y: | the call succeeds and is given back, but **Wine's file layer does not see it** (its drives come from the prefix's `dosdevices`): the game crashed (`MSVCR110.dll+0x3c3b9`) after `Y:\initialD.ini: File not found` |
+| Zero Ver. 2, E:/Y: also in `dosdevices` (standing in for real Windows) | **race played**: name entry, AE86, Mako & Sayuki at 140 km/h |
+| Season 5, same | **race played** after the automatic restart of its first start: car select, Story, race, Continue, guest/Aime prompt; `C:\Mount\Option` existed in the copied prefix and was left alone |
+| Windows-target tests (`cargo test --target x86_64-pc-windows-gnu`, Wine) | 28 core + 51 launcher pass (the junction / copy runtime test included); 3 tests of the Linux-only gamescope rows ignored |
