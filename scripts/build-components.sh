@@ -7,13 +7,15 @@
 #               payloads/, systemprofiles/  (needs Rust with the i686/x86_64-pc-windows-gnu
 #               targets and MinGW)
 #   runner/     GE-Proton 11-12, checked by SHA-256
+#   winetricks  pinned, checked by SHA-256 (windowsarcadeloader installs native XAudio with it)
 #   shaders/    the launcher's own CRT effect
 #   art/ fonts/ the window's original illustrations and the Barlow typefaces (OFL)
-# usage: scripts/build-components.sh <components dir> [lindbergh|wal|runner|shaders ...]
+# usage: scripts/build-components.sh <components dir> [lindbergh|wal|runner|winetricks|shaders|assets ...]
+# LAUNCHER_FEATURES: passed to windowsarcadeloader's build (packages: sdl3/build-from-source-static)
 set -eu
 here=$(cd "$(dirname "$0")/.." && pwd)
 out=$(mkdir -p "$1" && cd "$1" && pwd); shift
-parts=${*:-lindbergh wal runner shaders assets}
+parts=${*:-lindbergh wal runner winetricks shaders assets}
 work="$out/.build"; mkdir -p "$work"
 
 LINDBERGH_REPO=https://github.com/lindbergh-loader/lindbergh-loader
@@ -23,6 +25,8 @@ WAL_COMMIT=4f42c6d86ddaaa9d2e4e8c21e0046bb3027b111d
 RUNNER=GE-Proton11-12-x86_64
 RUNNER_URL=https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton11-12/$RUNNER.tar.gz
 RUNNER_SHA256=0595159e417c3dbbfb7cc3ae0d3ed15a617cc607aa23ef756ea79029d7af5d70
+WINETRICKS_URL=https://raw.githubusercontent.com/Winetricks/winetricks/20260125/src/winetricks
+WINETRICKS_SHA256=431f82fc74000e6c864409f1d8fb495d696c03928808e3e8acffc45179312a7b
 
 checkout() { # repo commit dir
   [ -d "$3/.git" ] || git clone -q "$1" "$3"
@@ -61,6 +65,12 @@ runner)
   echo "$RUNNER_SHA256  $f" | sha256sum -c -
   tar -xzf "$f" -C "$work"
   rm -rf "$out/runner"; mv "$work/$RUNNER/files" "$out/runner"
+  ;;
+winetricks)
+  f="$work/winetricks"
+  [ -f "$f" ] || curl -fsSL -o "$f" "$WINETRICKS_URL"
+  echo "$WINETRICKS_SHA256  $f" | sha256sum -c -
+  install -m 755 "$f" "$out/winetricks"
   ;;
 shaders)
   mkdir -p "$out/shaders"; cp "$here"/assets/shaders/*.fx "$out/shaders/"

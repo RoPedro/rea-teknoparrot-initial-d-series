@@ -446,6 +446,7 @@ mod tests {
             lindbergh: "/c/l".into(),
             wal: "/c/wal".into(),
             runner: "/c/r".into(),
+            winetricks: "/c/w".into(),
             shaders: "/c/s".into(),
         };
         let plan = launch::plan(

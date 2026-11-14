@@ -149,6 +149,7 @@ impl Paths {
             lindbergh: self.lindbergh(),
             wal: self.components.join("wal"),
             runner: self.components.join("runner"),
+            winetricks: self.components.join("winetricks"),
             shaders: self.components.join("shaders"),
         }
     }

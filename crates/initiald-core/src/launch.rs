@@ -55,6 +55,9 @@ pub struct Components {
     pub wal: PathBuf,
     /// The Wine runner windowsarcadeloader runs games with (`bin/wine`).
     pub runner: PathBuf,
+    /// The winetricks script windowsarcadeloader installs native XAudio with
+    /// (looked for beside the runner, else on PATH).
+    pub winetricks: PathBuf,
     /// ReShade effects (`crt-lottes.fx`).
     pub shaders: PathBuf,
 }
@@ -294,6 +297,7 @@ pub fn plan(
             links.push((root.join("systemprofiles"), c.wal.join("systemprofiles")));
             links.push((root.join("dist/payloads"), c.wal.join("payloads")));
             links.push((root.join("wine-runners/runner"), c.runner.clone()));
+            links.push((root.join("wine-runners/winetricks"), c.winetricks.clone()));
             input_pipe = Some(if system == "ringedge" {
                 StickLayout::RingEdge
             } else {
@@ -344,6 +348,7 @@ mod tests {
             lindbergh: "/c/lindbergh".into(),
             wal: "/c/wal".into(),
             runner: "/c/runner".into(),
+            winetricks: "/c/winetricks".into(),
             shaders: "/c/shaders".into(),
         }
     }
@@ -422,6 +427,16 @@ mod tests {
             false,
         );
         assert_eq!(p.input_pipe, Some(StickLayout::Alls));
+        // windowsarcadeloader looks for winetricks beside its runner
+        let runners = PathBuf::from("/d/wal/wine-runners");
+        assert!(
+            p.links
+                .contains(&(runners.join("runner"), "/c/runner".into()))
+        );
+        assert!(
+            p.links
+                .contains(&(runners.join("winetricks"), "/c/winetricks".into()))
+        );
     }
 
     #[test]
