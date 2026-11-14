@@ -99,9 +99,9 @@ Decided by the owner on 2026-11-13:
 | D3 | **lindbergh-loader is built on request** on the player's machine from a pinned commit; never inside our package. | CC BY-NC-SA 4.0 is not GPL-compatible. |
 | D4 | **Scope includes NAOMI 2** Initial D Ver.1/2/3 Export (`roms_rare/naomi2`) through Flycast; the TeknoParrot folder's `initdexp-chd` is the same Ver.1 GD-ROM. | Covers the whole series, 2002–2025. |
 
-Defaults applied pending the owner's confirmation (not asked): **GPL-3.0**
-for this repository (matches windowsarcadeloader and the Wangan launcher)
-and **original illustrations** for the hub art.
+Confirmed by the owner (2026-11-13, after being applied as defaults):
+**GPL-3.0** for this repository (matches windowsarcadeloader and the Wangan
+launcher) and **original illustrations** for the hub art.
 
 Questions that were put to the owner (2026-11-13):
 

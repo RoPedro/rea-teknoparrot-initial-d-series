@@ -33,7 +33,18 @@ pub struct Plan {
     pub input_pipe: Option<StickLayout>,
     /// The size the game draws at.
     pub game_size: Size,
+    /// The `HOME` gamescope runs with, when it loads a ReShade effect:
+    /// gamescope looks effects up by name only, under
+    /// `$HOME/.local/share/gamescope/reshade/Shaders` (it ignores
+    /// `XDG_DATA_HOME` and absolute paths), so the runtime holds such a
+    /// folder with a link to the launcher's shader. The game gets the
+    /// player's own `HOME` back.
+    pub gamescope_home: Option<PathBuf>,
 }
+
+/// The CRT effect's file name, in the components' `shaders/` and in
+/// gamescope's effect folder.
+const CRT_EFFECT: &str = "crt-lottes.fx";
 
 /// The launcher's own components (built or downloaded on request).
 #[derive(Debug, Clone)]
@@ -85,7 +96,7 @@ pub fn game_size(game: &Game, s: &Settings) -> Size {
     }
 }
 
-fn gamescope_args(s: &Settings, size: Size, c: &Components, headless: bool) -> Vec<String> {
+fn gamescope_args(s: &Settings, size: Size, headless: bool) -> Vec<String> {
     let mut a: Vec<String> = [
         "-w",
         &size.w.to_string(),
@@ -107,13 +118,7 @@ fn gamescope_args(s: &Settings, size: Size, c: &Components, headless: bool) -> V
         a.extend(["--sharpness".into(), s.sharpness.to_string()]);
     }
     if s.crt == Crt::Lottes {
-        a.extend([
-            "--reshade-effect".into(),
-            c.shaders
-                .join("crt-lottes.fx")
-                .to_string_lossy()
-                .into_owned(),
-        ]);
+        a.extend(["--reshade-effect".into(), CRT_EFFECT.into()]);
     }
     if headless {
         a.extend(["--backend".into(), "headless".into()]);
@@ -310,11 +315,20 @@ pub fn plan(
             }
         }
     };
+    let gamescope_home = (s.crt == Crt::Lottes).then(|| rt.join("gamescope-home"));
+    if let Some(home) = &gamescope_home {
+        links.push((
+            home.join(".local/share/gamescope/reshade/Shaders")
+                .join(CRT_EFFECT),
+            c.shaders.join(CRT_EFFECT),
+        ));
+    }
     Plan {
         files,
         links,
         game: game_cmd,
-        gamescope: gamescope_args(s, size, c, headless),
+        gamescope: gamescope_args(s, size, headless),
+        gamescope_home,
         input_pipe,
         game_size: size,
     }
@@ -481,10 +495,16 @@ mod tests {
             "eth0",
             false,
         );
+        // by name, from a HOME in the runtime that links the shader
         assert_eq!(
             arg_after(&p.gamescope, "--reshade-effect").as_deref(),
-            Some("/c/shaders/crt-lottes.fx")
+            Some("crt-lottes.fx")
         );
+        let home = p.gamescope_home.clone().unwrap();
+        assert!(p.links.contains(&(
+            home.join(".local/share/gamescope/reshade/Shaders/crt-lottes.fx"),
+            PathBuf::from("/c/shaders/crt-lottes.fx")
+        )));
         assert_eq!(arg_after(&p.gamescope, "-F").as_deref(), Some("fsr"));
         assert!(p.gamescope.contains(&"-f".to_string()));
         let h = plan(

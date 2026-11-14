@@ -177,10 +177,24 @@ pub fn prepare(
 
 /// The command line: gamescope, then bubblewrap with every library folder
 /// read-only (no loader can write to the player's dumps), then the game.
-pub fn command_line(plan: &Plan, libraries: &[PathBuf], bwrap: bool) -> Vec<String> {
-    let mut v = vec!["gamescope".to_string()];
+/// With a ReShade effect, gamescope runs with the plan's `HOME` and the
+/// game with `user_home` (see [`Plan::gamescope_home`]).
+pub fn command_line(
+    plan: &Plan,
+    libraries: &[PathBuf],
+    bwrap: bool,
+    user_home: &str,
+) -> Vec<String> {
+    let mut v = Vec::new();
+    if let Some(home) = &plan.gamescope_home {
+        v.extend(["env".into(), format!("HOME={}", home.display())]);
+    }
+    v.push("gamescope".to_string());
     v.extend(plan.gamescope.iter().cloned());
     v.push("--".into());
+    if plan.gamescope_home.is_some() {
+        v.extend(["env".into(), format!("HOME={user_home}")]);
+    }
     if bwrap {
         v.extend(["bwrap", "--dev-bind", "/", "/"].map(String::from));
         for l in libraries {
@@ -231,7 +245,8 @@ fn run_once(
 ) -> Result<Ended> {
     let libraries = paths.config().libraries;
     let bwrap = which("bwrap").is_some();
-    let argv = command_line(&p.plan, &libraries, bwrap);
+    let user_home = std::env::var("HOME").unwrap_or_default();
+    let argv = command_line(&p.plan, &libraries, bwrap, &user_home);
     let tag = p.runtime.to_string_lossy().into_owned();
     let mut cmd = Command::new(&argv[0]);
     cmd.args(&argv[1..])
@@ -399,11 +414,31 @@ mod tests {
             "eth0",
             true,
         );
-        let v = command_line(&plan, &["/lib".into(), "/naomi".into()], true);
+        let v = command_line(&plan, &["/lib".into(), "/naomi".into()], true, "/home/p");
         let s = v.join(" ");
         assert!(s.starts_with("gamescope -w 1360 -h 768 "), "{s}");
         assert!(s.contains(" -- bwrap --dev-bind / / --ro-bind /lib /lib --ro-bind /naomi /naomi /c/wal/arcade-launcher run "), "{s}");
-        let plain = command_line(&plan, &["/lib".into()], false);
+        let plain = command_line(&plan, &["/lib".into()], false, "/home/p");
         assert!(!plain.join(" ").contains("bwrap"));
+        // the CRT effect: gamescope with the runtime's HOME, the game with the player's
+        let crt = Settings {
+            crt: initiald_core::settings::Crt::Lottes,
+            ..Settings::default()
+        };
+        let plan = launch::plan(
+            game(GameId::Id6),
+            Path::new("/lib/x"),
+            &places,
+            &c,
+            &crt,
+            "eth0",
+            true,
+        );
+        let s = command_line(&plan, &["/lib".into()], true, "/home/p").join(" ");
+        assert!(
+            s.starts_with("env HOME=/d/rt/id6/gamescope-home gamescope "),
+            "{s}"
+        );
+        assert!(s.contains(" -- env HOME=/home/p bwrap "), "{s}");
     }
 }

@@ -10,9 +10,9 @@ folder that links to your dump, with the library mounted read-only.
 This project contains no game files: you need your own copies of the games.
 
 > Status: nine of the eleven games played a race through the launcher, on
-> Linux with an NVIDIA GPU, in an invisible test display. Nothing has been checked on a
-> real screen yet (FSR/NIS, the CRT look), on a real wheel, or with sound
-> on speakers. See [docs/RUNTIME_NOTES.md](docs/RUNTIME_NOTES.md).
+> Linux with an NVIDIA GPU, in an invisible test display; full screen, FSR
+> and NIS were checked on a real 4K screen. Not checked yet: a real wheel,
+> sound on speakers. See [docs/RUNTIME_NOTES.md](docs/RUNTIME_NOTES.md).
 
 ## Problems this launcher solves
 
@@ -117,7 +117,7 @@ Every window option has a flag; `--help` lists them:
 ```sh
 initiald-launcher --play id6
 initiald-launcher --game id5 --render 3840x2160 --output 3840x2160 --upscaler fsr
-initiald-launcher --game id7 --crt lottes      # CRT look: not checked on a real screen yet
+initiald-launcher --game id7 --crt lottes      # CRT look: fails on NVIDIA with gamescope 3.17
 ```
 
 ## Where things live
@@ -146,9 +146,12 @@ initiald-launcher --game id7 --crt lottes      # CRT look: not checked on a real
 - Initial D 5 draws some menu panels as white boxes.
 - More than 60 fps is not offered: these games tie their speed to the
   frame rate. DLSS is not possible for them.
-- Not checked yet: FSR/NIS and the CRT look on a real screen, a real
-  wheel and its force feedback, sound on speakers, Windows and the Steam
-  Deck.
+- The CRT look is not in the window: gamescope 3.17 loads the effect but
+  fails to allocate its memory on NVIDIA (any effect, not only ours), and
+  shows the picture unchanged. The `--crt lottes` flag is kept for other
+  GPUs.
+- Not checked yet: a real wheel and its force feedback, sound on
+  speakers, Windows and the Steam Deck.
 
 ## Uninstall
 

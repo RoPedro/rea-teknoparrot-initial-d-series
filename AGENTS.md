@@ -17,8 +17,8 @@ project: `rea-teknoparrot-wangan-series`.
   windowsarcadeloader payloads under Wine for ID6/7/8, Zero, S3, S5, fed by
   our SDL input over its TCP protocol; Flycast for NAOMI 2.
 - **lindbergh-loader** (CC BY-NC-SA) is built on request, never packaged.
-- **Licence / art**: GPL-3.0 and original illustrations (defaults, pending
-  confirmation).
+- **Licence / art**: GPL-3.0 and original illustrations (confirmed by the
+  owner 2026-11-13).
 
 ## Rules that bite here
 

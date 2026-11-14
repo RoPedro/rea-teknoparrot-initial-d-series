@@ -122,9 +122,17 @@ keys sent to the session's own Xwayland.
 | Zero Ver.2, first run (flat layout, before the fix) | "Error 4104 Unexpected Error Occurred": its top-level `IniD0_AppError.log` (and account files) were links into the read-only library. Small top-level files are now copied into the runtime (the game writes there), but **Error 4104 stays** (rerun: on screen by 60 s; the game's log only shows `outputEventLog`). The payload's servers start (aimedb, allnet, billing, gs, userdb); the English texts load. Not solved. Lead: the dump ships TeknoParrot's segatools `idzhook.dll`/`idzio.dll`, which windowsarcadeloader reimplements. |
 | Stop after `--seconds` | game, gamescope and Wine gone; 0 leftover processes found by the session tag |
 
-## gamescope options
+## gamescope options (on the owner's screen, 2026-11-13)
+
+Visible runs: Hyprland, monitor DP-1 3840×2160, gamescope 3.17 nested,
+Initial D Ver.1 (Flycast, drawn at 853×480) shown at 3840×2160, sound to a
+private null sink; the screen captured with `grim -o DP-1` 55 s in (the
+"Created by Sega Rosso" intro, the same frame each run).
 
 | Option | Seen |
 |---|---|
-| CRT effect (`--crt lottes`, `assets/shaders/crt-lottes.fx`) | gamescope looks effects up by name under `$XDG_DATA_HOME/gamescope/reshade/Shaders`; headless screenshots show no effect either way (by path or by name), no load error logged. **Not verified**: needs a check on a real screen. Not offered in the window until then. |
-| FSR / NIS | **not verified** (headless gamescope can't use FSR; same as the Wangan launcher) |
+| Full screen (`-f`) | yes: the picture covers the whole 3840×2160 monitor, 16:9 with black bars above and below the 4:3-era picture's widescreen frame |
+| FSR (`-F fsr --sharpness 5`) | **works**: edges visibly crisper than linear; mean edge strength of a logo crop 13.1 vs 7.8 for linear |
+| NIS (`-F nis --sharpness 5`) | **works**: 15.6 on the same crop |
+| CRT effect (`--crt lottes`) | **does not work here.** gamescope looks effects up by name only, under `$HOME/.local/share/gamescope/reshade/Shaders` (an absolute path is appended to that folder; `XDG_DATA_HOME` is ignored): the launcher now runs gamescope with a `HOME` in the runtime that links the shader, and gamescope loads it ("Using technique: CRT"), then logs `vkAllocateMemory failed` and shows the picture unchanged. The same failure with a trivial invert effect on `glxgears`: gamescope 3.17's ReShade on this NVIDIA driver (615.78), not the shader. Not offered in the window; kept on the command line for other GPUs. Headless gamescope logs neither message. |
+| A windowed run that hung | once in five visible runs Hyprland reported the gamescope window "not responding" and the capture showed the desktop; the retry was fine. Not reproduced. |
