@@ -87,6 +87,49 @@ fn check_components(game: &Game, p: &Paths) -> Result<()> {
     Ok(())
 }
 
+/// Whether `game` needs lindbergh-loader built first (its first start on
+/// this computer).
+pub fn needs_lindbergh_build(paths: &Paths, game: &Game) -> bool {
+    game.route == Route::Lindbergh && !paths.lindbergh().join("lindbergh.so").is_file()
+}
+
+/// Builds lindbergh-loader into the data folder with
+/// `scripts/build-components.sh` (git and docker or podman, a few minutes);
+/// its output goes to `lindbergh-build.log` there.
+pub fn build_lindbergh(paths: &Paths) -> Result<()> {
+    let script = paths.build_script();
+    if !script.is_file() {
+        bail!("the build script is missing ({})", script.display());
+    }
+    if which("git").is_none() {
+        bail!("building lindbergh-loader needs git, which is not installed");
+    }
+    if which("docker").is_none() && which("podman").is_none() {
+        bail!("building lindbergh-loader needs docker or podman, and neither is installed");
+    }
+    let target = paths.lindbergh_build_target();
+    fs::create_dir_all(&target).with_context(|| format!("creating {}", target.display()))?;
+    let log_path = paths.data.join("lindbergh-build.log");
+    let log =
+        fs::File::create(&log_path).with_context(|| format!("creating {}", log_path.display()))?;
+    let status = Command::new("sh")
+        .arg(&script)
+        .arg(&target)
+        .arg("lindbergh")
+        .stdin(Stdio::null())
+        .stdout(log.try_clone()?)
+        .stderr(log)
+        .status()
+        .context("starting the build script")?;
+    if !status.success() || !paths.lindbergh().join("lindbergh.so").is_file() {
+        bail!(
+            "building lindbergh-loader failed ({status}); its output is in {}",
+            log_path.display()
+        );
+    }
+    Ok(())
+}
+
 pub fn which(program: &str) -> Option<PathBuf> {
     std::env::var_os("PATH").and_then(|path| {
         std::env::split_paths(&path)

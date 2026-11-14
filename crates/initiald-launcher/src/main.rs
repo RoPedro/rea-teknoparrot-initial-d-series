@@ -220,6 +220,13 @@ fn play(paths: &Paths, slug: &str, args: &Args) -> ExitCode {
     } else {
         Display::Screen
     };
+    if session::needs_lindbergh_build(paths, game) {
+        eprintln!("building lindbergh-loader (first start of Initial D 4 or 5; a few minutes)…");
+        if let Err(e) = session::build_lindbergh(paths) {
+            eprintln!("{e:#}");
+            return ExitCode::FAILURE;
+        }
+    }
     let prepared = match session::prepare(paths, game, &entry, &settings, display) {
         Ok(p) => p,
         Err(e) => {
