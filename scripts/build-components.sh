@@ -1,7 +1,8 @@
 #!/bin/sh
 # Builds the launcher's components from pinned sources into a components folder:
 #   lindbergh/  lindbergh-loader (CC BY-NC-SA 4.0: built here on the player's machine, never
-#               shipped in our packages), in a throwaway ubuntu:22.04 container (docker or podman)
+#               shipped in our packages) with patches/lindbergh applied, in a throwaway
+#               ubuntu:22.04 container (docker or podman)
 #   wal/        windowsarcadeloader (GPL-3.0) with patches/wal applied: arcade-launcher,
 #               payloads/, systemprofiles/  (needs Rust with the i686/x86_64-pc-windows-gnu
 #               targets and MinGW)
@@ -33,6 +34,7 @@ checkout() { # repo commit dir
 for part in $parts; do case $part in
 lindbergh)
   checkout "$LINDBERGH_REPO" "$LINDBERGH_COMMIT" "$work/lindbergh-loader"
+  for p in "$here"/patches/lindbergh/*.patch; do git -C "$work/lindbergh-loader" apply "$p"; done
   engine=$(command -v docker || command -v podman) || { echo "lindbergh: needs docker or podman" >&2; exit 1; }
   mkdir -p "$out/lindbergh"
   "$engine" run --rm -v "$work/lindbergh-loader:/src:ro" -v "$out/lindbergh:/out" \

@@ -60,19 +60,28 @@ Settings that mattered:
 | 1920×1080 | yes | yes |
 | 3D attract on NVIDIA | yes with `GPU_VENDOR = 0` (auto); black with `2` (AMD path) | yes, either value |
 | Boot prompt "Card Stocker Cleaning" (existing SRAM) | dismissed with VIEW | — |
-| Free play → Start | **crashes** (see below) | card prompt → "no card" → car select (AE86, 86 Levin, MR2, Supra…) |
+| Free play → Start | crashed (see below); **fixed**: license prompt, rival (Iggy, Lake Akina), race with the timer running (through the launcher, 2026-11-14) | card prompt → "no card" → car select (AE86, 86 Levin, MR2, Supra…) |
 | Car preview on car select | — | white box at 120 s (same with both GPU paths; may be the panel's wipe, to check in a longer run) |
-| Race | not reached | not reached yet |
+| Race | **played** with `patches/lindbergh` | not reached yet |
 
 **ID4 crash at game start** (coin ×2 or free-play Start, every time):
 SIGSEGV, EIP = 0, a virtual call from `cApplication::run()+0x13`
-(`call *0x18(%edx)`) on `tInterfaceSupport<cUi>::pInstance`
-(`0x89ae8b0`, the `cUiJVS` object). Its first dword (vptr) holds
-`0x087aea00` (inside `tInterfaceSupport<cFeedback>`'s vtable, two words
-before `_ZTV3cUi`) instead of `cUiJVS`'s vtable: the object was
-overwritten. The loader's ID4 Export Rev D patch set assumes a clean ELF;
-this dump is TeknoParrot-modified (whole-file CRC unknown). Not solved.
-Core: `.work/cores/id4-coin.core`.
+(`call *0x18(%edx)`) on `tInterfaceSupport<cUi>::pInstance`, the
+`cUiJVS` object, whose vptr read `0x087aea00` instead of `0x087aeae8`.
+
+Found with a hardware watchpoint on that vptr (gdb attached to the running
+game, 2026-11-14): the write is `loadCardFile()+0x11`
+(`movb $0x0,0x40(%esi)`) on a card-reader thread. lindbergh-loader's card
+reader emulation turns the game's `cRealCardIF` into a `cFileCardIF` by
+patching the vptr its constructor stores (`0x082082e8`), but the object
+stays allocated at `cRealCardIF`'s size, `new(0x34)` at `0x08208297`.
+`cFileCardIF` uses fields up to `+0x40`, so its "loading" flag lands in
+the next heap chunk: here the `cUiJVS` object, its vptr's low byte cleared.
+Not caused by the TeknoParrot dump (the patch sites hold the expected
+bytes); it depends on the heap's layout. Fix, `patches/lindbergh/0001`:
+the allocation's size byte (`0x0820829a`) set to `0x80`. Only Export
+Rev. D was checked; the loader's other ID4 versions use the same pair of
+patches and probably need the same fix.
 
 ## RingEdge, Nu, ALLS — windowsarcadeloader (`4f42c6d`, built from source)
 
@@ -118,7 +127,8 @@ keys sent to the session's own Xwayland.
 | THE ARCADE Season 5, first start | boots (keychip, I/O board, ALL.Net, the local game server answers `Alive/Get`, `Boot/GetConfigData`, `Boot/Bookkeep`, `Boot/getGachaData`, the same calls as Season 3), then stays on "Initializing" for 8 minutes. Not the `IndRun.dll` patches: every patch site in this dump holds the instructions the profile describes (the game's two `call 0x37fa60`, IndRun's `ja`, `je`s, prologue and code tail). windowsarcadeloader logs "no E:\sysfile.dat yet (amdaemon's first start): DIP switches and free play from the next one". |
 | THE ARCADE Season 5, second start | **race played**: guest play, Story chapter 1, Akina, 50 km/h |
 | THE ARCADE Season 5, fresh runtime, launcher restart | the session waits for `AMFS/sysfile.dat` (written about a minute in), stops the game 10 s later and starts it again: steering calibration (Start taken), car select (AE86), chapter 1, race at 46 km/h, failed, continue, terms of use, card prompt. 0 leftover processes after each start. |
-| Zero Ver.2, `package\` layout | **Error 4104 gone.** Its cause, in amdaemon's own log (`Y:\amdaemon.log`): `Cannot open "config_wal.json"`, then `Invalid app config`. windowsarcadeloader's profile expects the cabinet's layout (the program in `package\`, where it writes `config_wal.json` for amdaemon); the runtime now puts the dump's files in `package/`, the drives at the root. The game boots to "Please do not touch the steering wheel…", then STEER ADJUSTMENTS, and stays there: Start (JVS switch 0x80, logged by amdaemon and the game as `buttons 0x1000`) is not taken, also on a second start; wheel and pedals at rest (JVS 0x8000 / 0). Not solved. |
+| Zero Ver.2, `package\` layout | **Error 4104 gone.** Its cause, in amdaemon's own log (`Y:\amdaemon.log`): `Cannot open "config_wal.json"`, then `Invalid app config`. windowsarcadeloader's profile expects the cabinet's layout (the program in `package\`, where it writes `config_wal.json` for amdaemon); the runtime now puts the dump's files in `package/`, the drives at the root. The game boots to "Please do not touch the steering wheel…", then STEER ADJUSTMENTS, and stayed there: Start was not taken, also on a second start. |
+| Zero Ver.2, STEER ADJUSTMENTS (2026-11-14) | **Cause**: windowsarcadeloader's `idz::hold_start` clears Start (JVS switch 0x80) in amdaemon's JVS board until the game has its game server's configuration (`WAL_IDZ_SERVER_READY`, set at loadConfigB) so that a card is not read too early. The game asks for that configuration from its attract, which comes after the steering adjustment of a first boot (an empty `Y:`): Start never came (no "configuration loaded" in `wal-alls.log`). **Fix**, `patches/wal/0002`: Start always passes; the card reader ignores the card until the configuration is loaded. **Race played** through the launcher: steering adjustment, new Aime player (name entry, auto team, AE86, `createProfile2` / `saveProfile5` saved), the Mako & Sayuki tutorial race at 137 km/h, time up, chapter 1. |
 | Zero Ver.2, first run (flat layout, before the fix) | "Error 4104 Unexpected Error Occurred": its top-level `IniD0_AppError.log` (and account files) were links into the read-only library. Small top-level files are now copied into the runtime (the game writes there), but **Error 4104 stays** (rerun: on screen by 60 s; the game's log only shows `outputEventLog`). The payload's servers start (aimedb, allnet, billing, gs, userdb); the English texts load. Not solved. Lead: the dump ships TeknoParrot's segatools `idzhook.dll`/`idzio.dll`, which windowsarcadeloader reimplements. |
 | Stop after `--seconds` | game, gamescope and Wine gone; 0 leftover processes found by the session tag |
 

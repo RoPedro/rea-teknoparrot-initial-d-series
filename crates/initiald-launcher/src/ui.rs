@@ -22,7 +22,7 @@ use eframe::egui::{
     self, Align2, Color32, CornerRadius, CursorIcon, FontId, Id, Mesh, Pos2, Rect, Sense, Shape,
     Stroke, StrokeKind, TextureHandle, Vec2, pos2, vec2,
 };
-use initiald_core::catalog::{GAMES, Game, Route};
+use initiald_core::catalog::{GAMES, Game, Route, Support};
 use initiald_core::input::{Button, default_pad_map};
 use initiald_core::library::{self, Entry, Found, HashCache};
 use rea_launcher::wheel::{Action, Control, Kind};
@@ -117,6 +117,8 @@ struct App {
     folder_note: Note,
     bios: String,
     bios_note: Note,
+    /// Each game's support, from the catalog (the tests set others).
+    supports: Vec<Support>,
 }
 
 impl App {
@@ -143,6 +145,7 @@ impl App {
             folder_note: None,
             bios: String::new(),
             bios_note: None,
+            supports: GAMES.iter().map(|g| g.support).collect(),
             paths,
         };
         app.start_scan();
@@ -210,7 +213,11 @@ impl App {
     }
 
     fn state(&self, i: usize) -> TileState {
-        TileState::of(&GAMES[i], self.entries.is_some(), self.entry(i).is_some())
+        let game = Game {
+            support: self.supports[i],
+            ..GAMES[i]
+        };
+        TileState::of(&game, self.entries.is_some(), self.entry(i).is_some())
     }
 
     fn world(&self) -> World {
@@ -2573,7 +2580,6 @@ fn ellipsized_text(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use initiald_core::catalog::Support;
     use initiald_core::settings::{Settings, Size};
     use rea_launcher_ui::testing::kittest::NodeT as _;
     use rea_launcher_ui::testing::{self, Harness, Queryable};
@@ -2651,14 +2657,13 @@ mod tests {
         })
     }
 
-    fn unverified() -> &'static Game {
-        game_where("unverified", |g| {
-            matches!(g.support, Support::Unverified(_))
-        })
-    }
-
-    fn blocked() -> &'static Game {
-        game_where("blocked", |g| matches!(g.support, Support::Blocked(_)))
+    /// A catalog game shown with `support` (every game in the catalog may be
+    /// verified, so the tests set the other states themselves).
+    fn shown_as(h: &mut Harness<'_, App>, support: Support) -> &'static Game {
+        let g = ready();
+        let i = GAMES.iter().position(|x| x.id == g.id).unwrap();
+        h.state_mut().supports[i] = support;
+        g
     }
 
     fn naomi() -> &'static Game {
@@ -2764,10 +2769,8 @@ mod tests {
     fn a_blocked_game_cannot_be_played_and_says_why() {
         let t = tempfile::tempdir().unwrap();
         let mut h = hub(t.path());
-        let blocked = blocked();
-        let Support::Blocked(why) = blocked.support else {
-            unreachable!()
-        };
+        let why = "Not yet: it crashes.";
+        let blocked = shown_as(&mut h, Support::Blocked(why));
         // even a game found on disk stays locked
         let dir = t.path().join("games/blocked");
         std::fs::create_dir_all(&dir).unwrap();
@@ -2789,14 +2792,12 @@ mod tests {
     fn an_unverified_game_shows_its_note_and_can_be_played() {
         let t = tempfile::tempdir().unwrap();
         let mut h = hub(t.path());
-        let g = unverified();
+        let note = "Boots; no race verified.";
+        let g = shown_as(&mut h, Support::Unverified(note));
         let dir = t.path().join("games/unverified");
         std::fs::create_dir_all(&dir).unwrap();
         h.state_mut().entries = Some(vec![fake_entry(g.slug, &dir)]);
         select(&mut h, g.slug);
-        let Support::Unverified(note) = g.support else {
-            unreachable!()
-        };
         assert!(says(&h, note));
         assert!(says(&h, "Starts, not verified"));
         assert!(!testing::disabled(
@@ -2808,7 +2809,7 @@ mod tests {
     fn a_game_missing_from_the_library_cannot_be_played() {
         let t = tempfile::tempdir().unwrap();
         let mut h = hub(t.path());
-        select(&mut h, unverified().slug);
+        select(&mut h, ready().slug);
         let play = h.get_by_role_and_label(Role::Button, "Play");
         assert!(testing::disabled(&play));
         assert!(says(&h, "Not in your library"));

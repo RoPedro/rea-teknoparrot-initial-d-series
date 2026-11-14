@@ -1,0 +1,13 @@
+diff --git a/src/lindbergh/patch.c b/src/lindbergh/patch.c
+index 5b021ae..2c6e454 100644
+--- a/src/lindbergh/patch.c
++++ b/src/lindbergh/patch.c
+@@ -956,6 +956,8 @@ int initPatch()
+             // Patch for Card Reader to use files instead
+             if (getConfig()->emulateIDCardReader)
+             {
++                patchMemoryFromString(0x0820829a, "80");     // cRealCardIF is allocated with 0x34 bytes; cFileCardIF
++                                                             // writes up to +0x40 (loadCardFile), into the next heap chunk
+                 patchMemoryFromString(0x082082e8, "88fa79"); // RealCard --> FileCard
+                 patchMemoryFromString((size_t)findStaticFnAddr("_ZN11cFileCardIF9emulationEv") + 0x21, "74");
+                 detourFunction((size_t)findStaticFnAddr("_ZN11_sInterface10checkTrgOnENS_11PORT_NUMBEREm"), checkTrgOn);

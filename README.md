@@ -9,7 +9,7 @@ folder that links to your dump, with the library mounted read-only.
 
 This project contains no game files: you need your own copies of the games.
 
-> Status: nine of the eleven games played a race through the launcher, on
+> Status: all eleven games played a race through the launcher, on
 > Linux with an NVIDIA GPU, in an invisible test display; full screen, FSR
 > and NIS were checked on a real 4K screen. Not checked yet: a real wheel,
 > sound on speakers. See [docs/RUNTIME_NOTES.md](docs/RUNTIME_NOTES.md).
@@ -49,12 +49,12 @@ This project contains no game files: you need your own copies of the games.
 | Initial D Arcade Stage | NAOMI 2 | Export Rev. A (GDS-0025A) | **plays** |
 | Ver. 2 | NAOMI 2 | Export (GDS-0027) | **plays** |
 | Ver. 3 | NAOMI 2 | Export (GDS-0033) | **plays** |
-| Arcade Stage 4 | Lindbergh | Export Rev. D (1.5) | **blocked**: crashes when a game starts |
+| Arcade Stage 4 | Lindbergh | Export Rev. D (1.5) | **plays** |
 | Arcade Stage 5 | Lindbergh | Export 2.0 | **plays** |
 | Arcade Stage 6 AA | RingEdge | Japan (SBUU) | **plays** |
 | Arcade Stage 7 AAX | RingEdge | Japan (SBYD) | **plays** |
 | Arcade Stage 8 Infinity | RingEdge | Japan (SBZZ) | **plays** |
-| Arcade Stage Zero Ver. 2 | Nu | 2.30.00 | boots; its steering calibration screen did not take Start |
+| Arcade Stage Zero Ver. 2 | Nu | 2.30.00 | **plays** |
 | THE ARCADE Season 3 | ALLS UX | 2.31.00 Rev. 1 | **plays** |
 | THE ARCADE Season 5 | ALLS UX | 3.10.00 Rev. 1 | **plays** (its first start is restarted once by itself) |
 
@@ -137,9 +137,6 @@ initiald-launcher --game id7 --crt lottes      # CRT look: fails on NVIDIA with 
 
 ## Known limitations
 
-- Initial D 4 (this TeknoParrot dump) crashes at the start of a game; Zero
-  boots but stays on its steering calibration screen (Start is not taken).
-  Both are described in the runtime notes.
 - The very first start of Season 5 stays on "Initializing" for about a
   minute, then the launcher starts it again by itself (the cabinet's system
   file is written on that first start).
@@ -181,6 +178,13 @@ and bubblewrap with every library folder read-only. For the Windows games
 it starts windowsarcadeloader's launcher with `--input-pipe`
 (`patches/wal`): the launcher's input thread writes the virtual stick to
 it and plays back the force feedback lines it prints.
+
+Two fixes to the loaders are applied when the components are built:
+`patches/lindbergh` gives Initial D 4's emulated card reader the memory
+it writes to (without it the game crashed when a game started), and
+`patches/wal` lets Zero's Start button through before its game server
+answers, holding back card reads instead (its first boot asks for the
+steering adjustment before that, and stayed there).
 
 ## Built on rea-launcher-sdk
 

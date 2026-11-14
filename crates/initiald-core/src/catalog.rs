@@ -203,9 +203,7 @@ pub const GAMES: &[Game] = &[
             "Export Rev. D (1.5)",
         )],
         native: Size::new(1360, 768),
-        support: Support::Blocked(
-            "This build crashes when a game starts (see the notes); the attract mode runs.",
-        ),
+        support: Support::Ready,
     },
     Game {
         id: GameId::Id5,
@@ -297,9 +295,7 @@ pub const GAMES: &[Game] = &[
             "2.30.00 (Japan, Export)",
         )],
         native: Size::new(1920, 1080),
-        support: Support::Unverified(
-            "Boots, but its steering calibration screen did not take Start in our tests.",
-        ),
+        support: Support::Ready,
     },
     Game {
         id: GameId::TheArcade3,
