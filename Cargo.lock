@@ -1077,6 +1077,7 @@ dependencies = [
 name = "initiald-core"
 version = "0.1.0"
 dependencies = [
+ "junction",
  "rea-launcher",
  "sha2 0.10.9",
  "tempfile",
@@ -1093,8 +1094,10 @@ dependencies = [
  "rea-launcher",
  "rea-launcher-native",
  "rea-launcher-ui",
+ "rea-launcher-win32",
  "signal-hook",
  "tempfile",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1189,6 +1192,16 @@ dependencies = [
  "cfg-if",
  "futures-util",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "junction"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cde48f36530cbd91b65f050101e6c056d6eb743cea2a8f0f19beef69c6742ff8"
+dependencies = [
+ "scopeguard",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2011,6 +2024,15 @@ dependencies = [
  "jpeg-decoder",
  "libc",
  "rea-launcher",
+]
+
+[[package]]
+name = "rea-launcher-win32"
+version = "0.9.0"
+source = "git+https://github.com/akitaonrails/rea-launcher-sdk?tag=v0.9.0#c8afb833bedb76bbfc6e01cc8448d702b8c58b8a"
+dependencies = [
+ "rea-launcher",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
