@@ -1,10 +1,9 @@
 //! One game run: build the runtime, write the loader's files, start the
-//! game in gamescope with the library read-only, feed its input, wait, and
-//! leave nothing behind.
+//! game (on Linux in gamescope with the library read-only), feed its input,
+//! wait, and leave nothing behind.
 
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
-use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
 use std::process::{Command, ExitStatus, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -13,7 +12,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, bail};
-use initiald_core::catalog::{Game, Route, Support};
+use initiald_core::catalog::{Game, Host, Route, Support};
 use initiald_core::launch::{self, Places, Plan};
 use initiald_core::library::Entry;
 use initiald_core::runtime;
@@ -21,10 +20,7 @@ use initiald_core::settings::Settings;
 
 use crate::input::{self, Script};
 use crate::paths::Paths;
-
-/// The environment variable every process of a session carries, so
-/// leftovers (Wine reparents its processes) can be found and stopped.
-pub const TAG: &str = "INITIALD_SESSION";
+use crate::proc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Display {
@@ -56,10 +52,16 @@ pub enum Feed {
 
 fn check_components(game: &Game, p: &Paths) -> Result<()> {
     let c = p.components();
+    let windows = Host::current() == Host::Windows;
     let need: Vec<PathBuf> = match game.route {
         Route::Lindbergh => vec![
             c.lindbergh.join("lindbergh"),
             c.lindbergh.join("lindbergh.so"),
+        ],
+        Route::Wal { .. } if windows => vec![
+            c.wal.join("arcade-launcher.exe"),
+            c.wal.join("payloads"),
+            c.wal.join("systemprofiles"),
         ],
         Route::Wal { .. } => vec![
             c.wal.join("arcade-launcher"),
@@ -67,6 +69,7 @@ fn check_components(game: &Game, p: &Paths) -> Result<()> {
             c.wal.join("systemprofiles"),
             c.runner.join("bin/wine"),
         ],
+        Route::Flycast { .. } if windows => vec![c.flycast.join("flycast.exe")],
         Route::Flycast { .. } => vec![],
     };
     let missing: Vec<String> = need
@@ -81,7 +84,7 @@ fn check_components(game: &Game, p: &Paths) -> Result<()> {
             missing.join("\n  ")
         );
     }
-    if matches!(game.route, Route::Flycast { .. }) && which("flycast").is_none() {
+    if !windows && matches!(game.route, Route::Flycast { .. }) && which("flycast").is_none() {
         bail!("{} runs in Flycast, which is not installed", game.title);
     }
     Ok(())
@@ -146,7 +149,7 @@ pub fn prepare(
     settings: &Settings,
     display: Display,
 ) -> Result<Prepared> {
-    if let Support::Blocked(why) = game.support {
+    if let Support::Blocked(why) = game.support_on(Host::current()) {
         bail!("{} can't start yet: {why}", game.title);
     }
     check_components(game, paths)?;
@@ -172,7 +175,7 @@ pub fn prepare(
     for dir in [rt.clone(), rt.join(game.game_folder())] {
         if dir.is_dir() {
             for d in runtime::dangling(&dir)? {
-                fs::remove_file(d)?;
+                runtime::remove_link(&d)?;
             }
         }
     }
@@ -192,6 +195,7 @@ pub fn prepare(
         settings,
         &nic,
         display == Display::Headless,
+        Host::current(),
     );
     for (file, text) in &plan.files {
         if let Some(d) = file.parent() {
@@ -278,6 +282,19 @@ pub fn run(paths: &Paths, p: &Prepared, feed: Feed, stop: Arc<AtomicBool>) -> Re
     }
 }
 
+/// The command the session starts: on Linux [`command_line`], on Windows
+/// the game's own (no gamescope, no bubblewrap).
+fn session_argv(plan: &Plan, libraries: &[PathBuf]) -> Vec<String> {
+    if Host::current() == Host::Windows {
+        return std::iter::once(plan.game.program.to_string_lossy().into_owned())
+            .chain(plan.game.args.iter().cloned())
+            .collect();
+    }
+    let bwrap = which("bwrap").is_some();
+    let user_home = std::env::var("HOME").unwrap_or_default();
+    command_line(plan, libraries, bwrap, &user_home)
+}
+
 fn run_once(
     paths: &Paths,
     p: &Prepared,
@@ -286,17 +303,12 @@ fn run_once(
     log: &Arc<Mutex<fs::File>>,
     marker: Option<&PathBuf>,
 ) -> Result<Ended> {
-    let libraries = paths.config().libraries;
-    let bwrap = which("bwrap").is_some();
-    let user_home = std::env::var("HOME").unwrap_or_default();
-    let argv = command_line(&p.plan, &libraries, bwrap, &user_home);
+    let argv = session_argv(&p.plan, &paths.config().libraries);
     let tag = p.runtime.to_string_lossy().into_owned();
     let mut cmd = Command::new(&argv[0]);
     cmd.args(&argv[1..])
         .current_dir(&p.plan.game.cwd)
         .envs(p.plan.game.env.iter().map(|(k, v)| (k, v)))
-        .env(TAG, &tag)
-        .process_group(0)
         .stdout(Stdio::piped())
         .stderr(Stdio::from(log.lock().unwrap().try_clone()?));
     cmd.stdin(if p.plan.input_pipe.is_some() {
@@ -304,9 +316,12 @@ fn run_once(
     } else {
         Stdio::null()
     });
+    proc::configure(&mut cmd, &tag);
     writeln!(log.lock().unwrap(), "# {}", argv.join(" "))?;
-    let mut child = cmd.spawn().context("starting gamescope")?;
-    let pgid = child.id() as i32;
+    let mut child = cmd
+        .spawn()
+        .with_context(|| format!("starting {}", argv[0]))?;
+    let group = proc::Group::of(&child, &tag).context("grouping the game's processes")?;
 
     // stdout: force feedback lines to the input thread, the rest to the log
     let out_tx = match &feed {
@@ -327,6 +342,12 @@ fn run_once(
             }
         });
     }
+    // the loader's input is closed to ask it to stop (it ends the game and
+    // gives back what it set up)
+    let detach = match &feed {
+        Feed::Devices { tx, .. } => Some(tx.clone()),
+        _ => None,
+    };
     let mut script_sink = None;
     if let (Some(layout), Some(stdin)) = (p.plan.input_pipe, child.stdin.take()) {
         match feed {
@@ -359,15 +380,18 @@ fn run_once(
             }
         }
         if stop.load(Ordering::SeqCst) || first_start_done {
-            if let Some((sink, _, _)) = script_sink.as_mut() {
+            if let Some((mut sink, _, _)) = script_sink.take() {
                 let _ = writeln!(sink, "quit");
             }
-            signal_group(pgid, "TERM");
+            if let Some(tx) = &detach {
+                let _ = tx.send(input::Command::Detach);
+            }
+            group.terminate();
             let deadline = Instant::now() + Duration::from_secs(8);
             while Instant::now() < deadline && child.try_wait()?.is_none() {
                 std::thread::sleep(Duration::from_millis(100));
             }
-            signal_group(pgid, "KILL");
+            group.kill();
             break child.wait()?;
         }
         if let Some((sink, layout, script)) = script_sink.as_mut() {
@@ -379,10 +403,10 @@ fn run_once(
         }
         std::thread::sleep(Duration::from_millis(10));
     };
-    signal_group(pgid, "TERM");
+    group.terminate();
     std::thread::sleep(Duration::from_millis(500));
-    signal_group(pgid, "KILL");
-    let left = kill_tagged(&tag);
+    group.kill();
+    let left = group.leftovers();
     writeln!(
         log.lock().unwrap(),
         "# exit: {status}; stopped {left} leftover process(es)"
@@ -394,41 +418,8 @@ fn run_once(
     })
 }
 
-fn signal_group(pgid: i32, sig: &str) {
-    let _ = Command::new("kill")
-        .args([format!("-{sig}"), "--".into(), format!("-{pgid}")])
-        .stderr(Stdio::null())
-        .status();
-}
-
-/// Kill every process whose environment carries this session's tag.
-pub fn kill_tagged(tag: &str) -> usize {
-    let want = format!("{TAG}={tag}");
-    let mut n = 0;
-    let Ok(rd) = fs::read_dir("/proc") else {
-        return 0;
-    };
-    for e in rd.flatten() {
-        let Some(pid) = e.file_name().to_str().and_then(|s| s.parse::<i32>().ok()) else {
-            continue;
-        };
-        if pid as u32 == std::process::id() {
-            continue;
-        }
-        let Ok(env) = fs::read(e.path().join("environ")) else {
-            continue;
-        };
-        if env.split(|b| *b == 0).any(|kv| kv == want.as_bytes()) {
-            let _ = Command::new("kill")
-                .args(["-KILL", &pid.to_string()])
-                .status();
-            n += 1;
-        }
-    }
-    n
-}
-
-#[cfg(test)]
+// the Linux command line (gamescope, bubblewrap)
+#[cfg(all(test, unix))]
 mod tests {
     use super::*;
     use initiald_core::catalog::{GameId, game};
@@ -447,6 +438,7 @@ mod tests {
             wal: "/c/wal".into(),
             runner: "/c/r".into(),
             winetricks: "/c/w".into(),
+            flycast: "/c/f".into(),
             shaders: "/c/s".into(),
         };
         let plan = launch::plan(
@@ -457,6 +449,7 @@ mod tests {
             &Settings::default(),
             "eth0",
             true,
+            Host::Linux,
         );
         let v = command_line(&plan, &["/lib".into(), "/naomi".into()], true, "/home/p");
         let s = v.join(" ");
@@ -477,6 +470,7 @@ mod tests {
             &crt,
             "eth0",
             true,
+            Host::Linux,
         );
         let s = command_line(&plan, &["/lib".into()], true, "/home/p").join(" ");
         assert!(

@@ -5,6 +5,7 @@
 
 use std::path::Path;
 
+use initiald_core::catalog::Host;
 use initiald_core::settings::{Settings, Size, Upscaler};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -26,6 +27,16 @@ impl Row {
         Row::Fullscreen,
         Row::Deadzone,
     ];
+
+    /// The rows the settings window shows on `host`: Windows has no
+    /// gamescope, so only what the games themselves take (render size)
+    /// and the pad's dead zone.
+    pub fn shown(host: Host) -> Vec<Row> {
+        match host {
+            Host::Linux => Row::ALL.to_vec(),
+            Host::Windows => vec![Row::Render, Row::Deadzone],
+        }
+    }
 
     pub fn label(self) -> &'static str {
         match self {
@@ -347,5 +358,11 @@ mod tests {
         assert_eq!(back.output, Size::new(1920, 1080));
         assert!(!back.fullscreen);
         assert!(!path.with_extension("cfg.tmp").exists());
+    }
+
+    #[test]
+    fn windows_shows_only_what_the_games_themselves_take() {
+        assert_eq!(Row::shown(Host::Linux), Row::ALL.to_vec());
+        assert_eq!(Row::shown(Host::Windows), vec![Row::Render, Row::Deadzone]);
     }
 }

@@ -6,6 +6,11 @@
 //! plus the files the launcher writes and the folders the loaders create
 //! (saves, cabinet drives) as real files. [`plan`] decides from a listing;
 //! [`apply`] carries it out without ever touching the game folder.
+//!
+//! On Windows, where a symlink needs administrator rights or developer
+//! mode, a linked folder is a directory junction (a directory symlink for a
+//! folder on a network share, which a junction cannot reach) and a linked
+//! file is a copy, refreshed when the game folder's file changes.
 
 use std::fs;
 use std::io;
@@ -125,21 +130,7 @@ pub fn apply(ops: &[Op]) -> io::Result<()> {
     for op in ops {
         match op {
             Op::Dir(d) => fs::create_dir_all(d)?,
-            Op::Link { target, at } => match fs::symlink_metadata(at) {
-                Ok(m) if m.file_type().is_symlink() => {
-                    if fs::read_link(at)? != *target {
-                        fs::remove_file(at)?;
-                        symlink(target, at)?;
-                    }
-                }
-                Ok(_) => {
-                    return Err(io::Error::other(format!(
-                        "{} is a real file or folder where the launcher expects a link; move it away",
-                        at.display()
-                    )));
-                }
-                Err(_) => symlink(target, at)?,
-            },
+            Op::Link { target, at } => link(target, at)?,
             Op::CopyOnce { from, to } => match fs::symlink_metadata(to) {
                 Ok(m) if !m.file_type().is_symlink() => {}
                 found => {
@@ -154,14 +145,87 @@ pub fn apply(ops: &[Op]) -> io::Result<()> {
     Ok(())
 }
 
-#[cfg(unix)]
-fn symlink(target: &Path, at: &Path) -> io::Result<()> {
-    std::os::unix::fs::symlink(target, at)
+fn real_where_a_link_goes(at: &Path) -> io::Error {
+    io::Error::other(format!(
+        "{} is a real file or folder where the launcher expects a link; move it away",
+        at.display()
+    ))
 }
 
-#[cfg(not(unix))]
-fn symlink(_target: &Path, _at: &Path) -> io::Result<()> {
-    Err(io::Error::other("symlinks are only made on Linux"))
+/// A symlink `at` → `target`, replaced when it points elsewhere.
+#[cfg(unix)]
+fn link(target: &Path, at: &Path) -> io::Result<()> {
+    match fs::symlink_metadata(at) {
+        Ok(m) if m.file_type().is_symlink() => {
+            if fs::read_link(at)? != *target {
+                fs::remove_file(at)?;
+                std::os::unix::fs::symlink(target, at)?;
+            }
+            Ok(())
+        }
+        Ok(_) => Err(real_where_a_link_goes(at)),
+        Err(_) => std::os::unix::fs::symlink(target, at),
+    }
+}
+
+/// Windows: a folder is a directory junction, a file a copy kept in step.
+#[cfg(windows)]
+fn link(target: &Path, at: &Path) -> io::Result<()> {
+    let existing = fs::symlink_metadata(at).ok();
+    if target.is_dir() {
+        match existing {
+            Some(m) if m.file_type().is_symlink() => {
+                if junction::get_target(at).ok().as_deref() == Some(target) {
+                    return Ok(());
+                }
+                remove_link(at)?;
+            }
+            Some(_) => return Err(real_where_a_link_goes(at)),
+            None => {}
+        }
+        junction::create(target, at).or_else(|e| {
+            std::os::windows::fs::symlink_dir(target, at).map_err(|_| {
+                io::Error::new(
+                    e.kind(),
+                    format!(
+                        "cannot link {} into the runtime folder ({e}); a game folder on a \
+                         network share needs Windows developer mode",
+                        target.display()
+                    ),
+                )
+            })
+        })
+    } else {
+        match existing {
+            Some(m) if m.file_type().is_symlink() => remove_link(at)?,
+            Some(m) if m.is_dir() => return Err(real_where_a_link_goes(at)),
+            _ => {}
+        }
+        mirror_file(target, at)
+    }
+}
+
+/// Keeps `at` a copy of `target`: copied when missing or when the size or
+/// modification time differ; the copy gets the source's modification time.
+#[cfg(windows)]
+fn mirror_file(target: &Path, at: &Path) -> io::Result<()> {
+    let src = fs::metadata(target)?;
+    if let Ok(m) = fs::metadata(at)
+        && m.len() == src.len()
+        && m.modified().ok() == src.modified().ok()
+    {
+        return Ok(());
+    }
+    fs::copy(target, at)?;
+    fs::File::options()
+        .write(true)
+        .open(at)?
+        .set_modified(src.modified()?)
+}
+
+/// Removes a link the launcher made (on Windows a junction is a folder).
+pub fn remove_link(at: &Path) -> io::Result<()> {
+    fs::remove_file(at).or_else(|e| fs::remove_dir(at).map_err(|_| e))
 }
 
 /// Links in a runtime folder whose target is gone (a dump moved): removed
@@ -225,6 +289,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn small_files_of_a_windows_game_are_copied_once_and_kept() {
         let t = tempfile::tempdir().unwrap();
         let (src, rt) = (t.path().join("dump"), t.path().join("rt"));
@@ -235,9 +300,9 @@ mod tests {
         let pkg = rt.join("package");
         // an older launcher linked the log: replaced by a copy
         fs::create_dir_all(&pkg).unwrap();
-        symlink(
-            &src.join("IniD0_AppError.log"),
-            &pkg.join("IniD0_AppError.log"),
+        std::os::unix::fs::symlink(
+            src.join("IniD0_AppError.log"),
+            pkg.join("IniD0_AppError.log"),
         )
         .unwrap();
         apply(&ops).unwrap();
@@ -286,7 +351,9 @@ mod tests {
             at: at.clone(),
         }])
         .unwrap();
-        assert_eq!(fs::read_link(&at).unwrap(), b);
+        // the link follows the new target (a symlink, or a junction on Windows)
+        fs::write(b.join("in-b"), b"b").unwrap();
+        assert_eq!(fs::read(at.join("in-b")).unwrap(), b"b");
         fs::write(rt.join("save.bin"), b"mine").unwrap();
         let err = apply(&[Op::Link {
             target: a,
@@ -294,5 +361,25 @@ mod tests {
         }]);
         assert!(err.is_err());
         assert_eq!(fs::read(rt.join("save.bin")).unwrap(), b"mine");
+    }
+
+    /// Windows: a linked file is a copy, refreshed when the game's file
+    /// changes; a copy is never mistaken for the player's file.
+    #[test]
+    #[cfg(windows)]
+    fn on_windows_a_linked_file_is_a_copy_kept_in_step() {
+        let t = tempfile::tempdir().unwrap();
+        let (src, at) = (t.path().join("game.exe"), t.path().join("rt-game.exe"));
+        fs::write(&src, b"v1").unwrap();
+        let op = Op::Link {
+            target: src.clone(),
+            at: at.clone(),
+        };
+        apply(std::slice::from_ref(&op)).unwrap();
+        assert!(!fs::symlink_metadata(&at).unwrap().file_type().is_symlink());
+        assert_eq!(fs::read(&at).unwrap(), b"v1");
+        fs::write(&src, b"v2, longer").unwrap();
+        apply(std::slice::from_ref(&op)).unwrap();
+        assert_eq!(fs::read(&at).unwrap(), b"v2, longer");
     }
 }

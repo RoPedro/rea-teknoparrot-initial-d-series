@@ -23,10 +23,11 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # The launcher, windowsarcadeloader (Linux launcher + Windows payloads)
-  # and the components, on Debian bookworm (glibc 2.36) so the programs run
-  # on older distributions too.
-  linux:
+  # Both packages from one build of windowsarcadeloader (its Linux and
+  # Windows launchers, the Windows payloads), on Debian bookworm (glibc
+  # 2.36) so the Linux programs run on older distributions too. The Windows
+  # programs link with LLD (.cargo/config.toml).
+  packages:
     runs-on: ubuntu-24.04
     container: debian:bookworm
     timeout-minutes: 120
@@ -37,7 +38,7 @@ jobs:
           # SDL2 (the launcher); mingw (the payloads); mono (a payload's C# bridge, built by
           # windowsarcadeloader's build.sh); cmake and SDL3's headers (its static build)
           apt-get install -y --no-install-recommends build-essential pkg-config cmake git curl \
-            ca-certificates xz-utils zip libsdl2-dev gcc-mingw-w64 mono-mcs mono-devel \
+            ca-certificates xz-utils zip unzip lld libsdl2-dev gcc-mingw-w64 mono-mcs mono-devel \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
             libxtst-dev libxkbcommon-dev libdrm-dev libgbm-dev libgl-dev libegl-dev libgles-dev \
             libdbus-1-dev libibus-1.0-dev libudev-dev libwayland-dev wayland-protocols libdecor-0-dev \
@@ -65,10 +66,15 @@ jobs:
         run: |
           git config --global --add safe.directory '*'
           scripts/package.sh linux
+      - name: Windows package
+        run: |
+          scripts/build-launcher.sh windows
+          scripts/package.sh windows
       - name: Contents
         run: |
           cd dist/pkg
-          ls -l *.tar.gz
+          ls -l *.tar.gz *.zip
+          unzip -l InitialDLauncher-*-windows-x86_64.zip | grep -v -e "/systemprofiles/" -e "/payloads/"
           tar -tzf InitialDLauncher-*-linux-x86_64.tar.gz | grep -v "/components/runner/" | sort
           for f in */initiald-launcher */components/wal/arcade-launcher; do
             echo "$f: $(objdump -T "$f" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1)"
@@ -80,10 +86,16 @@ jobs:
           path: dist/pkg/InitialDLauncher-*-linux-x86_64.tar.gz
           if-no-files-found: error
           compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/pkg/InitialDLauncher-*-windows-x86_64.zip
+          if-no-files-found: error
+          compression-level: 0
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux]
+    needs: [packages]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

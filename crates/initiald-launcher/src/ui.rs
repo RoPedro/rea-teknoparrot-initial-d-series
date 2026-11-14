@@ -22,7 +22,7 @@ use eframe::egui::{
     self, Align2, Color32, CornerRadius, CursorIcon, FontId, Id, Mesh, Pos2, Rect, Sense, Shape,
     Stroke, StrokeKind, TextureHandle, Vec2, pos2, vec2,
 };
-use initiald_core::catalog::{GAMES, Game, Route, Support};
+use initiald_core::catalog::{GAMES, Game, Host, Route, Support};
 use initiald_core::input::{Button, default_pad_map};
 use initiald_core::library::{self, Entry, Found, HashCache};
 use rea_launcher::wheel::{Action, Control, Kind};
@@ -148,7 +148,10 @@ impl App {
             folder_note: None,
             bios: String::new(),
             bios_note: None,
-            supports: GAMES.iter().map(|g| g.support).collect(),
+            supports: GAMES
+                .iter()
+                .map(|g| g.support_on(Host::current()))
+                .collect(),
             paths,
         };
         app.start_scan();
@@ -1585,7 +1588,7 @@ impl App {
             pos2(r.left() + MARGIN, top),
             pos2(
                 r.right() - MARGIN - right_w - 24.0,
-                top + 40.0 + Row::ALL.len() as f32 * 58.0 + 8.0,
+                top + 40.0 + Row::shown(Host::current()).len() as f32 * 58.0 + 8.0,
             ),
         );
         card(p, left);
@@ -2914,6 +2917,7 @@ mod tests {
     // ------------------------------------------------------------ settings
 
     #[test]
+    #[cfg_attr(windows, ignore = "the gamescope rows are Linux-only")]
     fn every_option_in_the_settings_window_is_saved_through_settings_save() {
         let t = tempfile::tempdir().unwrap();
         let mut h = hub(t.path());
@@ -3028,6 +3032,29 @@ mod tests {
     }
 
     #[test]
+    #[cfg(windows)]
+    fn on_windows_the_settings_offer_the_render_size_and_dead_zone_only() {
+        let t = tempfile::tempdir().unwrap();
+        let mut h = hub(t.path());
+        open_tab(&mut h, Tab::Settings);
+        for row in [Row::Render, Row::Deadzone] {
+            assert!(
+                h.query_by_role_and_label(Role::Button, row.label())
+                    .is_some(),
+                "{row:?}"
+            );
+        }
+        for row in [Row::Output, Row::Upscaler, Row::Sharpness, Row::Fullscreen] {
+            assert!(
+                h.query_by_role_and_label(Role::Button, row.label())
+                    .is_none(),
+                "{row:?}"
+            );
+        }
+    }
+
+    #[test]
+    #[cfg_attr(windows, ignore = "the gamescope rows are Linux-only")]
     fn settings_belong_to_the_selected_game() {
         let t = tempfile::tempdir().unwrap();
         let mut h = hub(t.path());
@@ -3049,6 +3076,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(windows, ignore = "the gamescope rows are Linux-only")]
     fn a_row_click_changes_the_value_and_sharpness_goes_off_without_fsr() {
         let t = tempfile::tempdir().unwrap();
         let mut h = hub(t.path());

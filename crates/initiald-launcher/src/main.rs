@@ -1,7 +1,12 @@
 //! initiald-launcher: one launcher for the Initial D arcade series.
 
+// a GUI program on Windows: no console window on a double click; commands
+// reach the terminal that started them (console::attach_parent)
+#![cfg_attr(windows, windows_subsystem = "windows")]
+
 mod input;
 mod paths;
+mod proc;
 mod session;
 mod ui;
 
@@ -11,7 +16,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
-use initiald_core::catalog::{self, Route, Support};
+use initiald_core::catalog::{self, Host, Route, Support};
 use initiald_core::library::{self, Found, HashCache};
 use initiald_core::settings::Settings;
 
@@ -113,6 +118,10 @@ fn save_options(paths: &Paths, slug: &str, options: &[String]) -> std::io::Resul
 }
 
 fn main() -> ExitCode {
+    #[cfg(windows)]
+    if std::env::args().len() > 1 {
+        rea_launcher_win32::console::attach_parent();
+    }
     let args = match parse_args(std::env::args().skip(1)) {
         Ok(Some(a)) => a,
         Ok(None) => {
@@ -154,7 +163,7 @@ fn main() -> ExitCode {
         for e in library::scan(&config.libraries, &mut HashCache::default()) {
             match &e.found {
                 Found::Known { game, edition } => {
-                    let state = match game.support {
+                    let state = match game.support_on(Host::current()) {
                         Support::Ready => "ready".to_string(),
                         Support::Unverified(note) => format!("starts; {note}"),
                         Support::Blocked(why) => format!("not yet: {why}"),

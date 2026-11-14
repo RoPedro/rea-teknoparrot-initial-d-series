@@ -1,7 +1,8 @@
 //! Where the launcher keeps things.
 //!
 //! - data (`$INITIALD_DATA`, else `$XDG_DATA_HOME/rea-initiald` or
-//!   `~/.local/share/rea-initiald`): `launcher.cfg`, `settings/`,
+//!   `~/.local/share/rea-initiald`; on Windows `%LOCALAPPDATA%\rea-initiald`):
+//!   `launcher.cfg`, `settings/`,
 //!   `runtimes/` (one per game, saves included), `wal/` (windowsarcadeloader's
 //!   root: its Wine prefix and profile layers), `launcher.log`;
 //! - components (`$INITIALD_COMPONENTS`, else `components/` beside the
@@ -150,6 +151,7 @@ impl Paths {
             wal: self.components.join("wal"),
             runner: self.components.join("runner"),
             winetricks: self.components.join("winetricks"),
+            flycast: self.components.join("flycast"),
             shaders: self.components.join("shaders"),
         }
     }
@@ -167,6 +169,15 @@ impl Paths {
     }
 }
 
+#[cfg(windows)]
+fn default_data() -> PathBuf {
+    std::env::var_os("LOCALAPPDATA")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("rea-initiald")
+}
+
+#[cfg(not(windows))]
 fn default_data() -> PathBuf {
     std::env::var_os("XDG_DATA_HOME")
         .map(PathBuf::from)

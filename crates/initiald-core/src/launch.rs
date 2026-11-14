@@ -7,7 +7,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::catalog::{Game, Route};
+use crate::catalog::{Game, Host, Route};
 use crate::input::StickLayout;
 use crate::settings::{Crt, Settings, Size};
 
@@ -42,6 +42,10 @@ pub struct Plan {
     pub gamescope_home: Option<PathBuf>,
 }
 
+/// Files to write (path, text) and links to make (at, target).
+type Files = Vec<(PathBuf, String)>;
+type Links = Vec<(PathBuf, PathBuf)>;
+
 /// The CRT effect's file name, in the components' `shaders/` and in
 /// gamescope's effect folder.
 const CRT_EFFECT: &str = "crt-lottes.fx";
@@ -60,6 +64,8 @@ pub struct Components {
     pub winetricks: PathBuf,
     /// ReShade effects (`crt-lottes.fx`).
     pub shaders: PathBuf,
+    /// Windows: Flycast (`flycast.exe`); Linux uses the player's own.
+    pub flycast: PathBuf,
 }
 
 /// Where the launcher keeps per-game state.
@@ -218,6 +224,45 @@ pub fn wal_layer(game: &Game, size: Size) -> String {
     out
 }
 
+/// Where Flycast keeps its files on Windows: beside `flycast.exe` (its
+/// configuration, `mappings\\`, `data\\` for the BIOS and saves), so each
+/// game's runtime holds its own copy of the program. The files and links
+/// it needs are added to `plan`'s.
+fn flycast_windows(
+    set: &str,
+    entry_dir: &Path,
+    rt: &Path,
+    c: &Components,
+    places: &Places,
+    size: Size,
+) -> (Command, Files, Links) {
+    let home = rt.join("flycast");
+    let mut files = vec![(home.join("emu.cfg"), flycast_cfg(size.h))];
+    for name in ["SDL_Keyboard.cfg", "SDL_Keyboard_arcade.cfg"] {
+        files.push((
+            home.join("mappings").join(name),
+            FLYCAST_KEYBOARD.to_string(),
+        ));
+    }
+    let mut links = vec![(home.join("flycast.exe"), c.flycast.join("flycast.exe"))];
+    if let Some(bios) = &places.naomi2_bios {
+        links.push((home.join("data/naomi2.zip"), bios.clone()));
+    }
+    let cmd = Command {
+        program: home.join("flycast.exe"),
+        args: vec![
+            entry_dir
+                .join(format!("{set}.zip"))
+                .to_string_lossy()
+                .into_owned(),
+        ],
+        env: vec![],
+        cwd: home,
+    };
+    (cmd, files, links)
+}
+
+#[allow(clippy::too_many_arguments)]
 pub fn plan(
     game: &Game,
     entry_dir: &Path,
@@ -226,6 +271,7 @@ pub fn plan(
     s: &Settings,
     nic: &str,
     headless: bool,
+    host: Host,
 ) -> Plan {
     let size = game_size(game, s);
     let rt = &places.runtime;
@@ -253,6 +299,12 @@ pub fn plan(
                 )],
                 cwd: c.lindbergh.clone(),
             }
+        }
+        Route::Flycast { set } if host == Host::Windows => {
+            let (cmd, f, l) = flycast_windows(set, entry_dir, rt, c, places, size);
+            files.extend(f);
+            links.extend(l);
+            cmd
         }
         Route::Flycast { set } => {
             files.push((rt.join("config/flycast/emu.cfg"), flycast_cfg(size.h)));
@@ -296,15 +348,21 @@ pub fn plan(
             files.push((layer.clone(), wal_layer(game, size)));
             links.push((root.join("systemprofiles"), c.wal.join("systemprofiles")));
             links.push((root.join("dist/payloads"), c.wal.join("payloads")));
-            links.push((root.join("wine-runners/runner"), c.runner.clone()));
-            links.push((root.join("wine-runners/winetricks"), c.winetricks.clone()));
+            if host == Host::Linux {
+                links.push((root.join("wine-runners/runner"), c.runner.clone()));
+                links.push((root.join("wine-runners/winetricks"), c.winetricks.clone()));
+            }
             input_pipe = Some(if system == "ringedge" {
                 StickLayout::RingEdge
             } else {
                 StickLayout::Alls
             });
             Command {
-                program: c.wal.join("arcade-launcher"),
+                // Windows: windowsarcadeloader's own run without Wine (patches/wal)
+                program: c.wal.join(match host {
+                    Host::Linux => "arcade-launcher",
+                    Host::Windows => "arcade-launcher.exe",
+                }),
                 args: vec![
                     "run".into(),
                     rt.to_string_lossy().into_owned(),
@@ -319,7 +377,9 @@ pub fn plan(
             }
         }
     };
-    let gamescope_home = (s.crt == Crt::Lottes).then(|| rt.join("gamescope-home"));
+    // Windows: no gamescope (the games draw at their render size, full screen)
+    let gamescope_home =
+        (host == Host::Linux && s.crt == Crt::Lottes).then(|| rt.join("gamescope-home"));
     if let Some(home) = &gamescope_home {
         links.push((
             home.join(".local/share/gamescope/reshade/Shaders")
@@ -331,7 +391,10 @@ pub fn plan(
         files,
         links,
         game: game_cmd,
-        gamescope: gamescope_args(s, size, headless),
+        gamescope: match host {
+            Host::Linux => gamescope_args(s, size, headless),
+            Host::Windows => Vec::new(),
+        },
         gamescope_home,
         input_pipe,
         game_size: size,
@@ -349,6 +412,7 @@ mod tests {
             wal: "/c/wal".into(),
             runner: "/c/runner".into(),
             winetricks: "/c/winetricks".into(),
+            flycast: "/c/flycast".into(),
             shaders: "/c/shaders".into(),
         }
     }
@@ -391,6 +455,7 @@ mod tests {
             &s,
             "eth0",
             false,
+            Host::Linux,
         );
         let layer = &p
             .files
@@ -425,6 +490,7 @@ mod tests {
             &Settings::default(),
             "eth0",
             false,
+            Host::Linux,
         );
         assert_eq!(p.input_pipe, Some(StickLayout::Alls));
         // windowsarcadeloader looks for winetricks beside its runner
@@ -453,16 +519,15 @@ mod tests {
             &s,
             "enp5s0",
             false,
+            Host::Linux,
         );
         let ini = &p.files[0].1;
         assert!(ini.contains("WIDTH = 2560\nHEIGHT = 1440"));
         assert!(ini.contains("NIC_NAME = \"enp5s0\""));
         assert!(ini.contains("GPU_VENDOR = 0"));
         assert_eq!(p.game.cwd, PathBuf::from("/c/lindbergh"));
-        assert_eq!(
-            arg_after(&p.game.args, "-g").as_deref(),
-            Some("/d/runtimes/id5")
-        );
+        let rt = places("id5").runtime.to_string_lossy().into_owned();
+        assert_eq!(arg_after(&p.game.args, "-g"), Some(rt));
         assert!(p.input_pipe.is_none());
     }
 
@@ -480,10 +545,12 @@ mod tests {
             &s,
             "eth0",
             false,
+            Host::Linux,
         );
         assert!(p.files[0].1.contains("rend.Resolution = 2160"));
         assert_eq!(p.game_size, Size::new(3840, 2160));
-        assert_eq!(p.game.args, ["/roms/naomi2/initdexp.zip"]);
+        let key = Path::new("/roms/naomi2").join("initdexp.zip");
+        assert_eq!(p.game.args, [key.to_string_lossy()]);
         assert_eq!(p.links[0].1, PathBuf::from("/bios/naomi2.zip"));
         // the keyboard map, under the name Flycast reads for arcade games
         assert!(
@@ -509,6 +576,7 @@ mod tests {
             &s,
             "eth0",
             false,
+            Host::Linux,
         );
         // by name, from a HOME in the runtime that links the shader
         assert_eq!(
@@ -530,6 +598,7 @@ mod tests {
             &s,
             "eth0",
             true,
+            Host::Linux,
         );
         assert_eq!(
             arg_after(&h.gamescope, "--backend").as_deref(),
@@ -537,5 +606,70 @@ mod tests {
         );
         assert_eq!(arg_after(&h.gamescope, "-F").as_deref(), Some("linear"));
         assert!(!h.gamescope.contains(&"-f".to_string()));
+    }
+
+    #[test]
+    fn on_windows_flycast_runs_from_the_runtime_with_its_files_beside_it() {
+        let s = Settings {
+            crt: Crt::Lottes,
+            ..Settings::default()
+        };
+        let p = plan(
+            game(GameId::Id1),
+            Path::new("/lib/naomi2"),
+            &places("id1"),
+            &comps(),
+            &s,
+            "eth0",
+            false,
+            Host::Windows,
+        );
+        let home = PathBuf::from("/d/runtimes/id1/flycast");
+        assert_eq!(p.game.program, home.join("flycast.exe"));
+        assert_eq!(p.game.cwd, home);
+        assert!(p.game.env.is_empty(), "no XDG folders on Windows");
+        assert!(p.files.iter().any(|(f, _)| *f == home.join("emu.cfg")));
+        assert!(
+            p.files
+                .iter()
+                .any(|(f, _)| *f == home.join("mappings/SDL_Keyboard_arcade.cfg"))
+        );
+        assert!(
+            p.links
+                .contains(&(home.join("flycast.exe"), "/c/flycast/flycast.exe".into()))
+        );
+        assert!(
+            p.links
+                .contains(&(home.join("data/naomi2.zip"), "/bios/naomi2.zip".into()))
+        );
+        // no gamescope on Windows, so no CRT effect folder either
+        assert!(p.gamescope.is_empty() && p.gamescope_home.is_none());
+    }
+
+    #[test]
+    fn on_windows_windowsarcadeloader_runs_its_windows_build_without_wine() {
+        let p = plan(
+            game(GameId::Zero),
+            Path::new("/lib/zero"),
+            &places("zero"),
+            &comps(),
+            &Settings::default(),
+            "eth0",
+            false,
+            Host::Windows,
+        );
+        assert_eq!(p.game.program, PathBuf::from("/c/wal/arcade-launcher.exe"));
+        assert!(p.game.args.contains(&"--input-pipe".to_string()));
+        assert_eq!(p.input_pipe, Some(StickLayout::Alls));
+        let runners = PathBuf::from("/d/wal/wine-runners");
+        assert!(
+            !p.links.iter().any(|(at, _)| at.starts_with(&runners)),
+            "no Wine runner"
+        );
+        assert!(
+            p.links
+                .contains(&("/d/wal/dist/payloads".into(), "/c/wal/payloads".into()))
+        );
+        assert!(p.gamescope.is_empty());
     }
 }

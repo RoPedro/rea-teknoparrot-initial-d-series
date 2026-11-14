@@ -80,9 +80,9 @@ pub enum Item {
 }
 
 pub fn settings_items() -> Vec<Item> {
-    Row::ALL
-        .iter()
-        .map(|r| Item::Option(*r))
+    Row::shown(initiald_core::catalog::Host::current())
+        .into_iter()
+        .map(Item::Option)
         .chain([Item::Rescan, Item::ChangeFolder])
         .collect()
 }

@@ -49,6 +49,23 @@ pub enum Support {
     Blocked(&'static str),
 }
 
+/// The system the launcher runs on: what it can start depends on it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Host {
+    Linux,
+    Windows,
+}
+
+impl Host {
+    pub const fn current() -> Host {
+        if cfg!(windows) {
+            Host::Windows
+        } else {
+            Host::Linux
+        }
+    }
+}
+
 /// What identifies an edition.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Ident {
@@ -93,6 +110,17 @@ pub struct Game {
 }
 
 impl Game {
+    /// Whether the game can start on `host`: the Sega Lindbergh games are
+    /// Linux programs (lindbergh-loader preloads itself into them).
+    pub fn support_on(&self, host: Host) -> Support {
+        match (host, self.route) {
+            (Host::Windows, Route::Lindbergh) => Support::Blocked(
+                "A Sega Lindbergh game: its Linux build runs in the Linux version of the launcher.",
+            ),
+            _ => self.support,
+        }
+    }
+
     /// Where the game's files go inside its runtime folder, relative to the
     /// runtime. windowsarcadeloader's Zero Ver.2 profile expects the
     /// cabinet's layout: the program in `package\` (its `config_wal.json`
@@ -419,5 +447,18 @@ mod tests {
         let s5 = game(GameId::TheArcade5);
         assert_eq!(s3.main_file, s5.main_file);
         assert_ne!(s3.editions[0], s5.editions[0]);
+    }
+
+    #[test]
+    fn the_lindbergh_games_are_linux_only() {
+        for g in GAMES {
+            let windows = g.support_on(Host::Windows);
+            assert_eq!(g.support_on(Host::Linux), g.support, "{}", g.slug);
+            if g.route == Route::Lindbergh {
+                assert!(matches!(windows, Support::Blocked(_)), "{}", g.slug);
+            } else {
+                assert_eq!(windows, g.support, "{}", g.slug);
+            }
+        }
     }
 }
