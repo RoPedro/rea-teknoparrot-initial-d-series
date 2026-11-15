@@ -87,58 +87,147 @@ fn check_components(game: &Game, p: &Paths) -> Result<()> {
     if !windows && matches!(game.route, Route::Flycast { .. }) && which("flycast").is_none() {
         bail!("{} runs in Flycast, which is not installed", game.title);
     }
-    if windows {
-        let windir =
-            std::env::var_os("SystemRoot").map_or(PathBuf::from(r"C:\Windows"), PathBuf::from);
-        let missing = missing_on_windows(game, &windir);
-        if !missing.is_empty() {
-            bail!(
-                "{} needs Microsoft software this PC doesn't have yet. Install it, then try again:\n  {}",
-                game.title,
-                missing.join("\n  ")
-            );
-        }
+    if windows && needs_vc2008(game, &windows_dir()) {
+        bail!(
+            "{} needs Microsoft's Visual C++ 2008 runtime, which this PC doesn't have yet. \
+             Install it, then try again: {VC2008_X86_URL}",
+            game.title
+        );
     }
     Ok(())
 }
 
-/// Microsoft's Visual C++ 2008 SP1 runtime (x86). The RingEdge games' programs
-/// (Initial D 6, 7, 8) load it through their manifest (`Microsoft.VC90.CRT`
+/// Microsoft's Visual C++ 2008 SP1 Redistributable (x86), where Microsoft
+/// publishes it.
+const VC2008_X86_URL: &str = "https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe";
+
+/// The Windows folder (`%SystemRoot%`).
+fn windows_dir() -> PathBuf {
+    std::env::var_os("SystemRoot").map_or(PathBuf::from(r"C:\Windows"), PathBuf::from)
+}
+
+/// Whether `game` needs Microsoft's Visual C++ 2008 SP1 runtime (x86) and the
+/// Windows folder `windir` lacks it. The RingEdge games' programs (Initial D
+/// 6, 7, 8) load it through their manifest (`Microsoft.VC90.CRT`
 /// 9.0.30729); Windows doesn't include it and the dumps don't carry it, and
 /// without it Windows refuses to start the program, with no window and no
-/// message.
-const VC2008_X86: &str = "Microsoft Visual C++ 2008 SP1 Redistributable (x86): \
-    https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe";
-
-/// What `game` needs from Windows that a fresh Windows lacks, looked up in the
-/// Windows folder `windir`: each entry names what to install.
-fn missing_on_windows(game: &Game, windir: &Path) -> Vec<&'static str> {
-    let mut missing = Vec::new();
-    if matches!(
+/// message. Any 9.0.30729 build in the side-by-side store does: Windows
+/// redirects the games' 9.0.30729.4148 to the newest one installed.
+fn needs_vc2008(game: &Game, windir: &Path) -> bool {
+    let ringedge = matches!(
         game.route,
         Route::Wal {
             system: "ringedge",
             ..
         }
-    ) && !has_vc2008_x86(windir)
-    {
-        missing.push(VC2008_X86);
-    }
-    missing
+    );
+    ringedge
+        && !fs::read_dir(windir.join("WinSxS")).is_ok_and(|dir| {
+            dir.flatten().any(|e| {
+                e.file_name()
+                    .to_string_lossy()
+                    .to_ascii_lowercase()
+                    .starts_with("x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.")
+            })
+        })
 }
 
-/// Whether the side-by-side store holds Visual C++ 2008 SP1's x86 C runtime
-/// (any 9.0.30729 build: Windows redirects the games' 9.0.30729.4148 to the
-/// newest one installed).
-fn has_vc2008_x86(windir: &Path) -> bool {
-    fs::read_dir(windir.join("WinSxS")).is_ok_and(|dir| {
-        dir.flatten().any(|e| {
-            e.file_name()
-                .to_string_lossy()
-                .to_ascii_lowercase()
-                .starts_with("x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.")
-        })
-    })
+/// What a game's first start sets up on this computer before the game runs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Setup {
+    /// lindbergh-loader, built (Initial D 4 and 5; its licence forbids
+    /// shipping it).
+    Lindbergh,
+    /// Microsoft's Visual C++ 2008 runtime, installed from the package's
+    /// `components/vcredist/` (Initial D 6, 7 and 8 on Windows).
+    VisualCpp2008,
+}
+
+/// What `game` needs set up before it can start, if anything.
+pub fn setup_needed(paths: &Paths, game: &Game) -> Option<Setup> {
+    if needs_lindbergh_build(paths, game) {
+        Some(Setup::Lindbergh)
+    } else if Host::current() == Host::Windows
+        && needs_vc2008(game, &windows_dir())
+        && paths.vcredist().is_file()
+    {
+        Some(Setup::VisualCpp2008)
+    } else {
+        None
+    }
+}
+
+pub fn set_up(paths: &Paths, setup: Setup) -> Result<()> {
+    match setup {
+        Setup::Lindbergh => build_lindbergh(paths),
+        Setup::VisualCpp2008 => install_vc2008(&paths.vcredist()),
+    }
+}
+
+/// Runs Microsoft's installer `installer` as administrator (Windows asks
+/// the player first), with its progress window, and waits for it.
+#[cfg(windows)]
+fn install_vc2008(installer: &Path) -> Result<()> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Foundation::{CloseHandle, ERROR_CANCELLED};
+    use windows_sys::Win32::System::Com::{
+        COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE, CoInitializeEx,
+    };
+    use windows_sys::Win32::System::Threading::{
+        GetExitCodeProcess, INFINITE, WaitForSingleObject,
+    };
+    use windows_sys::Win32::UI::Shell::{
+        SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW, ShellExecuteExW,
+    };
+    let wide = |s: &std::ffi::OsStr| s.encode_wide().chain([0]).collect::<Vec<u16>>();
+    let (verb, file, params) = (
+        wide("runas".as_ref()),
+        wide(installer.as_os_str()),
+        wide("/qb".as_ref()),
+    );
+    // COM on this thread, as ShellExecuteEx asks (the hub calls from its
+    // session thread); already set up is fine too
+    unsafe {
+        CoInitializeEx(
+            std::ptr::null(),
+            (COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE) as u32,
+        )
+    };
+    // SAFETY: the strings outlive the call; the process handle is closed below
+    let mut info: SHELLEXECUTEINFOW = unsafe { std::mem::zeroed() };
+    info.cbSize = std::mem::size_of::<SHELLEXECUTEINFOW>() as u32;
+    info.fMask = SEE_MASK_NOCLOSEPROCESS;
+    info.lpVerb = verb.as_ptr();
+    info.lpFile = file.as_ptr();
+    info.lpParameters = params.as_ptr();
+    info.nShow = 1; // SW_SHOWNORMAL
+    if unsafe { ShellExecuteExW(&mut info) } == 0 {
+        let e = std::io::Error::last_os_error();
+        if e.raw_os_error() == Some(ERROR_CANCELLED as i32) {
+            bail!("the Visual C++ 2008 runtime wasn't installed: Windows' permission was refused");
+        }
+        return Err(e).with_context(|| format!("starting {}", installer.display()));
+    }
+    if info.hProcess.is_null() {
+        // started without a handle to wait on: the check that follows decides
+        return Ok(());
+    }
+    let mut code = 0u32;
+    unsafe {
+        WaitForSingleObject(info.hProcess, INFINITE);
+        GetExitCodeProcess(info.hProcess, &mut code);
+        CloseHandle(info.hProcess);
+    }
+    // 3010: installed, a restart is asked for (the games don't need one)
+    if code != 0 && code != 3010 {
+        bail!("Microsoft's Visual C++ 2008 installer ended with code {code}");
+    }
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn install_vc2008(_installer: &Path) -> Result<()> {
+    bail!("the Visual C++ 2008 runtime is a Windows program")
 }
 
 /// windowsarcadeloader's own port.
@@ -188,14 +277,14 @@ pub fn early_end(after: Duration, status: &str, log: &str) -> Option<String> {
 
 /// Whether `game` needs lindbergh-loader built first (its first start on
 /// this computer).
-pub fn needs_lindbergh_build(paths: &Paths, game: &Game) -> bool {
+fn needs_lindbergh_build(paths: &Paths, game: &Game) -> bool {
     game.route == Route::Lindbergh && !paths.lindbergh().join("lindbergh.so").is_file()
 }
 
 /// Builds lindbergh-loader into the data folder with
 /// `scripts/build-components.sh` (git and docker or podman, a few minutes);
 /// its output goes to `lindbergh-build.log` there.
-pub fn build_lindbergh(paths: &Paths) -> Result<()> {
+fn build_lindbergh(paths: &Paths) -> Result<()> {
     let script = paths.build_script();
     if !script.is_file() {
         bail!("the build script is missing ({})", script.display());
@@ -529,9 +618,10 @@ mod host_tests {
     #[test]
     fn the_ringedge_games_need_visual_cpp_2008_on_windows() {
         let windir = tempfile::tempdir().unwrap();
-        fs::create_dir(windir.path().join("WinSxS")).unwrap();
+        let sxs = windir.path().join("WinSxS");
+        fs::create_dir(&sxs).unwrap();
         for id in [GameId::Id6, GameId::Id7, GameId::Id8] {
-            assert_eq!(missing_on_windows(game(id), windir.path()), [VC2008_X86]);
+            assert!(needs_vc2008(game(id), windir.path()));
         }
         // the other games carry their runtimes (Zero) or need none from Windows
         for id in [
@@ -540,18 +630,15 @@ mod host_tests {
             GameId::TheArcade3,
             GameId::TheArcade5,
         ] {
-            assert!(missing_on_windows(game(id), windir.path()).is_empty());
+            assert!(!needs_vc2008(game(id), windir.path()));
         }
         // an older Visual C++ 2008 (RTM, 9.0.21022) is not enough
         let rtm = "x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.21022.8_none_bcb86ed6ac711f91";
-        fs::create_dir(windir.path().join("WinSxS").join(rtm)).unwrap();
-        assert_eq!(
-            missing_on_windows(game(GameId::Id8), windir.path()),
-            [VC2008_X86]
-        );
+        fs::create_dir(sxs.join(rtm)).unwrap();
+        assert!(needs_vc2008(game(GameId::Id8), windir.path()));
         let sp1 = "x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.30729.6161_none_50934f2ebcb7eb57";
-        fs::create_dir(windir.path().join("WinSxS").join(sp1)).unwrap();
-        assert!(missing_on_windows(game(GameId::Id8), windir.path()).is_empty());
+        fs::create_dir(sxs.join(sp1)).unwrap();
+        assert!(!needs_vc2008(game(GameId::Id8), windir.path()));
     }
 
     #[test]

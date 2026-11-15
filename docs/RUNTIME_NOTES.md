@@ -180,7 +180,17 @@ nothing, no window, no message.
   never showed it (taking them out of the test prefix's WinSxS doesn't
   either: Wine then loads its builtin DLL anyway). The launcher now checks
   `%SystemRoot%\WinSxS` for an `x86_microsoft.vc90.crt_…_9.0.30729.*`
-  assembly before a RingEdge game and stops with the download link.
+  assembly before a RingEdge game. The Windows package carries Microsoft's
+  installer (`components\vcredist\vcredist_x86.exe`, 9.0.30729.5677,
+  pinned by SHA-256, signed by Microsoft); the first start of Initial D 6,
+  7 or 8 without the runtime runs it as administrator (`runas`, `/qb`: the
+  UAC prompt, then its progress window), waits, and checks again; still
+  missing (refused, failed, or no installer in a development build): the
+  message with Microsoft's download link.
+  Under Wine the installer runs and returns, but installs nothing: Wine's
+  own placeholder VC90 assemblies (9.0.30729.6161) are newer than the
+  installer's, so the install path was seen working up to that point, and
+  the WinSxS result only on a real Windows PC.
 - The hub said nothing about a game that closed by itself, whatever its
   exit status, and `launcher.log` only recorded library folders. A game
   that ends by itself within 20 s of its start is now reported with the

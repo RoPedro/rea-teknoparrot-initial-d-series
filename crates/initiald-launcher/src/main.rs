@@ -21,7 +21,7 @@ use initiald_core::library::{self, Found, HashCache};
 use initiald_core::settings::Settings;
 
 use crate::paths::Paths;
-use crate::session::{Display, Feed};
+use crate::session::{Display, Feed, Setup};
 
 const USAGE: &str = "\
 initiald-launcher — the Initial D arcade series
@@ -229,9 +229,17 @@ fn play(paths: &Paths, slug: &str, args: &Args) -> ExitCode {
     } else {
         Display::Screen
     };
-    if session::needs_lindbergh_build(paths, game) {
-        eprintln!("building lindbergh-loader (first start of Initial D 4 or 5; a few minutes)…");
-        if let Err(e) = session::build_lindbergh(paths) {
+    if let Some(setup) = session::setup_needed(paths, game) {
+        eprintln!(
+            "{}",
+            match setup {
+                Setup::Lindbergh =>
+                    "building lindbergh-loader (first start of Initial D 4 or 5; a few minutes)…",
+                Setup::VisualCpp2008 =>
+                    "installing Microsoft Visual C++ 2008 (x86), which Initial D 6, 7 and 8 need…",
+            }
+        );
+        if let Err(e) = session::set_up(paths, setup) {
             eprintln!("{e:#}");
             return ExitCode::FAILURE;
         }

@@ -29,7 +29,7 @@ use rea_launcher::wheel::{Action, Control, Kind};
 
 use crate::input::{Command, InputService, Snapshot};
 use crate::paths::{Config, Paths};
-use crate::session::{self, Display, Feed};
+use crate::session::{self, Display, Feed, Setup};
 
 use form::{Form, Row};
 use model::{Effect, Focus, Input, Item, Model, Page, Tab, TileState, World};
@@ -65,8 +65,8 @@ pub fn run(paths: Paths) -> anyhow::Result<()> {
 
 /// What the game thread reports.
 enum Progress {
-    /// lindbergh-loader is being built (an Initial D 4 or 5's first start).
-    Building,
+    /// The game's first start sets something up first.
+    SettingUp(Setup),
     /// The runtime folder is built; the game is starting.
     Playing,
     Ended(Result<(), String>),
@@ -74,7 +74,7 @@ enum Progress {
 
 struct Running {
     game: &'static Game,
-    building: bool,
+    setting_up: Option<Setup>,
     playing: bool,
     progress: Receiver<Progress>,
     /// Asks the session to stop the game.
@@ -446,9 +446,9 @@ impl App {
         std::thread::Builder::new()
             .name("session".into())
             .spawn(move || {
-                if session::needs_lindbergh_build(&paths, game) {
-                    let _ = tx.send(Progress::Building);
-                    if let Err(e) = session::build_lindbergh(&paths) {
+                if let Some(setup) = session::setup_needed(&paths, game) {
+                    let _ = tx.send(Progress::SettingUp(setup));
+                    if let Err(e) = session::set_up(&paths, setup) {
                         let _ = tx.send(Progress::Ended(Err(format!("{e:#}"))));
                         return;
                     }
@@ -487,7 +487,7 @@ impl App {
             .expect("spawn session thread");
         self.running = Some(Running {
             game,
-            building: false,
+            setting_up: None,
             playing: false,
             progress: rx,
             stop,
@@ -506,7 +506,7 @@ impl App {
         let game = run.game;
         let ended = loop {
             match run.progress.try_recv() {
-                Ok(Progress::Building) => run.building = true,
+                Ok(Progress::SettingUp(setup)) => run.setting_up = Some(setup),
                 Ok(Progress::Playing) => run.playing = true,
                 Ok(Progress::Ended(r)) => break Some(r),
                 Err(TryRecvError::Empty) => break None,
@@ -2313,11 +2313,17 @@ impl App {
                 format!("{} is running", run.game.title),
                 "Close the game window or press Stop to come back.",
             )
-        } else if run.building {
+        } else if run.setting_up == Some(Setup::Lindbergh) {
             (
                 "Building lindbergh-loader…".to_string(),
                 "Initial D 4 and 5 run in lindbergh-loader, built once on your computer \
                  (its licence forbids shipping it). This takes a few minutes.",
+            )
+        } else if run.setting_up == Some(Setup::VisualCpp2008) {
+            (
+                "Installing Microsoft Visual C++ 2008…".to_string(),
+                "Initial D 6, 7 and 8 need this Microsoft runtime, installed once. \
+                 Windows asks for your permission first.",
             )
         } else {
             (
@@ -2874,7 +2880,7 @@ mod tests {
         let stop = Arc::new(AtomicBool::new(false));
         h.state_mut().running = Some(Running {
             game: ready(),
-            building: false,
+            setting_up: None,
             playing: false,
             progress: rx,
             stop: Arc::clone(&stop),
@@ -2883,10 +2889,16 @@ mod tests {
         assert!(says(&h, &format!("Getting {} ready", ready().title)));
         assert!(h.query_by_role_and_label(Role::Button, "Stop").is_none());
         // an Initial D 4 or 5's first start builds lindbergh-loader first
-        tx.send(Progress::Building).unwrap();
+        tx.send(Progress::SettingUp(Setup::Lindbergh)).unwrap();
         h.run_steps(3);
         assert!(says(&h, "Building lindbergh-loader"));
         assert!(says(&h, "This takes a few minutes"));
+        assert!(h.query_by_role_and_label(Role::Button, "Stop").is_none());
+        // an Initial D 6, 7 or 8's first start on Windows installs Visual C++ 2008
+        tx.send(Progress::SettingUp(Setup::VisualCpp2008)).unwrap();
+        h.run_steps(3);
+        assert!(says(&h, "Installing Microsoft Visual C++ 2008"));
+        assert!(says(&h, "Windows asks for your permission first"));
         assert!(h.query_by_role_and_label(Role::Button, "Stop").is_none());
         tx.send(Progress::Playing).unwrap();
         h.run_steps(3);

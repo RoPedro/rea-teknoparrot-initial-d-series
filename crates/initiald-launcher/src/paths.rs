@@ -6,7 +6,8 @@
 //!   `runtimes/` (one per game, saves included), `wal/` (windowsarcadeloader's
 //!   root: its Wine prefix and profile layers), `launcher.log`;
 //! - components (`$INITIALD_COMPONENTS`, else `components/` beside the
-//!   program): `wal/`, `runner/`, `shaders/`, `art/`, `fonts/`, and
+//!   program): `wal/`, `runner/`, `shaders/`, `art/`, `fonts/`, on Windows
+//!   `flycast/` and `vcredist/`, and
 //!   `lindbergh/` from a developer's build; the player's lindbergh-loader is
 //!   built on first use into the data folder's `components/lindbergh/`
 //!   (CC BY-NC-SA: never inside a package).
@@ -143,6 +144,12 @@ impl Paths {
             Some(s) if s.is_file() => s,
             _ => Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scripts/build-components.sh"),
         }
+    }
+
+    /// Microsoft's Visual C++ 2008 SP1 Redistributable (x86) in a Windows
+    /// package (see [`crate::session::Setup::VisualCpp2008`]).
+    pub fn vcredist(&self) -> PathBuf {
+        self.components.join("vcredist").join("vcredist_x86.exe")
     }
 
     pub fn components(&self) -> Components {

@@ -9,8 +9,9 @@
 #   windows  target/x86_64-pc-windows-gnu/release/initiald-launcher.exe, dist/sdl2/SDL2.dll
 # The components are built or fetched once into dist/components with
 # scripts/build-components.sh (windowsarcadeloader from source with
-# patches/wal, both its launchers; GE-Proton, winetricks and Flycast by
-# SHA-256; the CRT effect, the art and fonts), then copied into each package.
+# patches/wal, both its launchers; GE-Proton, winetricks, Flycast and
+# Microsoft's Visual C++ 2008 x86 installer by SHA-256; the CRT effect, the
+# art and fonts), then copied into each package.
 #
 # lindbergh-loader (CC BY-NC-SA) is never packaged: the Linux package
 # carries the script, its container recipe and patches/lindbergh, and the
@@ -61,12 +62,14 @@ else
 	exe=${CARGO_TARGET_DIR:-$root/target}/x86_64-pc-windows-gnu/release/initiald-launcher.exe
 	[ -f "$exe" ] || die "missing $exe - run scripts/build-launcher.sh windows"
 	[ -f "$root/dist/sdl2/SDL2.dll" ] || die "missing dist/sdl2/SDL2.dll"
-	"$root/scripts/build-components.sh" "$comps" wal flycast shaders assets
+	"$root/scripts/build-components.sh" "$comps" wal flycast vcredist shaders assets
 	cp "$exe" "$root/dist/sdl2/SDL2.dll" "$out/"
 	sdl=$(sed -n 's/^dir=//p' "$root/packaging/sdl2.pin")
 	cp "$root/dist/sdl2/${sdl%/*}/LICENSE.txt" "$out/licenses/SDL2-LICENSE.txt"
 	copy_wal arcade-launcher.exe
 	cp -r "$comps/flycast" "$out/components/flycast"
+	# installed by the launcher on the first start of Initial D 6, 7 or 8
+	cp -r "$comps/vcredist" "$out/components/vcredist"
 fi
 
 cp "$root/packaging/README-player.txt" "$out/README.txt"

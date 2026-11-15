@@ -31,12 +31,11 @@ What it needs on Windows
 
 - Windows 10 or 11, 64-bit. Initial D 4 and 5 (Sega Lindbergh, Linux
   programs) are Linux-only.
-- For Initial D 6, 7 and 8, two Microsoft runtimes Windows doesn't
-  include:
-  - Visual C++ 2008 SP1 Redistributable (x86): without it Windows won't
-    start these games at all (the launcher checks and tells you).
-    https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe
-  - DirectX End-User Runtime (June 2010), for their sound.
+- For Initial D 6, 7 and 8, Microsoft's Visual C++ 2008 runtime (x86),
+  which Windows doesn't include: the launcher installs it from
+  components\vcredist the first time you play one of them (Windows asks
+  for your permission), and Microsoft's DirectX End-User Runtime (June
+  2010) for their sound.
 - Zero and THE ARCADE map the cabinet's E: and Y: drives while they run;
   a drive letter your PC already uses is hidden for that time and given
   back when the game ends.
