@@ -31,8 +31,12 @@ What it needs on Windows
 
 - Windows 10 or 11, 64-bit. Initial D 4 and 5 (Sega Lindbergh, Linux
   programs) are Linux-only.
-- Microsoft's DirectX End-User Runtime (June 2010), for the sound of
-  Initial D 6, 7 and 8.
+- For Initial D 6, 7 and 8, two Microsoft runtimes Windows doesn't
+  include:
+  - Visual C++ 2008 SP1 Redistributable (x86): without it Windows won't
+    start these games at all (the launcher checks and tells you).
+    https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe
+  - DirectX End-User Runtime (June 2010), for their sound.
 - Zero and THE ARCADE map the cabinet's E: and Y: drives while they run;
   a drive letter your PC already uses is hidden for that time and given
   back when the game ends.
@@ -52,7 +56,8 @@ Linux:    ~/.local/share/rea-initiald/
 Windows:  %LOCALAPPDATA%\rea-initiald\
 
 Settings, logs, and runtimes/<game>/ (each game's private folder, your
-saves included). To uninstall, delete this folder and that one (back up
+saves included). If a game doesn't start, runtimes/<game>/session.log
+says why. To uninstall, delete this folder and that one (back up
 runtimes/ first).
 
 Licences: licenses/. Source: https://github.com/akitaonrails/rea-teknoparrot-initial-d-series

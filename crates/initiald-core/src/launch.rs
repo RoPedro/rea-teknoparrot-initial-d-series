@@ -77,6 +77,9 @@ pub struct Places {
     pub wal_root: PathBuf,
     /// The NAOMI 2 BIOS set, when the player has one.
     pub naomi2_bios: Option<PathBuf>,
+    /// windowsarcadeloader's first port on 127.0.0.1 (its input server; the
+    /// ALLS payloads' services above it).
+    pub wal_port: u16,
 }
 
 /// How this machine reaches the network (lindbergh-loader's `NIC_NAME`):
@@ -201,8 +204,8 @@ bind10 = 4:btn_a\nbind11 = 22:btn_b\n";
 /// The profile layer the launcher gives windowsarcadeloader for one game:
 /// the runner, a prefix with native XACT (the RingEdge games' sound thread
 /// crashes on Wine's own), no ReShade or gamescope of its own (the launcher
-/// wraps the game), and the render size.
-pub fn wal_layer(game: &Game, size: Size) -> String {
+/// wraps the game), the render size and its ports (from `port`).
+pub fn wal_layer(game: &Game, size: Size, port: u16) -> String {
     let mut env = Vec::new();
     if let Route::Wal {
         system: "ringedge", ..
@@ -215,6 +218,7 @@ pub fn wal_layer(game: &Game, size: Size) -> String {
          runner: runner\nprefix: wine-prefix/initiald\nprefix_tricks: [xact]\nreshade: false\n\
          gamescope:\n  enabled: false\n",
     );
+    out.push_str(&format!("port: {port}\n"));
     if !env.is_empty() {
         out.push_str("env:\n");
         for (k, v) in env {
@@ -345,7 +349,7 @@ pub fn plan(
                 format!("{}\n", game.loader_path()),
             ));
             let layer = root.join(format!("layer-{}.yaml", game.slug));
-            files.push((layer.clone(), wal_layer(game, size)));
+            files.push((layer.clone(), wal_layer(game, size, places.wal_port)));
             links.push((root.join("systemprofiles"), c.wal.join("systemprofiles")));
             links.push((root.join("dist/payloads"), c.wal.join("payloads")));
             if host == Host::Linux {
@@ -422,6 +426,7 @@ mod tests {
             runtime: PathBuf::from("/d/runtimes").join(slug),
             wal_root: "/d/wal".into(),
             naomi2_bios: Some("/bios/naomi2.zip".into()),
+            wal_port: 34100,
         }
     }
 
@@ -468,6 +473,7 @@ mod tests {
             "{layer}"
         );
         assert!(layer.contains("prefix_tricks: [xact]"));
+        assert!(layer.contains("\nport: 34100\n"), "{layer}");
         assert_eq!(arg_after(&p.gamescope, "-w").as_deref(), Some("3840"));
         assert_eq!(p.input_pipe, Some(StickLayout::RingEdge));
         assert!(p.game.args.contains(&"--input-pipe".to_string()));

@@ -142,9 +142,16 @@ its Wine (GE-Proton). You need:
 
 **Windows** (`InitialDLauncher-<version>-windows-x86_64.zip`): unpack it
 anywhere and run `initiald-launcher.exe`. It brings windowsarcadeloader and
-Flycast. You need Windows 10 or 11 (64-bit) and Microsoft's DirectX
-End-User Runtime (June 2010) for the RingEdge games' sound. Initial D 4
-and 5 are Linux-only.
+Flycast. You need Windows 10 or 11 (64-bit), and for Initial D 6, 7 and 8
+two Microsoft runtimes that Windows doesn't include:
+
+- the [Visual C++ 2008 SP1 Redistributable (x86)](https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe)
+  (from Microsoft's [Visual C++ downloads](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist#visual-studio-2008-vc-90-sp1-no-longer-supported)):
+  without it Windows won't start these games at all. The launcher checks
+  for it and says so;
+- the DirectX End-User Runtime (June 2010), for their sound.
+
+Initial D 4 and 5 are Linux-only.
 
 ## First run
 
@@ -200,7 +207,8 @@ initiald-launcher --game id5 --render 3840x2160 --output 3840x2160 --upscaler fs
 | lindbergh-loader, once built | `…/components/lindbergh/` | — |
 
 Each run writes `runtimes/<game>/session.log`; windowsarcadeloader's own
-log is in its run folder (`wal-<system>.log`).
+log is in its run folder (`wal-<system>.log`). A game that couldn't start
+is also noted in `launcher.log`, and the hub shows why.
 
 ## Known limitations
 

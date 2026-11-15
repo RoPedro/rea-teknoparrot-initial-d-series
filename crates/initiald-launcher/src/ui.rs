@@ -15,7 +15,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver, TryRecvError};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use eframe::egui::accesskit::{self, Role, Toggled};
 use eframe::egui::{
@@ -469,9 +469,19 @@ impl App {
                     },
                     _ => Feed::None,
                 };
-                let r = session::run(&paths, &prepared, feed, stop_for_session)
-                    .map(|_| ())
-                    .map_err(|e| format!("{e:#}"));
+                let began = Instant::now();
+                let r = match session::run(&paths, &prepared, feed, Arc::clone(&stop_for_session)) {
+                    // ended by itself at once: it didn't start (Windows refuses a
+                    // program whose runtime is missing without a window or a message)
+                    Ok(status) if !stop_for_session.load(Ordering::SeqCst) => {
+                        let log = std::fs::read_to_string(session::log_path(&prepared.runtime))
+                            .unwrap_or_default();
+                        session::early_end(began.elapsed(), &status.to_string(), &log)
+                            .map_or(Ok(()), Err)
+                    }
+                    Ok(_) => Ok(()),
+                    Err(e) => Err(format!("{e:#}")),
+                };
                 let _ = tx.send(Progress::Ended(r));
             })
             .expect("spawn session thread");
@@ -494,7 +504,6 @@ impl App {
             run.stop.store(true, Ordering::SeqCst);
         }
         let game = run.game;
-        let log_hint = format!("Details are in {}.", self.paths.log().display());
         let ended = loop {
             match run.progress.try_recv() {
                 Ok(Progress::Building) => run.building = true,
@@ -514,21 +523,20 @@ impl App {
         }
         ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
         if let Err(e) = r {
+            log_line(&self.paths, &format!("{}: {e}", game.title));
             self.message = Some(if started {
                 Message {
                     title: format!("{} stopped with an error", game.title),
                     body: format!(
-                        "{}.\n\nTry again. If it happens again: {log_hint}",
-                        sentence(&e)
+                        "{}.\n\nTry again. If it happens again, the game's log is {}.",
+                        sentence(&e),
+                        session::log_path(&self.paths.runtime(game.slug)).display()
                     ),
                 }
             } else {
                 Message {
                     title: format!("{} couldn't start", game.title),
-                    body: format!(
-                        "{}.\n\nCheck that the game folder is complete, then try again. {log_hint}",
-                        sentence(&e)
-                    ),
+                    body: format!("{}.", sentence(&e)),
                 }
             });
         }

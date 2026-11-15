@@ -281,7 +281,7 @@ fn play(paths: &Paths, slug: &str, args: &Args) -> ExitCode {
             eprintln!(
                 "{} ended ({status}); log: {}",
                 game.title,
-                prepared.runtime.join("session.log").display()
+                session::log_path(&prepared.runtime).display()
             );
             ExitCode::SUCCESS
         }

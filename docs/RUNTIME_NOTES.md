@@ -165,3 +165,32 @@ Not yet run on a Windows PC.
 | Zero Ver. 2, E:/Y: also in `dosdevices` (standing in for real Windows) | **race played**: name entry, AE86, Mako & Sayuki at 140 km/h |
 | Season 5, same | **race played** after the automatic restart of its first start: car select, Story, race, Continue, guest/Aime prompt; `C:\Mount\Option` existed in the copied prefix and was left alone |
 | Windows-target tests (`cargo test --target x86_64-pc-windows-gnu`, Wine) | 28 core + 51 launcher pass (the junction / copy runtime test included); 3 tests of the Linux-only gamescope rows ignored |
+
+### Issue #1: Initial D 8 didn't start on Windows 11 (2026-11-15)
+
+Reported on a Windows 11 PC: the hub said the game was starting, then
+nothing, no window, no message.
+
+- The RingEdge programs (`id6_dump_.exe`, `InitialD8_GLW_RE_SBZZ_redumped_.exe`)
+  import `msvcr90.dll` / `msvcp90.dll` through their embedded manifest
+  (`Microsoft.VC90.CRT` 9.0.30729.4148, x86). The dumps don't carry them
+  (Zero carries its own `msvcr110.dll`); Windows has them only from the
+  Visual C++ 2008 SP1 Redistributable (x86). Without them Windows refuses
+  to create the process. Wine has them built in, so the runs under Wine
+  never showed it (taking them out of the test prefix's WinSxS doesn't
+  either: Wine then loads its builtin DLL anyway). The launcher now checks
+  `%SystemRoot%\WinSxS` for an `x86_microsoft.vc90.crt_…_9.0.30729.*`
+  assembly before a RingEdge game and stops with the download link.
+- The hub said nothing about a game that closed by itself, whatever its
+  exit status, and `launcher.log` only recorded library folders. A game
+  that ends by itself within 20 s of its start is now reported with the
+  errors of its `session.log`, and every failure is written to
+  `launcher.log`.
+- windowsarcadeloader's fixed ports (input server 33700, the ALLS services
+  33802–33810): with 33700 held by another program, `arcade-launcher`
+  stopped at once (`binding 127.0.0.1:33700: OS Error 10048`), silently.
+  Seen here while another windowsarcadeloader test ran; on Windows, Hyper-V
+  and WSL reserve port ranges too. The launcher now picks the first free
+  block (33700, 33900, …) for each start and writes it to the game's layer
+  (`port:`). Checked under Wine (Windows build) and on Linux with 33700
+  held: port 33900, ID8 to its attract screen.

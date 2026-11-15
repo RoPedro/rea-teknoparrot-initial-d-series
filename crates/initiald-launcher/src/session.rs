@@ -4,7 +4,7 @@
 
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Sender;
@@ -87,7 +87,103 @@ fn check_components(game: &Game, p: &Paths) -> Result<()> {
     if !windows && matches!(game.route, Route::Flycast { .. }) && which("flycast").is_none() {
         bail!("{} runs in Flycast, which is not installed", game.title);
     }
+    if windows {
+        let windir =
+            std::env::var_os("SystemRoot").map_or(PathBuf::from(r"C:\Windows"), PathBuf::from);
+        let missing = missing_on_windows(game, &windir);
+        if !missing.is_empty() {
+            bail!(
+                "{} needs Microsoft software this PC doesn't have yet. Install it, then try again:\n  {}",
+                game.title,
+                missing.join("\n  ")
+            );
+        }
+    }
     Ok(())
+}
+
+/// Microsoft's Visual C++ 2008 SP1 runtime (x86). The RingEdge games' programs
+/// (Initial D 6, 7, 8) load it through their manifest (`Microsoft.VC90.CRT`
+/// 9.0.30729); Windows doesn't include it and the dumps don't carry it, and
+/// without it Windows refuses to start the program, with no window and no
+/// message.
+const VC2008_X86: &str = "Microsoft Visual C++ 2008 SP1 Redistributable (x86): \
+    https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe";
+
+/// What `game` needs from Windows that a fresh Windows lacks, looked up in the
+/// Windows folder `windir`: each entry names what to install.
+fn missing_on_windows(game: &Game, windir: &Path) -> Vec<&'static str> {
+    let mut missing = Vec::new();
+    if matches!(
+        game.route,
+        Route::Wal {
+            system: "ringedge",
+            ..
+        }
+    ) && !has_vc2008_x86(windir)
+    {
+        missing.push(VC2008_X86);
+    }
+    missing
+}
+
+/// Whether the side-by-side store holds Visual C++ 2008 SP1's x86 C runtime
+/// (any 9.0.30729 build: Windows redirects the games' 9.0.30729.4148 to the
+/// newest one installed).
+fn has_vc2008_x86(windir: &Path) -> bool {
+    fs::read_dir(windir.join("WinSxS")).is_ok_and(|dir| {
+        dir.flatten().any(|e| {
+            e.file_name()
+                .to_string_lossy()
+                .to_ascii_lowercase()
+                .starts_with("x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.")
+        })
+    })
+}
+
+/// windowsarcadeloader's own port.
+const DEFAULT_WAL_PORT: u16 = 33700;
+
+/// windowsarcadeloader's ports for this start, from `from` on: the first
+/// block whose ports on 127.0.0.1 are all free, its input server on the
+/// first, the ALLS payloads' services on the first + 102 to 110. A port
+/// another program holds (another loader, or a range Windows reserves for
+/// Hyper-V and WSL) stopped the game at its start; `from` when none is free.
+fn free_wal_port(from: u16) -> u16 {
+    let free = |p: u16| std::net::TcpListener::bind(("127.0.0.1", p)).is_ok();
+    (0..20u16)
+        .filter_map(|i| from.checked_add(i * 200))
+        .filter(|base| base.checked_add(110).is_some())
+        .find(|&base| free(base) && (base + 102..=base + 110).all(free))
+        .unwrap_or(from)
+}
+
+/// A game that closes by itself this soon after its start didn't start.
+const EARLY_END: Duration = Duration::from_secs(20);
+
+/// A run that ended by itself `after` its start, with `status`: when that was
+/// too soon to have started, why (the end, then the last errors of its
+/// session log `log`, where the loaders write theirs).
+pub fn early_end(after: Duration, status: &str, log: &str) -> Option<String> {
+    if after >= EARLY_END {
+        return None;
+    }
+    let errors: Vec<&str> = log
+        .lines()
+        .filter(|l| {
+            let l = l.to_ascii_lowercase();
+            l.starts_with("error") || l.contains("missing") || l.contains("failed")
+        })
+        .collect();
+    let mut why = format!(
+        "the game closed by itself {} s after starting ({status})",
+        after.as_secs()
+    );
+    if !errors.is_empty() {
+        why.push_str(":\n");
+        why.push_str(&errors[errors.len().saturating_sub(4)..].join("\n"));
+    }
+    Some(why)
 }
 
 /// Whether `game` needs lindbergh-loader built first (its first start on
@@ -185,6 +281,7 @@ pub fn prepare(
         runtime: rt.clone(),
         wal_root: paths.wal_root(),
         naomi2_bios: config.naomi2_bios.clone(),
+        wal_port: free_wal_port(DEFAULT_WAL_PORT),
     };
     let nic = launch::default_interface(&fs::read_to_string("/proc/net/route").unwrap_or_default());
     let plan = launch::plan(
@@ -254,6 +351,12 @@ pub fn command_line(
     v
 }
 
+/// The log of a game's runs (the command, the loaders' output, the end), in
+/// its runtime folder `runtime`.
+pub fn log_path(runtime: &Path) -> PathBuf {
+    runtime.join("session.log")
+}
+
 /// How one start of the game ended.
 enum Ended {
     Exited(ExitStatus),
@@ -266,7 +369,7 @@ enum Ended {
 /// [`Game::first_start_marker`]) is started again, once, as soon as that
 /// start has written its marker. Returns the game's exit status.
 pub fn run(paths: &Paths, p: &Prepared, feed: Feed, stop: Arc<AtomicBool>) -> Result<ExitStatus> {
-    let log_path = p.runtime.join("session.log");
+    let log_path = log_path(&p.runtime);
     let log = Arc::new(Mutex::new(fs::File::create(&log_path)?));
     let marker = p.first_start.as_ref().filter(|m| !m.exists());
     if let Ended::Exited(st) = run_once(paths, p, feed.clone(), &stop, &log, marker)? {
@@ -418,6 +521,72 @@ fn run_once(
     })
 }
 
+#[cfg(test)]
+mod host_tests {
+    use super::*;
+    use initiald_core::catalog::{GameId, game};
+
+    #[test]
+    fn the_ringedge_games_need_visual_cpp_2008_on_windows() {
+        let windir = tempfile::tempdir().unwrap();
+        fs::create_dir(windir.path().join("WinSxS")).unwrap();
+        for id in [GameId::Id6, GameId::Id7, GameId::Id8] {
+            assert_eq!(missing_on_windows(game(id), windir.path()), [VC2008_X86]);
+        }
+        // the other games carry their runtimes (Zero) or need none from Windows
+        for id in [
+            GameId::Id1,
+            GameId::Zero,
+            GameId::TheArcade3,
+            GameId::TheArcade5,
+        ] {
+            assert!(missing_on_windows(game(id), windir.path()).is_empty());
+        }
+        // an older Visual C++ 2008 (RTM, 9.0.21022) is not enough
+        let rtm = "x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.21022.8_none_bcb86ed6ac711f91";
+        fs::create_dir(windir.path().join("WinSxS").join(rtm)).unwrap();
+        assert_eq!(
+            missing_on_windows(game(GameId::Id8), windir.path()),
+            [VC2008_X86]
+        );
+        let sp1 = "x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.30729.6161_none_50934f2ebcb7eb57";
+        fs::create_dir(windir.path().join("WinSxS").join(sp1)).unwrap();
+        assert!(missing_on_windows(game(GameId::Id8), windir.path()).is_empty());
+    }
+
+    #[test]
+    fn windowsarcadeloader_gets_ports_no_other_program_holds() {
+        // a port the system just gave out, then held as another program would
+        let held = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let taken = held.local_addr().unwrap().port();
+        let port = free_wal_port(taken);
+        assert_ne!(port, taken);
+        assert_eq!((port - taken) % 200, 0);
+        drop(held);
+        assert!(std::net::TcpListener::bind(("127.0.0.1", port)).is_ok());
+    }
+
+    #[test]
+    fn a_game_that_closes_at_once_did_not_start() {
+        let log = "# arcade-launcher.exe run ...\n\
+            winhost: xaudio2_7.dll missing from C:\\Windows\\SysWOW64 (xact): install ...\n\
+            game: Initial D Arcade Stage 8 Infinity\n\
+            error: starting the game: The application has failed to start\n";
+        let why = early_end(Duration::from_secs(3), "exit code: 1", log).unwrap();
+        assert!(why.starts_with("the game closed by itself 3 s after starting (exit code: 1):\n"));
+        assert!(why.contains("xaudio2_7.dll missing"));
+        assert!(why.ends_with("error: starting the game: The application has failed to start"));
+        assert!(!why.contains("game: Initial D"));
+        // nothing in the log: the end alone
+        assert_eq!(
+            early_end(Duration::from_secs(1), "exit code: 0", "").unwrap(),
+            "the game closed by itself 1 s after starting (exit code: 0)"
+        );
+        // a game that ran: a normal end
+        assert_eq!(early_end(EARLY_END, "exit code: 1", log), None);
+    }
+}
+
 // the Linux command line (gamescope, bubblewrap)
 #[cfg(all(test, unix))]
 mod tests {
@@ -432,6 +601,7 @@ mod tests {
             runtime: "/d/rt/id6".into(),
             wal_root: "/d/wal".into(),
             naomi2_bios: None,
+            wal_port: DEFAULT_WAL_PORT,
         };
         let c = Components {
             lindbergh: "/c/l".into(),
