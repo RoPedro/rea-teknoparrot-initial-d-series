@@ -1,38 +1,17 @@
-//! The private runtime folder each game runs from.
+//! The private runtime folder each game runs from: which entries of the
+//! player's game folder are linked, copied or left out
+//! (`rea_launcher::linkfarm` builds it and never touches the game folder).
 //!
-//! The player's game folder is read-only (it may be on a network share,
-//! and the launcher runs every game with the library bound read-only).
-//! The runtime holds a symlink to each top-level entry of the game folder,
+//! The runtime holds a link to each top-level entry of the game folder,
 //! plus the files the launcher writes and the folders the loaders create
-//! (saves, cabinet drives) as real files. [`plan`] decides from a listing;
-//! [`apply`] carries it out without ever touching the game folder.
-//!
-//! On Windows, where a symlink needs administrator rights or developer
-//! mode, a linked folder is a directory junction (a directory symlink for a
-//! folder on a network share, which a junction cannot reach) and a linked
-//! file is a copy, refreshed when the game folder's file changes.
+//! (saves, cabinet drives) as real files.
 
-use std::fs;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::Path;
+
+use rea_launcher::linkfarm::{self, Item, Op, Place, Policy};
 
 use crate::catalog::{Game, Route};
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Op {
-    Dir(PathBuf),
-    /// Symlink `at` → `target` (replaced when it points elsewhere).
-    Link {
-        target: PathBuf,
-        at: PathBuf,
-    },
-    /// A copy the game owns from then on: made once (replacing a link an
-    /// older launcher left), never overwritten.
-    CopyOnce {
-        from: PathBuf,
-        to: PathBuf,
-    },
-}
 
 /// Top-level files of a Windows game below this size are copied, not
 /// linked: the games write their logs and account files there
@@ -40,42 +19,31 @@ pub enum Op {
 /// read-only while they run.
 const SMALL: u64 = 4 * 1024 * 1024;
 
-fn copied(route: Route, it: &Item) -> bool {
-    let code = [".exe", ".dll", ".manifest"]
-        .iter()
-        .any(|x| it.name.to_ascii_lowercase().ends_with(x));
-    matches!(route, Route::Wal { .. }) && !it.dir && it.size < SMALL && !code
-}
+/// A game's rules for its runtime folder.
+struct Rules(Route);
 
-/// One entry of the game folder.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Item {
-    pub name: String,
-    pub dir: bool,
-    pub size: u64,
-}
-
-pub fn list(dir: &Path) -> io::Result<Vec<Item>> {
-    let mut v = Vec::new();
-    for e in fs::read_dir(dir)? {
-        let e = e?;
-        let m = fs::metadata(e.path())?;
-        v.push(Item {
-            name: e.file_name().to_string_lossy().into_owned(),
-            dir: m.is_dir(),
-            size: m.len(),
-        });
+impl Policy for Rules {
+    fn place(&self, name: &str, it: &Item) -> Place {
+        if linkfarm::ntfs_leftover(name) || loader_owned(self.0, name) {
+            Place::Skip
+        } else if matches!(self.0, Route::Wal { .. }) && !it.dir && it.size < SMALL && !code(name) {
+            Place::CopyOnce
+        } else {
+            Place::Link
+        }
     }
-    v.sort_by(|a, b| a.name.cmp(&b.name));
-    Ok(v)
+}
+
+fn code(name: &str) -> bool {
+    let name = name.to_ascii_lowercase();
+    [".exe", ".dll", ".manifest"]
+        .iter()
+        .any(|x| name.ends_with(x))
 }
 
 /// Names never linked: files the launcher or the loaders write in the
-/// runtime, and NTFS leftovers in the dumps.
-fn skip(route: Route, name: &str) -> bool {
-    if name == "System Volume Information" || name.starts_with('$') {
-        return true;
-    }
+/// runtime.
+fn loader_owned(route: Route, name: &str) -> bool {
     match route {
         Route::Lindbergh => matches!(
             name,
@@ -95,208 +63,89 @@ fn skip(route: Route, name: &str) -> bool {
     }
 }
 
-/// The runtime of a Lindbergh or Windows game: every entry of the game
-/// folder linked. NAOMI 2 games need no runtime folder of this kind.
-pub fn plan(game: &Game, src: &Path, items: &[Item], rt: &Path) -> Vec<Op> {
+/// The runtime `rt` of a game in folder `src` (`ls` lists a folder:
+/// `linkfarm::list`). A Lindbergh or Windows game's entries go in its
+/// [`Game::game_folder`]; a NAOMI 2 game needs only the folder.
+pub fn plan(
+    game: &Game,
+    src: &Path,
+    rt: &Path,
+    ls: &dyn Fn(&Path) -> io::Result<Vec<Item>>,
+) -> io::Result<Vec<Op>> {
     let mut ops = vec![Op::Dir(rt.to_path_buf())];
-    if matches!(game.route, Route::Flycast { .. }) {
-        return ops;
+    if !matches!(game.route, Route::Flycast { .. }) {
+        ops.extend(linkfarm::plan(
+            src,
+            &rt.join(game.game_folder()),
+            &Rules(game.route),
+            ls,
+        )?);
+        ops.dedup();
     }
-    let dest = rt.join(game.game_folder());
-    if dest != rt {
-        ops.push(Op::Dir(dest.clone()));
-    }
-    for it in items {
-        if skip(game.route, &it.name) {
-            continue;
-        }
-        let (from, to) = (src.join(&it.name), dest.join(&it.name));
-        if copied(game.route, it) {
-            ops.push(Op::CopyOnce { from, to });
-        } else {
-            ops.push(Op::Link {
-                target: from,
-                at: to,
-            });
-        }
-    }
-    ops
-}
-
-/// Carry out a plan. A link is replaced only when it points elsewhere; a
-/// real file or folder where a link should be is an error (it would be
-/// the player's data), never removed.
-pub fn apply(ops: &[Op]) -> io::Result<()> {
-    for op in ops {
-        match op {
-            Op::Dir(d) => fs::create_dir_all(d)?,
-            Op::Link { target, at } => link(target, at)?,
-            Op::CopyOnce { from, to } => match fs::symlink_metadata(to) {
-                Ok(m) if !m.file_type().is_symlink() => {}
-                found => {
-                    if found.is_ok() {
-                        fs::remove_file(to)?;
-                    }
-                    fs::copy(from, to)?;
-                }
-            },
-        }
-    }
-    Ok(())
-}
-
-fn real_where_a_link_goes(at: &Path) -> io::Error {
-    io::Error::other(format!(
-        "{} is a real file or folder where the launcher expects a link; move it away",
-        at.display()
-    ))
-}
-
-/// A symlink `at` → `target`, replaced when it points elsewhere.
-#[cfg(unix)]
-fn link(target: &Path, at: &Path) -> io::Result<()> {
-    match fs::symlink_metadata(at) {
-        Ok(m) if m.file_type().is_symlink() => {
-            if fs::read_link(at)? != *target {
-                fs::remove_file(at)?;
-                std::os::unix::fs::symlink(target, at)?;
-            }
-            Ok(())
-        }
-        Ok(_) => Err(real_where_a_link_goes(at)),
-        Err(_) => std::os::unix::fs::symlink(target, at),
-    }
-}
-
-/// Windows: a folder is a directory junction, a file a copy kept in step.
-#[cfg(windows)]
-fn link(target: &Path, at: &Path) -> io::Result<()> {
-    let existing = fs::symlink_metadata(at).ok();
-    if target.is_dir() {
-        match existing {
-            Some(m) if m.file_type().is_symlink() => {
-                if junction::get_target(at).ok().as_deref() == Some(target) {
-                    return Ok(());
-                }
-                remove_link(at)?;
-            }
-            Some(_) => return Err(real_where_a_link_goes(at)),
-            None => {}
-        }
-        junction::create(target, at).or_else(|e| {
-            std::os::windows::fs::symlink_dir(target, at).map_err(|_| {
-                io::Error::new(
-                    e.kind(),
-                    format!(
-                        "cannot link {} into the runtime folder ({e}); a game folder on a \
-                         network share needs Windows developer mode",
-                        target.display()
-                    ),
-                )
-            })
-        })
-    } else {
-        match existing {
-            Some(m) if m.file_type().is_symlink() => remove_link(at)?,
-            Some(m) if m.is_dir() => return Err(real_where_a_link_goes(at)),
-            _ => {}
-        }
-        mirror_file(target, at)
-    }
-}
-
-/// Keeps `at` a copy of `target`: copied when missing or when the size or
-/// modification time differ; the copy gets the source's modification time.
-#[cfg(windows)]
-fn mirror_file(target: &Path, at: &Path) -> io::Result<()> {
-    let src = fs::metadata(target)?;
-    if let Ok(m) = fs::metadata(at)
-        && m.len() == src.len()
-        && m.modified().ok() == src.modified().ok()
-    {
-        return Ok(());
-    }
-    fs::copy(target, at)?;
-    fs::File::options()
-        .write(true)
-        .open(at)?
-        .set_modified(src.modified()?)
-}
-
-/// Removes a link the launcher made (on Windows a junction is a folder).
-pub fn remove_link(at: &Path) -> io::Result<()> {
-    fs::remove_file(at).or_else(|e| fs::remove_dir(at).map_err(|_| e))
-}
-
-/// Links in a runtime folder whose target is gone (a dump moved): removed
-/// so a re-plan can link the new place.
-pub fn dangling(dir: &Path) -> io::Result<Vec<PathBuf>> {
-    let mut v = Vec::new();
-    for e in fs::read_dir(dir)? {
-        let p = e?.path();
-        if fs::symlink_metadata(&p)?.file_type().is_symlink() && fs::metadata(&p).is_err() {
-            v.push(p);
-        }
-    }
-    Ok(v)
+    Ok(ops)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::catalog::{GameId, game};
+    use std::path::PathBuf;
 
-    fn items(names: &[&str]) -> Vec<Item> {
-        names
+    fn items(names: &[&str]) -> impl Fn(&Path) -> io::Result<Vec<Item>> {
+        let v: Vec<Item> = names
             .iter()
             .map(|n| Item {
                 name: n.to_string(),
                 dir: false,
                 size: if n.ends_with(".exe") { 30 << 20 } else { 100 },
             })
-            .collect()
+            .collect();
+        move |_| Ok(v.clone())
     }
 
     #[test]
     fn wal_runtime_links_the_dump_but_not_drives_or_markers() {
-        let g = game(GameId::Zero);
+        let ls = items(&[
+            "InitialD0_DX11_Nu.exe",
+            "AppData",
+            "old.windowsloader",
+            "data",
+        ]);
         let ops = plan(
-            g,
+            game(GameId::Zero),
             Path::new("/lib/zero"),
-            &items(&[
-                "InitialD0_DX11_Nu.exe",
-                "AppData",
-                "old.windowsloader",
-                "data",
-            ]),
             Path::new("/rt/zero"),
-        );
-        let linked: Vec<_> = ops
-            .iter()
-            .filter_map(|o| match o {
-                Op::Link { at, .. } => Some(at.file_name().unwrap().to_str().unwrap()),
-                _ => None,
-            })
-            .collect();
-        assert_eq!(linked, ["InitialD0_DX11_Nu.exe"]);
+            &ls,
+        )
+        .unwrap();
         // Zero's files go in package\, as on the cabinet
-        assert!(ops.iter().any(|o| matches!(o, Op::Link { at, .. }
-            if at == Path::new("/rt/zero/package/InitialD0_DX11_Nu.exe"))));
-        assert!(
-            ops.iter()
-                .any(|o| matches!(o, Op::CopyOnce { to, .. } if to.ends_with("data")))
+        assert_eq!(
+            ops,
+            [
+                Op::Dir("/rt/zero".into()),
+                Op::Dir("/rt/zero/package".into()),
+                Op::Link {
+                    target: "/lib/zero/InitialD0_DX11_Nu.exe".into(),
+                    at: "/rt/zero/package/InitialD0_DX11_Nu.exe".into()
+                },
+                Op::CopyOnce {
+                    from: "/lib/zero/data".into(),
+                    to: "/rt/zero/package/data".into()
+                },
+            ]
         );
     }
 
     #[test]
     #[cfg(unix)]
     fn small_files_of_a_windows_game_are_copied_once_and_kept() {
+        use std::fs;
         let t = tempfile::tempdir().unwrap();
         let (src, rt) = (t.path().join("dump"), t.path().join("rt"));
         fs::create_dir_all(&src).unwrap();
         fs::write(src.join("IniD0_AppError.log"), b"old").unwrap();
         fs::write(src.join("idzhook.dll"), b"dll").unwrap();
-        let ops = plan(game(GameId::Zero), &src, &list(&src).unwrap(), &rt);
+        let ops = plan(game(GameId::Zero), &src, &rt, &linkfarm::list).unwrap();
         let pkg = rt.join("package");
         // an older launcher linked the log: replaced by a copy
         fs::create_dir_all(&pkg).unwrap();
@@ -305,7 +154,7 @@ mod tests {
             pkg.join("IniD0_AppError.log"),
         )
         .unwrap();
-        apply(&ops).unwrap();
+        linkfarm::apply(&ops, linkfarm::Occupied::Refuse).unwrap();
         let log = pkg.join("IniD0_AppError.log");
         assert!(!fs::symlink_metadata(&log).unwrap().file_type().is_symlink());
         assert!(
@@ -315,71 +164,38 @@ mod tests {
                 .is_symlink()
         );
         fs::write(&log, b"the game's").unwrap();
-        apply(&ops).unwrap();
+        linkfarm::apply(&ops, linkfarm::Occupied::Refuse).unwrap();
         assert_eq!(fs::read(&log).unwrap(), b"the game's");
         assert_eq!(fs::read(src.join("IniD0_AppError.log")).unwrap(), b"old");
     }
 
     #[test]
     fn lindbergh_runtime_keeps_the_launcher_files_its_own() {
+        let ls = items(&["id5.elf", "lindbergh.ini", "System Volume Information"]);
         let ops = plan(
             game(GameId::Id5),
             Path::new("/lib/id5"),
-            &items(&["id5.elf", "lindbergh.ini", "System Volume Information"]),
             Path::new("/rt/id5"),
+            &ls,
+        )
+        .unwrap();
+        assert_eq!(
+            ops,
+            [
+                Op::Dir("/rt/id5".into()),
+                Op::Link {
+                    target: "/lib/id5/id5.elf".into(),
+                    at: "/rt/id5/id5.elf".into()
+                }
+            ]
         );
-        assert_eq!(ops.len(), 2);
     }
 
     #[test]
-    fn apply_links_relinks_and_never_replaces_real_files() {
-        let t = tempfile::tempdir().unwrap();
-        let (a, b, rt) = (t.path().join("a"), t.path().join("b"), t.path().join("rt"));
-        fs::create_dir_all(&a).unwrap();
-        fs::create_dir_all(&b).unwrap();
-        let at = rt.join("data");
-        apply(&[
-            Op::Dir(rt.clone()),
-            Op::Link {
-                target: a.clone(),
-                at: at.clone(),
-            },
-        ])
-        .unwrap();
-        apply(&[Op::Link {
-            target: b.clone(),
-            at: at.clone(),
-        }])
-        .unwrap();
-        // the link follows the new target (a symlink, or a junction on Windows)
-        fs::write(b.join("in-b"), b"b").unwrap();
-        assert_eq!(fs::read(at.join("in-b")).unwrap(), b"b");
-        fs::write(rt.join("save.bin"), b"mine").unwrap();
-        let err = apply(&[Op::Link {
-            target: a,
-            at: rt.join("save.bin"),
-        }]);
-        assert!(err.is_err());
-        assert_eq!(fs::read(rt.join("save.bin")).unwrap(), b"mine");
-    }
-
-    /// Windows: a linked file is a copy, refreshed when the game's file
-    /// changes; a copy is never mistaken for the player's file.
-    #[test]
-    #[cfg(windows)]
-    fn on_windows_a_linked_file_is_a_copy_kept_in_step() {
-        let t = tempfile::tempdir().unwrap();
-        let (src, at) = (t.path().join("game.exe"), t.path().join("rt-game.exe"));
-        fs::write(&src, b"v1").unwrap();
-        let op = Op::Link {
-            target: src.clone(),
-            at: at.clone(),
-        };
-        apply(std::slice::from_ref(&op)).unwrap();
-        assert!(!fs::symlink_metadata(&at).unwrap().file_type().is_symlink());
-        assert_eq!(fs::read(&at).unwrap(), b"v1");
-        fs::write(&src, b"v2, longer").unwrap();
-        apply(std::slice::from_ref(&op)).unwrap();
-        assert_eq!(fs::read(&at).unwrap(), b"v2, longer");
+    fn a_naomi_2_game_needs_only_its_folder() {
+        let unlisted = |_: &Path| -> io::Result<Vec<Item>> { panic!("not listed") };
+        let rt = PathBuf::from("/rt/id1");
+        let ops = plan(game(GameId::Id1), Path::new("/lib/naomi2"), &rt, &unlisted).unwrap();
+        assert_eq!(ops, [Op::Dir(rt)]);
     }
 }

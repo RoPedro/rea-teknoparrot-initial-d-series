@@ -8,11 +8,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-rea-launcher.workspace = true
+rea-launcher = { workspace = true, features = ["linkfarm"] }
 
 [dev-dependencies]
 tempfile = "3"
-
-[target.'cfg(windows)'.dependencies]
-# Directory junctions for the runtime folder (no administrator rights needed)
-junction = "2"

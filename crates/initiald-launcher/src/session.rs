@@ -18,6 +18,7 @@ use initiald_core::runtime;
 use initiald_core::settings::Settings;
 use rea_launcher::catalog::{Host, Support};
 use rea_launcher::library::Entry;
+use rea_launcher::linkfarm::{self, Occupied, Op};
 
 use crate::input::{self, Script};
 use crate::paths::Paths;
@@ -356,16 +357,14 @@ pub fn prepare(
             );
         }
     }
-    let items =
-        runtime::list(&entry.dir).with_context(|| format!("reading {}", entry.dir.display()))?;
-    for dir in [rt.clone(), rt.join(game.game_folder())] {
-        if dir.is_dir() {
-            for d in runtime::dangling(&dir)? {
-                runtime::remove_link(&d)?;
-            }
+    let ops = runtime::plan(game, &entry.dir, &rt, &linkfarm::list)
+        .with_context(|| format!("reading {}", entry.dir.display()))?;
+    if rt.is_dir() {
+        for d in linkfarm::dangling(&rt)? {
+            linkfarm::remove_link(&d)?;
         }
     }
-    runtime::apply(&runtime::plan(game, &entry.dir, &items, &rt))
+    linkfarm::apply(&ops, Occupied::Refuse)
         .with_context(|| format!("building {}", rt.display()))?;
     let places = Places {
         runtime: rt.clone(),
@@ -393,14 +392,14 @@ pub fn prepare(
     let mut links = Vec::new();
     for (at, target) in &plan.links {
         if let Some(d) = at.parent() {
-            links.push(runtime::Op::Dir(d.to_path_buf()));
+            links.push(Op::Dir(d.to_path_buf()));
         }
-        links.push(runtime::Op::Link {
+        links.push(Op::Link {
             target: target.clone(),
             at: at.clone(),
         });
     }
-    runtime::apply(&links)?;
+    linkfarm::apply(&links, Occupied::Refuse)?;
     let first_start = game.first_start_marker().map(|m| rt.join(m));
     Ok(Prepared {
         plan,

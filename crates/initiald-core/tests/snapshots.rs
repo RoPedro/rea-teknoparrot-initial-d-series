@@ -13,10 +13,11 @@ use std::path::{Path, PathBuf};
 use initiald_core::catalog::{GAMES, Game};
 use initiald_core::input::{Button, StickLayout};
 use initiald_core::launch::{self, Components, Places};
-use initiald_core::runtime::{self, Item, Op};
+use initiald_core::runtime;
 use initiald_core::settings::Settings;
 use rea_launcher::catalog::Host;
 use rea_launcher::gamescope::{Crt, Size, Upscaler};
+use rea_launcher::linkfarm::{Item, Op};
 use rea_launcher::wheel::{Control, Controls};
 
 /// A path as the snapshot spells it on every system (Windows joins with `\`).
@@ -194,11 +195,13 @@ fn every_runtime_plan() {
         let _ = writeln!(out, "== {}", g.slug);
         let src = PathBuf::from("/lib").join(g.slug);
         let rt = PathBuf::from("/rt").join(g.slug);
-        for op in runtime::plan(g, &src, &listing(g), &rt) {
+        let listing = listing(g);
+        for op in runtime::plan(g, &src, &rt, &|_| Ok(listing.clone())).unwrap() {
             let _ = match op {
                 Op::Dir(d) => writeln!(out, "dir {}", p(&d)),
                 Op::Link { target, at } => writeln!(out, "link {} -> {}", p(&at), p(&target)),
                 Op::CopyOnce { from, to } => writeln!(out, "copy once {} <- {}", p(&to), p(&from)),
+                other => unreachable!("{other:?}"),
             };
         }
         let _ = writeln!(
