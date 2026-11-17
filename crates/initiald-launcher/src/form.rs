@@ -1,12 +1,14 @@
 //! A game's settings page: what each row of [`settings::OPTIONS`] shows,
 //! why one is off, and how the arrows change the [`Settings`] behind it.
-//! The `crt` key has no row (command line only until it is checked on a
-//! real screen); a save writes only the rows the player changed.
+//! The Look row sets the picture rows at once; changing one of those by
+//! hand makes the look "Custom". The `crt` key has no row (command line
+//! only until it is checked on a real screen); a save writes only the rows
+//! the player changed.
 
 use std::io;
 use std::path::Path;
 
-use initiald_core::settings::{self, Settings};
+use initiald_core::settings::{self, LOOK_KEYS, Look, Settings};
 use rea_launcher::gamescope::{Size, Upscaler};
 use rea_launcher::hub::{pick, size_name};
 use rea_launcher_ui::hub::HubForm;
@@ -31,8 +33,10 @@ const SHARPNESS_OFF: &str = "Only FSR 1 and NVIDIA Image Scaling use sharpness."
 #[derive(Debug, Clone, PartialEq)]
 pub struct Form {
     pub settings: Settings,
-    /// The cabinet's own screen size, for "native".
+    /// The cabinet's own screen size, for "native" and the looks.
     native: Size,
+    /// The player's screen, for the looks.
+    screen: Option<(u32, u32)>,
     /// The keys the player changed: the only ones a save writes.
     changed: Vec<&'static str>,
 }
@@ -62,11 +66,20 @@ fn render_choices(current: Option<Size>) -> Vec<Option<Size>> {
 }
 
 impl Form {
-    pub fn new(settings: Settings, native: Size) -> Self {
+    pub fn new(settings: Settings, native: Size, screen: Option<(u32, u32)>) -> Self {
         Self {
             settings,
             native,
+            screen,
             changed: Vec::new(),
+        }
+    }
+
+    fn changed(&mut self, keys: &[&'static str]) {
+        for key in keys {
+            if !self.changed.contains(key) {
+                self.changed.push(key);
+            }
         }
     }
 }
@@ -75,6 +88,7 @@ impl HubForm for Form {
     fn value(&self, key: &str) -> String {
         let s = &self.settings;
         match key {
+            "look" => s.look.map_or("Custom", Look::label).to_string(),
             "render" => match s.render {
                 None => format!("Native, {}", size_name(self.native)),
                 Some(z) => size_name(z),
@@ -102,6 +116,14 @@ impl HubForm for Form {
         let before = self.settings.clone();
         let s = &mut self.settings;
         match key {
+            "look" => {
+                let next = match s.look {
+                    // from a custom picture, the one for this screen first
+                    None => Look::recommended(self.screen),
+                    Some(cur) => pick(&Look::ALL, cur, d, wrap),
+                };
+                next.apply(s, self.native, self.screen);
+            }
             "render" => s.render = pick(&render_choices(s.render), s.render, d, wrap),
             "output" => s.output = pick(&output_choices(s.output), s.output, d, wrap),
             "upscaler" => s.upscaler = pick(&Upscaler::ALL, s.upscaler, d, wrap),
@@ -113,11 +135,19 @@ impl HubForm for Form {
             }
             _ => return false,
         }
-        let changed = self.settings != before;
-        if changed && !self.changed.contains(&spec.key) {
-            self.changed.push(spec.key);
+        if self.settings == before {
+            return false;
         }
-        changed
+        if spec.key == "look" {
+            self.changed(&LOOK_KEYS);
+        } else {
+            self.changed(&[spec.key]);
+            if LOOK_KEYS.contains(&spec.key) || matches!(spec.key, "sharpness" | "fullscreen") {
+                self.settings.look = None;
+                self.changed(&["look"]);
+            }
+        }
+        true
     }
 
     fn save(&self, file: &Path) -> io::Result<()> {
@@ -130,7 +160,7 @@ mod tests {
     use super::*;
 
     fn form() -> Form {
-        Form::new(Settings::default(), Size::new(1360, 768))
+        Form::new(Settings::default(), Size::new(1360, 768), None)
     }
 
     #[test]
@@ -220,13 +250,43 @@ mod tests {
     }
 
     #[test]
+    fn a_look_sets_the_picture_and_a_hand_change_makes_it_custom() {
+        let mut f = Form::new(Settings::default(), Size::new(1360, 768), Some((1280, 800)));
+        assert_eq!(f.value("look"), "Custom");
+        assert!(f.adjust("look", 1, false), "from custom: the screen's look");
+        assert_eq!(f.value("look"), "Steam Deck");
+        assert_eq!(f.settings.output, Size::new(1280, 800));
+        assert!(f.adjust("look", -1, false));
+        assert_eq!(f.value("look"), "Recommended");
+        assert!(
+            f.adjust("look", 1, true) && f.adjust("look", 1, true),
+            "Enter wraps"
+        );
+        assert_eq!(f.settings.look, Some(Look::Original));
+        assert_eq!(f.settings.render, None);
+        f.adjust("upscaler", 1, false);
+        assert_eq!(f.value("look"), "Custom");
+        f.adjust("look", 1, false);
+        f.adjust("deadzone", 1, false);
+        assert_eq!(
+            f.value("look"),
+            "Steam Deck",
+            "the dead zone is not a picture value"
+        );
+    }
+
+    #[test]
     fn saving_writes_only_the_changed_rows_and_keeps_the_rest() {
         let t = tempfile::tempdir().unwrap();
         let path = t.path().join("settings/id6.cfg");
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         let text = "# my notes\nfuture = 1\ncrt = lottes\nfullscreen = maybe\n";
         std::fs::write(&path, text).unwrap();
-        let mut f = Form::new(Settings::load(&path).unwrap().0, Size::new(1360, 768));
+        let mut f = Form::new(
+            Settings::load(&path, Size::new(1360, 768), None).unwrap().0,
+            Size::new(1360, 768),
+            None,
+        );
         f.adjust("output", -2, false);
         f.save(&path).unwrap();
         let saved = std::fs::read_to_string(&path).unwrap();

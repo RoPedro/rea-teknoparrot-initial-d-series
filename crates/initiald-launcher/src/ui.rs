@@ -206,10 +206,10 @@ impl HubBackend for Launcher {
         unknown.chain(problems).collect()
     }
 
-    fn form(&mut self, game: usize, _screen: Option<(u32, u32)>) -> Form {
+    fn form(&mut self, game: usize, screen: Option<(u32, u32)>) -> Form {
         let g = &GAMES[game];
         let file = self.paths.settings(g.slug);
-        let settings = match Settings::load(&file) {
+        let settings = match Settings::load(&file, g.native, screen) {
             Ok((s, problems)) => {
                 for p in problems {
                     self.log.line(&format!("{}: {p}", file.display()));
@@ -222,7 +222,7 @@ impl HubBackend for Launcher {
                 Settings::default()
             }
         };
-        Form::new(settings, g.native)
+        Form::new(settings, g.native, screen)
     }
 
     fn session(
@@ -230,7 +230,7 @@ impl HubBackend for Launcher {
         game: usize,
         library: &Scan<Game>,
         config: &HubConfig,
-        _screen: Option<(u32, u32)>,
+        screen: Option<(u32, u32)>,
     ) -> Result<Session, String> {
         #[cfg(test)]
         if let Some(next) = self.next.take() {
@@ -243,8 +243,8 @@ impl HubBackend for Launcher {
             .ok_or("it is not in your library folders")?)
         .clone();
         let file = self.paths.settings(g.slug);
-        let (settings, _) =
-            Settings::load(&file).map_err(|e| format!("{}: {e}", file.display()))?;
+        let (settings, _) = Settings::load(&file, g.native, screen)
+            .map_err(|e| format!("{}: {e}", file.display()))?;
         let feed = match (g.route, &self.input) {
             (Route::Wal { .. }, Some(input)) => Feed::Devices {
                 tx: input.sender(),

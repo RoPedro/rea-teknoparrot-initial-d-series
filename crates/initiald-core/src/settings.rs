@@ -13,16 +13,94 @@ use std::io;
 use std::path::Path;
 
 use rea_launcher::cfg::{self, KeyStyle, Kind, OptionSpec, Rejected, Resolution, Value};
-use rea_launcher::fsx;
-use rea_launcher::gamescope::{self, CRTS, Crt, SIZE_MAX, SIZE_MIN, Size, UPSCALERS, Upscaler};
+use rea_launcher::gamescope::{
+    self, CRTS, Crt, SIZE_MAX, SIZE_MIN, Size, UPSCALERS, Upscaler, fit,
+};
+use rea_launcher::{display, fsx};
 
 /// Flags are the keys: `--render` is `render`.
 pub const STYLE: KeyStyle = KeyStyle::Underscore;
+
+/// A look: a named set of picture values (the render size, the size on
+/// the screen, the upscaler).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Look {
+    /// The game as the cabinet showed it: its own size, smooth scaling.
+    Original,
+    /// Drawn at the player's screen size in the cabinet's shape, FSR to fill
+    /// the rest.
+    Recommended,
+    /// The Steam Deck's 1280×800 screen.
+    SteamDeck,
+}
+
+pub const LOOKS: &[(&str, &str)] = &[
+    ("original", "Original"),
+    ("recommended", "Recommended"),
+    ("steam_deck", "Steam Deck"),
+];
+
+/// The keys a look sets.
+pub const LOOK_KEYS: [&str; 4] = ["look", "render", "output", "upscaler"];
+
+impl Look {
+    pub const ALL: [Look; 3] = [Look::Original, Look::Recommended, Look::SteamDeck];
+
+    pub fn key(self) -> &'static str {
+        LOOKS[self as usize].0
+    }
+
+    pub fn label(self) -> &'static str {
+        LOOKS[self as usize].1
+    }
+
+    pub fn from_key(key: &str) -> Option<Look> {
+        Look::ALL.into_iter().find(|l| l.key() == key)
+    }
+
+    /// The look for `screen` (the monitor in pixels, when known): Steam
+    /// Deck on a Deck's screen.
+    pub fn recommended(screen: Option<(u32, u32)>) -> Look {
+        if display::is_steam_deck(screen) {
+            Look::SteamDeck
+        } else {
+            Look::Recommended
+        }
+    }
+
+    /// Sets this look's values in `s` for a cabinet of size `native` on
+    /// `screen` (1920×1080 when unknown).
+    pub fn apply(self, s: &mut Settings, native: Size, screen: Option<(u32, u32)>) {
+        let screen = screen
+            .and_then(display::landscape)
+            .map_or(Size::new(1920, 1080), |(w, h)| Size::new(w, h));
+        let (render, output, upscaler) = match self {
+            Look::Original => (None, screen, Upscaler::Linear),
+            Look::Recommended => (Some(fit(native, screen)), screen, Upscaler::Fsr),
+            Look::SteamDeck => {
+                let (w, h) = display::STEAM_DECK_SCREEN;
+                let deck = Size::new(w, h);
+                (Some(fit(native, deck)), deck, Upscaler::Linear)
+            }
+        };
+        s.render = render;
+        s.output = output;
+        s.upscaler = upscaler;
+        s.look = Some(self);
+    }
+}
 
 const NATIVE: &cfg::Aliases = &[("native", Resolution::Original)];
 
 /// Every per-game option: settings key, flag and window row.
 pub const OPTIONS: &[OptionSpec] = &[
+    OptionSpec::new(
+        "look",
+        Kind::Choice(LOOKS),
+        "Look",
+        "Sets the picture at once: the cabinet's own, sharper for your screen, or for the \
+         Steam Deck. Options set after it win.",
+    ),
     OptionSpec::new(
         "render",
         Kind::Size {
@@ -97,6 +175,9 @@ pub const HEADING: &str = "Settings for one game of the Initial D launcher.\n\
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Settings {
+    /// The look last chosen (its values are in the fields below); `None`
+    /// once a picture value was changed by hand.
+    pub look: Option<Look>,
     /// The size the game itself draws at; `None`: the cabinet's own.
     pub render: Option<Size>,
     /// What gamescope shows on the screen.
@@ -113,6 +194,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            look: None,
             render: None,
             output: Size::new(3840, 2160),
             upscaler: Upscaler::Fsr,
@@ -129,6 +211,7 @@ impl Settings {
     /// line and the window all come through here).
     pub fn apply(&mut self, key: &str, value: Value) -> Result<(), Rejected> {
         match (key, value) {
+            ("look", Value::Choice(v)) => self.look = Look::from_key(v),
             ("render", Value::Size(Resolution::Size(w, h))) => self.render = Some(Size::new(w, h)),
             ("render", Value::Size(_)) => self.render = None,
             ("output", Value::Size(Resolution::Size(w, h))) => self.output = Size::new(w, h),
@@ -157,9 +240,11 @@ impl Settings {
         (s, problems)
     }
 
-    /// The file value of `key`, in the format earlier versions wrote.
+    /// The file value of `key`, in the format earlier versions wrote
+    /// (`look`: empty when there is none).
     pub fn value(&self, key: &str) -> String {
         match key {
+            "look" => self.look.map_or("", Look::key).into(),
             "render" => self.render.map_or("native".into(), |z| z.to_string()),
             "output" => self.output.to_string(),
             "upscaler" => self.upscaler.key().into(),
@@ -172,8 +257,8 @@ impl Settings {
     }
 
     /// `existing` with `keys` set to these settings' values, every other
-    /// line as it was; a new file starts from the commented template and
-    /// gets every key.
+    /// line as it was (no look: its line is cleared); a new file starts
+    /// from the commented template and gets every key.
     pub fn save(&self, existing: &str, keys: &[&str]) -> String {
         let fresh = existing.trim().is_empty();
         let mut out = if fresh {
@@ -182,17 +267,37 @@ impl Settings {
             existing.to_string()
         };
         for spec in OPTIONS.iter().filter(|s| fresh || keys.contains(&s.key)) {
-            out = cfg::spec::set_key(&out, spec, &self.value(spec.key));
+            out = match self.value(spec.key) {
+                v if v.is_empty() => cfg::clear_key(&out, spec.key),
+                v => cfg::spec::set_key(&out, spec, &v),
+            };
         }
         out
     }
 
-    /// The settings in `file` and what couldn't be read in it; a missing
-    /// file is the defaults, an unreadable one an error.
-    pub fn load(file: &Path) -> io::Result<(Settings, Vec<String>)> {
-        Ok(cfg::read_file(file)?
-            .map(|text| Settings::parse(&text))
-            .unwrap_or_default())
+    /// The settings in `file` of a game whose cabinet is `native` in size,
+    /// and what couldn't be read in it; an unreadable file is an error. The
+    /// first time (no file yet) the recommended look for `screen` is
+    /// decided and saved, so a Play or `--play` before the settings page
+    /// ever opened uses it too.
+    pub fn load(
+        file: &Path,
+        native: Size,
+        screen: Option<(u32, u32)>,
+    ) -> io::Result<(Settings, Vec<String>)> {
+        if let Some(text) = cfg::read_file(file)? {
+            return Ok(Settings::parse(&text));
+        }
+        let mut s = Settings::default();
+        Look::recommended(screen).apply(&mut s, native, screen);
+        let problems = match s.write(file, &[]) {
+            Ok(()) => Vec::new(),
+            Err(e) => vec![format!(
+                "couldn't save the recommended look to {}: {e}",
+                file.display()
+            )],
+        };
+        Ok((s, problems))
     }
 
     /// Writes `keys` into `file` ([`Settings::save`]) as a whole-file swap;
@@ -286,7 +391,8 @@ mod tests {
 
     #[test]
     fn a_new_file_is_the_template_with_every_key() {
-        let s = Settings::default();
+        let mut s = Settings::default();
+        Look::Original.apply(&mut s, Size::new(1360, 768), None);
         let text = s.save("", &[]);
         assert!(text.starts_with("# Settings for one game"), "{text}");
         for spec in OPTIONS {
@@ -303,10 +409,78 @@ mod tests {
     fn an_unreadable_file_is_not_written_over() {
         let t = tempfile::tempdir().unwrap();
         let file = t.path().join("id6.cfg");
-        assert_eq!(Settings::load(&file).unwrap().0, Settings::default());
         std::fs::create_dir(&file).unwrap();
-        assert!(Settings::load(&file).is_err());
+        assert!(Settings::load(&file, Size::new(1360, 768), None).is_err());
         assert!(Settings::default().write(&file, &["render"]).is_err());
         assert!(file.is_dir());
+    }
+
+    const RINGEDGE: Size = Size::new(1360, 768);
+
+    #[test]
+    fn looks_set_the_picture_for_the_screen_in_the_cabinets_shape() {
+        let mut s = Settings::default();
+        Look::Recommended.apply(&mut s, Size::new(640, 480), Some((3840, 2160)));
+        assert_eq!(
+            (s.render, s.output, s.upscaler),
+            (
+                Some(Size::new(2880, 2160)),
+                Size::new(3840, 2160),
+                Upscaler::Fsr
+            ),
+            "4:3 inside 16:9"
+        );
+        Look::SteamDeck.apply(&mut s, RINGEDGE, Some((3840, 2160)));
+        assert_eq!(
+            (s.render, s.output, s.upscaler),
+            (
+                Some(Size::new(1280, 722)),
+                Size::new(1280, 800),
+                Upscaler::Linear
+            )
+        );
+        Look::Original.apply(&mut s, RINGEDGE, Some((2560, 1440)));
+        assert_eq!(
+            (s.render, s.output, s.upscaler),
+            (None, Size::new(2560, 1440), Upscaler::Linear),
+            "the cabinet's own size, smooth"
+        );
+        assert_eq!(s.look, Some(Look::Original));
+        assert_eq!(Look::recommended(Some((800, 1280))), Look::SteamDeck);
+        assert_eq!(Look::recommended(None), Look::Recommended);
+    }
+
+    #[test]
+    fn a_look_given_up_is_cleared_from_the_file() {
+        let mut s = Settings::default();
+        Look::Original.apply(&mut s, RINGEDGE, None);
+        let text = s.save("", &[]);
+        assert!(text.contains("\nlook = original\n"), "{text}");
+        s.look = None;
+        s.upscaler = Upscaler::Nis;
+        let text = s.save(&text, &["look", "upscaler"]);
+        assert!(!text.contains("\nlook ="), "{text}");
+        assert_eq!(Settings::parse(&text).0, s);
+    }
+
+    #[test]
+    fn the_first_load_decides_the_recommended_look_and_saves_it() {
+        let t = tempfile::tempdir().unwrap();
+        let file = t.path().join("settings/id6.cfg");
+        let (s, problems) = Settings::load(&file, RINGEDGE, Some((1280, 800))).unwrap();
+        assert!(problems.is_empty(), "{problems:?}");
+        assert_eq!(
+            (s.look, s.output),
+            (Some(Look::SteamDeck), Size::new(1280, 800))
+        );
+        let text = std::fs::read_to_string(&file).unwrap();
+        assert_eq!(Settings::parse(&text).0, s, "saved");
+        // a second load reads the file, whatever the screen
+        assert_eq!(
+            Settings::load(&file, RINGEDGE, Some((3840, 2160)))
+                .unwrap()
+                .0,
+            s
+        );
     }
 }

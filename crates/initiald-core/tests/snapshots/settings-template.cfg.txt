@@ -2,6 +2,11 @@
 # Every key is also a command-line option: render = 2560x1440 is --play
 # <game> --render 2560x1440.
 
+# Sets the picture at once: the cabinet's own, sharper for your screen, or
+# for the Steam Deck. Options set after it win.
+# Values: original, recommended or steam_deck.
+#look =
+
 # The size the game draws at. Bigger is sharper and needs a stronger GPU.
 # Values: WIDTHxHEIGHT or native.
 render = native

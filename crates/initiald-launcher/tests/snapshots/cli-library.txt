@@ -35,7 +35,7 @@ $ initiald-launcher --game id6
 exit 2
 -- stdout
 -- stderr
---set id6 needs options to save, e.g. --set id6 --render <value>
+--set id6 needs options to save, e.g. --set id6 --look <value>
 <usage text>
 
 -- data/settings/id6.cfg
@@ -66,9 +66,14 @@ Report a problem: https://github.com/akitaonrails/rea-teknoparrot-initial-d-seri
 # Every key is also a command-line option: render = 2560x1440 is --play
 # <game> --render 2560x1440.
 
+# Sets the picture at once: the cabinet's own, sharper for your screen, or
+# for the Steam Deck. Options set after it win.
+# Values: original, recommended or steam_deck.
+look = recommended
+
 # The size the game draws at. Bigger is sharper and needs a stronger GPU.
 # Values: WIDTHxHEIGHT or native.
-render = native
+render = 1912x1080
 
 # The size of the picture on your screen. Pick your screen's size.
 # Values: WIDTHxHEIGHT.

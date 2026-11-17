@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 
 use initiald_core::catalog::by_slug;
+use initiald_core::settings::Look;
 use rea_launcher::gamescope::{Size, Upscaler};
 use rea_launcher::hub::{Page, Tab};
 use rea_launcher::library::Entry;
@@ -470,9 +471,37 @@ fn settings_belong_to_the_selected_game() {
             .settings(GAMES[0].slug)
             .exists()
     );
+    // a game seen for the first time gets the recommended look, saved
+    let look = h.get_by_role_and_label(Role::Button, "Look");
+    assert_eq!(testing::value(&look).as_deref(), Some("Recommended"));
     assert_eq!(
-        testing::value(&h.get_by_role_and_label(Role::Button, "Game render size")).unwrap(),
-        format!("Native, {}", rea_launcher::hub::size_name(g.native))
+        settings_of(t.path(), g.slug).0.look,
+        Some(Look::Recommended)
+    );
+}
+
+#[test]
+#[cfg_attr(windows, ignore = "the gamescope rows are off on Windows")]
+fn the_look_row_sets_the_picture_and_a_hand_change_makes_it_custom() {
+    let t = tempfile::tempdir().unwrap();
+    let mut h = hub(t.path());
+    open_tab(&mut h, Tab::Settings);
+    let value = |h: &H, label: &str| testing::value(&h.get_by_role_and_label(Role::Button, label));
+    click_button(&mut h, "Look: previous");
+    assert_eq!(value(&h, "Look").as_deref(), Some("Original"));
+    let (s, text) = settings_of(t.path(), GAMES[0].slug);
+    assert_eq!(
+        (s.look, s.render, s.upscaler),
+        (Some(Look::Original), None, Upscaler::Linear)
+    );
+    assert!(text.contains("\nlook = original\n"), "{text}");
+    click_button(&mut h, "Upscaler: next");
+    assert_eq!(value(&h, "Look").as_deref(), Some("Custom"));
+    let (s, text) = settings_of(t.path(), GAMES[0].slug);
+    assert_eq!(s.look, None);
+    assert!(
+        !text.contains("\nlook ="),
+        "a look given up is cleared:\n{text}"
     );
 }
 

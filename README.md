@@ -178,7 +178,12 @@ its `<set>/` CHD folder.
 Pick a game on the hub and press **Settings** (or Y on a pad). Each row
 is one setting of that game; left and right (or a click on the arrows)
 change it, and it is saved at once and used the next time you press
-**Play**: the size the game draws at and the stick dead zone; on Linux
+**Play**. **Look** sets the picture at once: *Original* (the cabinet's own
+size, smooth scaling), *Recommended* (drawn at your screen's size in the
+cabinet's shape, FSR 1 for the rest) or *Steam Deck* (for its 1280×800
+screen); a game you open for the first time starts with the one for your
+screen, and changing a picture row by hand makes it *Custom*. The other
+rows: the size the game draws at and the stick dead zone; on Linux
 also the size shown on the screen, the upscaler and its sharpness, and full
 screen. On Windows the Linux-only rows are shown switched off, with the
 reason. **Folders and BIOS** opens the page where you add game folders and
@@ -215,6 +220,7 @@ and its sharpness, and full screen.
 
 ```sh
 initiald-launcher --play id6
+initiald-launcher --set id5 --look steam_deck
 initiald-launcher --set id5 --render 3840x2160 --output 3840x2160 --upscaler fsr
 ```
 

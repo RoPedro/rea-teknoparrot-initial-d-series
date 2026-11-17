@@ -19,8 +19,9 @@ use std::time::Duration;
 
 use initiald_core::catalog::{self, GAMES, Game, Route};
 use initiald_core::input::Button;
-use initiald_core::settings::{self, Settings};
+use initiald_core::settings::{self, LOOK_KEYS, Look, Settings};
 use rea_launcher::catalog::{Host, Support};
+use rea_launcher::cfg::Value;
 use rea_launcher::hub::cli::{self, CliSpec, Invocation, Mode};
 use rea_launcher::hub::{HubConfig, HubPaths, PathKind, typed_path};
 use rea_launcher::library::{Found, Library, Scan};
@@ -201,6 +202,25 @@ fn by_slug(slug: &str) -> &'static Game {
     catalog::by_slug(slug).expect("checked by the parser")
 }
 
+/// The command line's options over `s`, and the keys they set: a look
+/// first (with its picture keys), so the flags after it win.
+fn apply_options(inv: &Invocation, s: &mut Settings, game: &Game) -> Vec<&'static str> {
+    let mut keys = Vec::new();
+    inv.apply_options(settings::OPTIONS, &["look"], |spec, v| match v {
+        Value::Choice(key) if spec.key == "look" => {
+            if let Some(look) = Look::from_key(key) {
+                look.apply(s, game.native, None);
+                keys.extend(LOOK_KEYS);
+            }
+        }
+        v => {
+            let _ = s.apply(spec.key, v); // checked by the parser
+            keys.push(spec.key);
+        }
+    });
+    keys
+}
+
 /// The command line's options saved into the game's settings file.
 fn set(paths: &HubPaths, game: &Game, inv: &Invocation) -> Result<(), String> {
     if inv.options.is_empty() {
@@ -208,11 +228,8 @@ fn set(paths: &HubPaths, game: &Game, inv: &Invocation) -> Result<(), String> {
     }
     let file = paths.settings(game.slug);
     let save = || -> std::io::Result<()> {
-        let (mut s, _) = Settings::load(&file)?;
-        for (key, value) in &inv.options {
-            let _ = s.set(key, value); // checked by parse
-        }
-        let keys: Vec<&str> = inv.options.iter().map(|(k, _)| *k).collect();
+        let (mut s, _) = Settings::load(&file, game.native, None)?;
+        let keys = apply_options(inv, &mut s, game);
         s.write(&file, &keys)
     };
     save().map_err(|e| format!("Could not save the options to {}: {e}", file.display()))
@@ -323,7 +340,7 @@ fn play(
         .ok_or_else(|| format!("{} is not in your library folders", game.title))?;
     let file = paths.settings(game.slug);
     let (settings, problems) =
-        Settings::load(&file).map_err(|e| format!("{}: {e}", file.display()))?;
+        Settings::load(&file, game.native, None).map_err(|e| format!("{}: {e}", file.display()))?;
     for p in problems {
         eprintln!("warning: {p}");
     }
@@ -409,6 +426,27 @@ mod tests {
         let e = parse_v(&["--set", "id6", "--deadzone", "5"]).unwrap_err();
         assert!(e.starts_with("bad value for --deadzone: 5"), "{e}");
         assert!(parse_v(&["--bogus"]).is_err());
+    }
+
+    #[test]
+    fn a_look_sets_its_values_and_later_flags_win() {
+        let t = tempfile::tempdir().unwrap();
+        let p = crate::paths::in_dir(t.path());
+        let inv = parse_v(&["--set", "id6", "--upscaler=nis", "--look", "steam_deck"]).unwrap();
+        set(&p, by_slug("id6"), &inv).unwrap();
+        let text = std::fs::read_to_string(p.settings("id6")).unwrap();
+        let s = Settings::parse(&text).0;
+        assert_eq!(s.look, Some(Look::SteamDeck));
+        assert_eq!(s.output, rea_launcher::gamescope::Size::new(1280, 800));
+        assert_eq!(
+            s.upscaler,
+            rea_launcher::gamescope::Upscaler::Nis,
+            "the flag wins"
+        );
+        let inv = parse_v(&["--set", "id6", "--look", "original"]).unwrap();
+        set(&p, by_slug("id6"), &inv).unwrap();
+        let s = Settings::parse(&std::fs::read_to_string(p.settings("id6")).unwrap()).0;
+        assert_eq!((s.look, s.render), (Some(Look::Original), None));
     }
 
     #[test]

@@ -6,6 +6,15 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+### Added
+
+- Looks, as the other rea launchers have them: Original (the cabinet's
+  own picture), Recommended (drawn at your screen's size in the cabinet's
+  shape, FSR 1) and Steam Deck (1280×800), in the settings window's new
+  Look row and as `--look`. A game's first settings are the look for your
+  screen (Steam Deck on a Deck) instead of a fixed 4K output; changing a
+  picture setting by hand makes the look Custom.
+
 ### Changed
 
 - Updated rea-launcher-sdk to v0.10.0: the window, the command line, the

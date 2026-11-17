@@ -14,7 +14,7 @@ use initiald_core::catalog::{GAMES, Game};
 use initiald_core::input::{Button, StickLayout};
 use initiald_core::launch::{self, Components, Places};
 use initiald_core::runtime;
-use initiald_core::settings::Settings;
+use initiald_core::settings::{Look, Settings};
 use rea_launcher::catalog::Host;
 use rea_launcher::gamescope::{Crt, Size, Upscaler};
 use rea_launcher::linkfarm::{Item, Op};
@@ -77,6 +77,7 @@ fn components() -> Components {
 /// The settings each game's plan is shown with.
 fn variants() -> Vec<(&'static str, Settings, bool)> {
     let custom = Settings {
+        look: None,
         render: Some(Size::new(2560, 1440)),
         output: Size::new(1920, 1080),
         upscaler: Upscaler::Nis,
@@ -152,6 +153,45 @@ fn every_plan_of_every_game() {
         }
     }
     rea_launcher::snapshot!("plans.txt", out);
+}
+
+/// What each look plans for one game per route, on Linux, for a 4K
+/// screen (the window's) and an unknown one (the command line's).
+#[test]
+fn every_look_of_one_game_per_route() {
+    let c = components();
+    let mut out = String::new();
+    for slug in ["id1", "id5", "id6", "ta5"] {
+        let g = initiald_core::catalog::by_slug(slug).unwrap();
+        let places = Places {
+            runtime: PathBuf::from("/d/runtimes").join(g.slug),
+            wal_root: "/d/wal".into(),
+            naomi2_bios: Some("/bios/naomi2.zip".into()),
+            wal_port: 33700,
+        };
+        for look in Look::ALL {
+            for screen in [Some((3840, 2160)), None] {
+                let mut s = Settings::default();
+                look.apply(&mut s, g.native, screen);
+                let _ = writeln!(out, "== {} {} on {screen:?}", g.slug, look.key());
+                let entry = PathBuf::from("/lib").join(g.slug);
+                let plan = launch::plan(g, &entry, &places, &c, &s, "eth0", false, Host::Linux);
+                let _ = writeln!(out, "size {}", plan.game_size);
+                let _ = writeln!(out, "gamescope {}", plan.gamescope.join(" "));
+                for (f, text) in &plan.files {
+                    for line in text.lines().filter(|l| {
+                        l.contains("WIDTH")
+                            || l.contains("HEIGHT")
+                            || l.contains("Resolution")
+                            || l.contains("GL_SCALE")
+                    }) {
+                        let _ = writeln!(out, "{}: {}", p(f), line.trim());
+                    }
+                }
+            }
+        }
+    }
+    rea_launcher::snapshot!("look-plans.txt", out);
 }
 
 /// A game folder holding a bit of everything the runtime rules look at.

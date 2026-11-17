@@ -1,28 +1,32 @@
 == 1280x720
 Label value="Initial D Arcade Stage 5 settings"
 Label value="Changes are saved as you make them and used the next time you press Play."
-Button label="Game render size" value="Native, 1360 × 768" description="The size the game draws at. Bigger is sharper and needs a stronger GPU." @60,214 796x58
-Button label="Game render size: previous" @572,223 28x40
-Button label="Game render size: next" @818,223 28x40
-Button label="Output size" value="3840 × 2160 (4K)" description="The size of the picture on your screen. Pick your screen's size." @60,272 796x58
-Button label="Output size: previous" @572,281 28x40
-Button label="Output size: next" @818,281 28x40
-Button label="Upscaler" value="FSR 1 (sharp upscale)" description="How the game's picture is stretched to the output size." @60,330 796x58
-Button label="Upscaler: previous" @572,339 28x40
-Button label="Upscaler: next" @818,339 28x40
-Button label="Sharpness" value="5" description="How crisp the upscaler makes edges. 0 is the sharpest." @60,388 796x58
-Button label="Sharpness: previous" @572,397 28x40
-Button label="Sharpness: next" @818,397 28x40
-Button label="Fullscreen" value="On" description="Fill the whole screen, or play in a window." @60,446 796x58
-Button label="Fullscreen: previous" @572,455 28x40
-Button label="Fullscreen: next" @818,455 28x40
-Button label="Dead zone" value="5%" description="How far a controller stick moves before the car starts to steer." @60,504 796x58
-Button label="Dead zone: previous" @572,513 28x40
-Button label="Dead zone: next" @818,513 28x40
+Button label="Look" value="Recommended" description="Sets the picture at once: the cabinet's own, sharper for your screen, or for the Steam Deck. Options set after it win." @60,214 796x58
+Button label="Look: previous" @572,223 28x40
+Button label="Look: next" @818,223 28x40
+Button label="Game render size" value="1912 × 1080" description="The size the game draws at. Bigger is sharper and needs a stronger GPU." @60,272 796x58
+Button label="Game render size: previous" @572,281 28x40
+Button label="Game render size: next" @818,281 28x40
+Button label="Output size" value="1920 × 1080 (1080p)" description="The size of the picture on your screen. Pick your screen's size." @60,330 796x58
+Button label="Output size: previous" @572,339 28x40
+Button label="Output size: next" @818,339 28x40
+Button label="Upscaler" value="FSR 1 (sharp upscale)" description="How the game's picture is stretched to the output size." @60,388 796x58
+Button label="Upscaler: previous" @572,397 28x40
+Button label="Upscaler: next" @818,397 28x40
+Button label="Sharpness" value="5" description="How crisp the upscaler makes edges. 0 is the sharpest." @60,446 796x58
+Button label="Sharpness: previous" @572,455 28x40
+Button label="Sharpness: next" @818,455 28x40
+Button label="Fullscreen" value="On" description="Fill the whole screen, or play in a window." @60,504 796x58
+Button label="Fullscreen: previous" @572,513 28x40
+Button label="Fullscreen: next" @818,513 28x40
+Button label="Dead zone" value="5%" description="How far a controller stick moves before the car starts to steer." @60,562 796x58
+Button label="Dead zone: previous" @572,571 28x40
+Button label="Dead zone: next" @818,571 28x40
 Label value="<tmp>/games"
 Label value="1 of 11 games found. 1 folder holds a build this launcher doesn't know; launcher.log has its digest."
 Button label="Rescan" @904,330 300x46
 Button label="Folders and BIOS" @904,390 300x46
+Label value="Sets the picture at once: the cabinet's own, sharper for your screen, or for the Steam Deck. Options set after it win."
 Tab label="Games" toggled=False @326,17 78x38
 Tab label="Controls" toggled=False @412,17 91x38
 Tab label="Settings" toggled=True @511,17 91x38
@@ -30,29 +34,32 @@ Label value="Controller: No controller"
 == 1280x800
 Label value="Initial D Arcade Stage 5 settings"
 Label value="Changes are saved as you make them and used the next time you press Play."
-Button label="Game render size" value="Native, 1360 × 768" description="The size the game draws at. Bigger is sharper and needs a stronger GPU." @67,238 742x64
-Button label="Game render size: previous" @493,248 31x44
-Button label="Game render size: next" @767,248 31x44
-Button label="Output size" value="3840 × 2160 (4K)" description="The size of the picture on your screen. Pick your screen's size." @67,302 742x64
-Button label="Output size: previous" @493,312 31x44
-Button label="Output size: next" @767,312 31x44
-Button label="Upscaler" value="FSR 1 (sharp upscale)" description="How the game's picture is stretched to the output size." @67,367 742x64
-Button label="Upscaler: previous" @493,377 31x44
-Button label="Upscaler: next" @767,377 31x44
-Button label="Sharpness" value="5" description="How crisp the upscaler makes edges. 0 is the sharpest." @67,431 742x64
-Button label="Sharpness: previous" @493,441 31x44
-Button label="Sharpness: next" @767,441 31x44
-Button label="Fullscreen" value="On" description="Fill the whole screen, or play in a window." @67,496 742x64
-Button label="Fullscreen: previous" @493,506 31x44
-Button label="Fullscreen: next" @767,506 31x44
-Button label="Dead zone" value="5%" description="How far a controller stick moves before the car starts to steer." @67,560 742x64
-Button label="Dead zone: previous" @493,570 31x44
-Button label="Dead zone: next" @767,570 31x44
+Button label="Look" value="Recommended" description="Sets the picture at once: the cabinet's own, sharper for your screen, or for the Steam Deck. Options set after it win." @67,238 742x64
+Button label="Look: previous" @493,248 31x44
+Button label="Look: next" @767,248 31x44
+Button label="Game render size" value="1912 × 1080" description="The size the game draws at. Bigger is sharper and needs a stronger GPU." @67,302 742x64
+Button label="Game render size: previous" @493,312 31x44
+Button label="Game render size: next" @767,312 31x44
+Button label="Output size" value="1920 × 1080 (1080p)" description="The size of the picture on your screen. Pick your screen's size." @67,367 742x64
+Button label="Output size: previous" @493,377 31x44
+Button label="Output size: next" @767,377 31x44
+Button label="Upscaler" value="FSR 1 (sharp upscale)" description="How the game's picture is stretched to the output size." @67,431 742x64
+Button label="Upscaler: previous" @493,441 31x44
+Button label="Upscaler: next" @767,441 31x44
+Button label="Sharpness" value="5" description="How crisp the upscaler makes edges. 0 is the sharpest." @67,496 742x64
+Button label="Sharpness: previous" @493,506 31x44
+Button label="Sharpness: next" @767,506 31x44
+Button label="Fullscreen" value="On" description="Fill the whole screen, or play in a window." @67,560 742x64
+Button label="Fullscreen: previous" @493,570 31x44
+Button label="Fullscreen: next" @767,570 31x44
+Button label="Dead zone" value="5%" description="How far a controller stick moves before the car starts to steer." @67,624 742x64
+Button label="Dead zone: previous" @493,634 31x44
+Button label="Dead zone: next" @767,634 31x44
 Label value="<tmp>/games"
 Label value="1 of 11 games found. 1 folder holds a build this launcher doesn't know; launcher.log has its digest."
 Button label="Rescan" @862,367 333x51
 Button label="Folders and BIOS" @862,433 333x51
-Label value="The size the game draws at. Bigger is sharper and needs a stronger GPU."
+Label value="Sets the picture at once: the cabinet's own, sharper for your screen, or for the Steam Deck. Options set after it win."
 Tab label="Games" toggled=False @362,19 86x42
 Tab label="Controls" toggled=False @457,19 101x42
 Tab label="Settings" toggled=True @568,19 101x42

@@ -1,5 +1,5 @@
 == plain
-Settings { render: None, output: Size { w: 2560, h: 1440 }, upscaler: Linear, sharpness: 5, crt: Off, fullscreen: false, deadzone: 0.12 }
+Settings { look: None, render: None, output: Size { w: 2560, h: 1440 }, upscaler: Linear, sharpness: 5, crt: Off, fullscreen: false, deadzone: 0.12 }
 problem settings line 4: unknown setting "future_key" (ignored, kept in the file)
 problem settings line 6: sharpness needs 0 to 20, not "50"
 -- saved
@@ -15,7 +15,7 @@ fullscreen = off
 no equals sign
 upscaler = linear
 == bom
-Settings { render: None, output: Size { w: 2560, h: 1440 }, upscaler: Linear, sharpness: 5, crt: Off, fullscreen: false, deadzone: 0.12 }
+Settings { look: None, render: None, output: Size { w: 2560, h: 1440 }, upscaler: Linear, sharpness: 5, crt: Off, fullscreen: false, deadzone: 0.12 }
 problem settings line 4: unknown setting "future_key" (ignored, kept in the file)
 problem settings line 6: sharpness needs 0 to 20, not "50"
 -- saved
