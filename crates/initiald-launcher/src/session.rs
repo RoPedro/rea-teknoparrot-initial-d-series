@@ -17,8 +17,10 @@ use initiald_core::launch::{self, Places, Plan};
 use initiald_core::runtime;
 use initiald_core::settings::Settings;
 use rea_launcher::catalog::{Host, Support};
+use rea_launcher::gamescope::CommandLine;
 use rea_launcher::library::Entry;
 use rea_launcher::linkfarm::{self, Occupied, Op};
+use rea_launcher::{session, wal};
 
 use crate::input::{self, Script};
 use crate::paths::Paths;
@@ -235,48 +237,6 @@ fn install_vc2008(_installer: &Path) -> Result<()> {
 /// windowsarcadeloader's own port.
 const DEFAULT_WAL_PORT: u16 = 33700;
 
-/// windowsarcadeloader's ports for this start, from `from` on: the first
-/// block whose ports on 127.0.0.1 are all free, its input server on the
-/// first, the ALLS payloads' services on the first + 102 to 110. A port
-/// another program holds (another loader, or a range Windows reserves for
-/// Hyper-V and WSL) stopped the game at its start; `from` when none is free.
-fn free_wal_port(from: u16) -> u16 {
-    let free = |p: u16| std::net::TcpListener::bind(("127.0.0.1", p)).is_ok();
-    (0..20u16)
-        .filter_map(|i| from.checked_add(i * 200))
-        .filter(|base| base.checked_add(110).is_some())
-        .find(|&base| free(base) && (base + 102..=base + 110).all(free))
-        .unwrap_or(from)
-}
-
-/// A game that closes by itself this soon after its start didn't start.
-const EARLY_END: Duration = Duration::from_secs(20);
-
-/// A run that ended by itself `after` its start, with `status`: when that was
-/// too soon to have started, why (the end, then the last errors of its
-/// session log `log`, where the loaders write theirs).
-pub fn early_end(after: Duration, status: &str, log: &str) -> Option<String> {
-    if after >= EARLY_END {
-        return None;
-    }
-    let errors: Vec<&str> = log
-        .lines()
-        .filter(|l| {
-            let l = l.to_ascii_lowercase();
-            l.starts_with("error") || l.contains("missing") || l.contains("failed")
-        })
-        .collect();
-    let mut why = format!(
-        "the game closed by itself {} s after starting ({status})",
-        after.as_secs()
-    );
-    if !errors.is_empty() {
-        why.push_str(":\n");
-        why.push_str(&errors[errors.len().saturating_sub(4)..].join("\n"));
-    }
-    Some(why)
-}
-
 /// Whether `game` needs lindbergh-loader built first (its first start on
 /// this computer).
 fn needs_lindbergh_build(paths: &Paths, game: &Game) -> bool {
@@ -370,9 +330,10 @@ pub fn prepare(
         runtime: rt.clone(),
         wal_root: paths.wal_root(),
         naomi2_bios: config.naomi2_bios.clone(),
-        wal_port: free_wal_port(DEFAULT_WAL_PORT),
+        wal_port: wal::free_port_block(DEFAULT_WAL_PORT),
     };
-    let nic = launch::default_interface(&fs::read_to_string("/proc/net/route").unwrap_or_default());
+    let nic =
+        session::default_interface(&fs::read_to_string("/proc/net/route").unwrap_or_default());
     let plan = launch::plan(
         game,
         &entry.dir,
@@ -408,36 +369,26 @@ pub fn prepare(
     })
 }
 
-/// The command line: gamescope, then bubblewrap with every library folder
-/// read-only (no loader can write to the player's dumps), then the game.
-/// With a ReShade effect, gamescope runs with the plan's `HOME` and the
-/// game with `user_home` (see [`Plan::gamescope_home`]).
+/// The Linux command line: gamescope, then bubblewrap with every library
+/// folder read-only (no loader can write to the player's dumps), then the
+/// game. With a ReShade effect, gamescope runs with the plan's `HOME` and
+/// the game with `user_home` (see [`Plan::gamescope_home`]).
 pub fn command_line(
     plan: &Plan,
     libraries: &[PathBuf],
     bwrap: bool,
     user_home: &str,
 ) -> Vec<String> {
-    let mut v = Vec::new();
-    if let Some(home) = &plan.gamescope_home {
-        v.extend(["env".into(), format!("HOME={}", home.display())]);
+    CommandLine {
+        gamescope: plan.gamescope.clone(),
+        homes: plan
+            .gamescope_home
+            .clone()
+            .map(|home| (home, user_home.to_string())),
+        read_only: bwrap.then(|| libraries.to_vec()),
+        cpus: None,
     }
-    v.push("gamescope".to_string());
-    v.extend(plan.gamescope.iter().cloned());
-    v.push("--".into());
-    if plan.gamescope_home.is_some() {
-        v.extend(["env".into(), format!("HOME={user_home}")]);
-    }
-    if bwrap {
-        v.extend(["bwrap", "--dev-bind", "/", "/"].map(String::from));
-        for l in libraries {
-            let l = l.to_string_lossy().into_owned();
-            v.extend(["--ro-bind".into(), l.clone(), l]);
-        }
-    }
-    v.push(plan.game.program.to_string_lossy().into_owned());
-    v.extend(plan.game.args.iter().cloned());
-    v
+    .argv(&plan.game.program, &plan.game.args)
 }
 
 /// The log of a game's runs (the command, the loaders' output, the end), in
@@ -639,38 +590,6 @@ mod host_tests {
         let sp1 = "x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.30729.6161_none_50934f2ebcb7eb57";
         fs::create_dir(sxs.join(sp1)).unwrap();
         assert!(!needs_vc2008(game(GameId::Id8), windir.path()));
-    }
-
-    #[test]
-    fn windowsarcadeloader_gets_ports_no_other_program_holds() {
-        // a port the system just gave out, then held as another program would
-        let held = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
-        let taken = held.local_addr().unwrap().port();
-        let port = free_wal_port(taken);
-        assert_ne!(port, taken);
-        assert_eq!((port - taken) % 200, 0);
-        drop(held);
-        assert!(std::net::TcpListener::bind(("127.0.0.1", port)).is_ok());
-    }
-
-    #[test]
-    fn a_game_that_closes_at_once_did_not_start() {
-        let log = "# arcade-launcher.exe run ...\n\
-            winhost: xaudio2_7.dll missing from C:\\Windows\\SysWOW64 (xact): install ...\n\
-            game: Initial D Arcade Stage 8 Infinity\n\
-            error: starting the game: The application has failed to start\n";
-        let why = early_end(Duration::from_secs(3), "exit code: 1", log).unwrap();
-        assert!(why.starts_with("the game closed by itself 3 s after starting (exit code: 1):\n"));
-        assert!(why.contains("xaudio2_7.dll missing"));
-        assert!(why.ends_with("error: starting the game: The application has failed to start"));
-        assert!(!why.contains("game: Initial D"));
-        // nothing in the log: the end alone
-        assert_eq!(
-            early_end(Duration::from_secs(1), "exit code: 0", "").unwrap(),
-            "the game closed by itself 1 s after starting (exit code: 0)"
-        );
-        // a game that ran: a normal end
-        assert_eq!(early_end(EARLY_END, "exit code: 1", log), None);
     }
 }
 

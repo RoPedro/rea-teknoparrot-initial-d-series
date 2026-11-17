@@ -488,7 +488,7 @@ impl App {
                     Ok(status) if !stop_for_session.load(Ordering::SeqCst) => {
                         let log = std::fs::read_to_string(session::log_path(&prepared.runtime))
                             .unwrap_or_default();
-                        session::early_end(began.elapsed(), &status.to_string(), &log)
+                        rea_launcher::session::early_end(began.elapsed(), &status.to_string(), &log)
                             .map_or(Ok(()), Err)
                     }
                     Ok(_) => Ok(()),

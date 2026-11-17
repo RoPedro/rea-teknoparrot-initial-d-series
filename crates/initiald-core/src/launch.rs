@@ -11,7 +11,7 @@ use rea_launcher::catalog::Host;
 
 use crate::catalog::{Game, Route};
 use crate::input::StickLayout;
-use rea_launcher::gamescope::{Crt, Size};
+use rea_launcher::gamescope::{self, Size};
 
 use crate::settings::Settings;
 
@@ -50,10 +50,6 @@ pub struct Plan {
 type Files = Vec<(PathBuf, String)>;
 type Links = Vec<(PathBuf, PathBuf)>;
 
-/// The CRT effect's file name, in the components' `shaders/` and in
-/// gamescope's effect folder.
-const CRT_EFFECT: &str = "crt-lottes.fx";
-
 /// The launcher's own components (built or downloaded on request).
 #[derive(Debug, Clone)]
 pub struct Components {
@@ -86,21 +82,6 @@ pub struct Places {
     pub wal_port: u16,
 }
 
-/// How this machine reaches the network (lindbergh-loader's `NIC_NAME`):
-/// the default route's interface, else loopback.
-pub fn default_interface(proc_net_route: &str) -> String {
-    proc_net_route
-        .lines()
-        .skip(1)
-        .filter_map(|l| {
-            let mut f = l.split_whitespace();
-            let (name, dest) = (f.next()?, f.next()?);
-            (dest == "00000000" && name != "lo").then(|| name.to_string())
-        })
-        .next()
-        .unwrap_or_else(|| "lo".into())
-}
-
 pub fn game_size(game: &Game, s: &Settings) -> Size {
     match game.route {
         // Flycast draws the 4:3 game at a multiple of 480 lines, widened to 16:9
@@ -110,38 +91,6 @@ pub fn game_size(game: &Game, s: &Settings) -> Size {
         }
         _ => s.render.unwrap_or(game.native),
     }
-}
-
-fn gamescope_args(s: &Settings, size: Size, headless: bool) -> Vec<String> {
-    let mut a: Vec<String> = [
-        "-w",
-        &size.w.to_string(),
-        "-h",
-        &size.h.to_string(),
-        "-W",
-        &s.output.w.to_string(),
-        "-H",
-        &s.output.h.to_string(),
-        "-r",
-        "60",
-        "-F",
-        if headless { "linear" } else { s.upscaler.key() },
-    ]
-    .iter()
-    .map(|x| x.to_string())
-    .collect();
-    if !headless && matches!(s.upscaler.key(), "fsr" | "nis") {
-        a.extend(["--sharpness".into(), s.sharpness.to_string()]);
-    }
-    if s.crt == Crt::Lottes {
-        a.extend(["--reshade-effect".into(), CRT_EFFECT.into()]);
-    }
-    if headless {
-        a.extend(["--backend".into(), "headless".into()]);
-    } else if s.fullscreen {
-        a.push("-f".into());
-    }
-    a
 }
 
 pub fn lindbergh_ini(size: Size, nic: &str) -> String {
@@ -386,21 +335,17 @@ pub fn plan(
         }
     };
     // Windows: no gamescope (the games draw at their render size, full screen)
-    let gamescope_home =
-        (host == Host::Linux && s.crt == Crt::Lottes).then(|| rt.join("gamescope-home"));
-    if let Some(home) = &gamescope_home {
-        links.push((
-            home.join(".local/share/gamescope/reshade/Shaders")
-                .join(CRT_EFFECT),
-            c.shaders.join(CRT_EFFECT),
-        ));
+    let effect = s.crt.effect().filter(|_| host == Host::Linux);
+    let gamescope_home = effect.map(|_| gamescope::effect_home(rt));
+    if let (Some(home), Some(effect)) = (&gamescope_home, effect) {
+        links.push(gamescope::effect_link(home, &c.shaders, effect));
     }
     Plan {
         files,
         links,
         game: game_cmd,
         gamescope: match host {
-            Host::Linux => gamescope_args(s, size, headless),
+            Host::Linux => s.picture(size).args(headless),
             Host::Windows => Vec::new(),
         },
         gamescope_home,
@@ -413,6 +358,7 @@ pub fn plan(
 mod tests {
     use super::*;
     use crate::catalog::{GameId, game};
+    use rea_launcher::gamescope::Crt;
 
     fn comps() -> Components {
         Components {
@@ -438,15 +384,6 @@ mod tests {
         args.iter()
             .position(|a| a == flag)
             .and_then(|i| args.get(i + 1).cloned())
-    }
-
-    #[test]
-    fn the_default_route_interface_is_picked() {
-        let route = "Iface\tDestination\tGateway\n\
-                     lo\t0000007F\t00000000\n\
-                     eth0\t00000000\t010011AC\n";
-        assert_eq!(default_interface(route), "eth0");
-        assert_eq!(default_interface("Iface\tDestination\n"), "lo");
     }
 
     #[test]
