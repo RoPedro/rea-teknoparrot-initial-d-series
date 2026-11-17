@@ -5,8 +5,9 @@
 
 use std::path::Path;
 
-use initiald_core::settings::{Settings, Size, Upscaler};
+use initiald_core::settings::Settings;
 use rea_launcher::catalog::Host;
+use rea_launcher::gamescope::{Size, Upscaler};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Row {
@@ -50,7 +51,6 @@ impl Row {
     }
 
     /// The settings key (and command-line option `--<key>`) of this row.
-    #[cfg(test)]
     pub fn key(self) -> &'static str {
         match self {
             Row::Render => "render",
@@ -103,6 +103,8 @@ pub struct Form {
     pub settings: Settings,
     /// The cabinet's own screen size, for "native".
     pub native: Size,
+    /// The keys the player changed: the only ones a save writes.
+    changed: Vec<&'static str>,
 }
 
 pub fn size_name(s: Size) -> String {
@@ -157,7 +159,11 @@ fn pick<T: Copy + PartialEq>(all: &[T], cur: T, d: i32, wrap: bool) -> T {
 
 impl Form {
     pub fn new(settings: Settings, native: Size) -> Self {
-        Self { settings, native }
+        Self {
+            settings,
+            native,
+            changed: Vec::new(),
+        }
     }
 
     /// Why a row can't be changed now, if it can't.
@@ -204,20 +210,19 @@ impl Form {
                 s.deadzone = pct.clamp(0, 30) as f32 / 100.0;
             }
         }
-        self.settings != before
+        let changed = self.settings != before;
+        if changed && !self.changed.contains(&row.key()) {
+            self.changed.push(row.key());
+        }
+        changed
     }
-}
 
-/// Write `settings` into the file at `path`, keeping the player's comments
-/// and unknown keys; atomically (temporary file, then rename).
-pub fn save(path: &Path, settings: &Settings) -> std::io::Result<()> {
-    let existing = std::fs::read_to_string(path).unwrap_or_default();
-    if let Some(p) = path.parent() {
-        std::fs::create_dir_all(p)?;
+    /// Writes the changed keys into the file at `path`
+    /// ([`Settings::write`]: the player's lines kept, an unreadable file
+    /// left alone).
+    pub fn save(&self, path: &Path) -> std::io::Result<()> {
+        self.settings.write(path, &self.changed)
     }
-    let tmp = path.with_extension("cfg.tmp");
-    std::fs::write(&tmp, settings.save(&existing))?;
-    std::fs::rename(tmp, path)
 }
 
 #[cfg(test)]
@@ -232,10 +237,14 @@ mod tests {
     fn every_row_has_a_settings_key_and_crt_is_not_one() {
         for row in Row::ALL {
             assert_eq!(Row::from_key(row.key()), Some(row));
-            assert!(initiald_core::settings::KEYS.contains(&row.key()));
+            assert!(
+                initiald_core::settings::OPTIONS
+                    .iter()
+                    .any(|o| o.key == row.key())
+            );
         }
         assert_eq!(Row::from_key("crt"), None);
-        assert_eq!(Row::ALL.len(), initiald_core::settings::KEYS.len() - 1);
+        assert_eq!(Row::ALL.len(), initiald_core::settings::OPTIONS.len() - 1);
     }
 
     #[test]
@@ -346,18 +355,23 @@ mod tests {
         );
         f.adjust(Row::Output, -2, false);
         f.adjust(Row::Fullscreen, 1, false);
-        save(&path, &f.settings).unwrap();
+        f.save(&path).unwrap();
         let text = std::fs::read_to_string(&path).unwrap();
         assert!(
             text.starts_with("# my notes\nfuture = 1\ncrt = lottes\n"),
             "{text}"
         );
         let (back, problems) = Settings::parse(&text);
-        assert!(problems.is_empty());
+        assert_eq!(problems.len(), 1, "the unknown key: {problems:?}");
         assert_eq!(back, f.settings);
         assert_eq!(back.output, Size::new(1920, 1080));
         assert!(!back.fullscreen);
-        assert!(!path.with_extension("cfg.tmp").exists());
+        assert_eq!(
+            std::fs::read_dir(t.path().join("settings"))
+                .unwrap()
+                .count(),
+            1
+        );
     }
 
     #[test]

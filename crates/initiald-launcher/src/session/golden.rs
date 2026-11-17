@@ -9,7 +9,7 @@ use std::path::Path;
 
 use initiald_core::catalog::{GAMES, GameId, game};
 use initiald_core::launch::Components;
-use initiald_core::settings::{Crt, Size, Upscaler};
+use rea_launcher::gamescope::{Crt, Size, Upscaler};
 use rea_launcher::library::Found;
 
 use super::*;

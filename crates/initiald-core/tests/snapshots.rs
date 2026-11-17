@@ -14,8 +14,9 @@ use initiald_core::catalog::{GAMES, Game};
 use initiald_core::input::{Button, StickLayout};
 use initiald_core::launch::{self, Components, Places};
 use initiald_core::runtime::{self, Item, Op};
-use initiald_core::settings::{Crt, Settings, Size, Upscaler};
+use initiald_core::settings::Settings;
 use rea_launcher::catalog::Host;
+use rea_launcher::gamescope::{Crt, Size, Upscaler};
 use rea_launcher::wheel::{Control, Controls};
 
 /// A path as the snapshot spells it on every system (Windows joins with `\`).
@@ -25,7 +26,10 @@ fn p(path: &Path) -> String {
 
 #[test]
 fn the_settings_template() {
-    rea_launcher::snapshot!("settings-template.cfg.txt", Settings::default().save(""));
+    rea_launcher::snapshot!(
+        "settings-template.cfg.txt",
+        Settings::default().save("", &[])
+    );
 }
 
 /// A player's file: comments, a commented-out key, unknown keys, a bad
@@ -53,7 +57,7 @@ fn a_players_settings_file_round_trips() {
         for problem in problems {
             let _ = writeln!(out, "problem {problem}");
         }
-        let _ = write!(out, "-- saved\n{}", s.save(&text));
+        let _ = write!(out, "-- saved\n{}", s.save(&text, &["output", "sharpness"]));
     }
     rea_launcher::snapshot!("settings-round-trip.txt", out);
 }

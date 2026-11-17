@@ -6,8 +6,7 @@
 //! its digest so the player can file it (STANDARDS: "Exact binary identity").
 
 use rea_launcher::catalog::{self, Edition, Host, Support, Title};
-
-use crate::settings::Size;
+use rea_launcher::gamescope::Size;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum GameId {

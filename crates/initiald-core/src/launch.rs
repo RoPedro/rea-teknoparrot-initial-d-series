@@ -11,7 +11,9 @@ use rea_launcher::catalog::Host;
 
 use crate::catalog::{Game, Route};
 use crate::input::StickLayout;
-use crate::settings::{Crt, Settings, Size};
+use rea_launcher::gamescope::{Crt, Size};
+
+use crate::settings::Settings;
 
 /// A process to start.
 #[derive(Debug, Clone, PartialEq, Eq)]

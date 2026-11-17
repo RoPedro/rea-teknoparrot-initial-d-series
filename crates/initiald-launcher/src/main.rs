@@ -60,7 +60,7 @@ struct Args {
     no_input: bool,
     script: Option<PathBuf>,
     seconds: Option<u64>,
-    options: Vec<String>,
+    options: Vec<(String, String)>,
 }
 
 fn parse_args(mut it: impl Iterator<Item = String>) -> Result<Option<Args>, String> {
@@ -88,11 +88,10 @@ fn parse_args(mut it: impl Iterator<Item = String>) -> Result<Option<Args>, Stri
             | "--deadzone" => {
                 let key = &x[2..];
                 let v = value("a value")?;
-                let line = format!("{key} = {v}");
-                if !Settings::parse(&line).1.is_empty() {
+                if Settings::default().set(key, &v).is_err() {
                     return Err(format!("bad value for {x}: {v}"));
                 }
-                a.options.push(line);
+                a.options.push((key.to_string(), v));
             }
             other => return Err(format!("unknown option {other}")),
         }
@@ -100,22 +99,15 @@ fn parse_args(mut it: impl Iterator<Item = String>) -> Result<Option<Args>, Stri
     Ok(Some(a))
 }
 
-fn load_settings(paths: &Paths, slug: &str) -> Settings {
-    let text = std::fs::read_to_string(paths.settings(slug)).unwrap_or_default();
-    Settings::parse(&text).0
-}
-
-/// Apply `key = value` options to a game's settings file, keeping the rest.
-fn save_options(paths: &Paths, slug: &str, options: &[String]) -> std::io::Result<()> {
+/// Sets `options` in a game's settings file, keeping the rest.
+fn save_options(paths: &Paths, slug: &str, options: &[(String, String)]) -> std::io::Result<()> {
     let file = paths.settings(slug);
-    let old = std::fs::read_to_string(&file).unwrap_or_default();
-    let (settings, _) = Settings::parse(&format!("{old}\n{}", options.join("\n")));
-    if let Some(p) = file.parent() {
-        std::fs::create_dir_all(p)?;
+    let (mut settings, _) = Settings::load(&file)?;
+    for (key, value) in options {
+        let _ = settings.set(key, value); // checked by parse_args
     }
-    let tmp = file.with_extension("tmp");
-    std::fs::write(&tmp, settings.save(&old))?;
-    std::fs::rename(tmp, file)
+    let keys: Vec<&str> = options.iter().map(|(k, _)| k.as_str()).collect();
+    settings.write(&file, &keys)
 }
 
 fn main() -> ExitCode {
@@ -228,7 +220,18 @@ fn play(paths: &Paths, slug: &str, args: &Args) -> ExitCode {
         eprintln!("{} is not in your library folders", game.title);
         return ExitCode::FAILURE;
     };
-    let settings = load_settings(paths, slug);
+    let settings = match Settings::load(&paths.settings(slug)) {
+        Ok((s, problems)) => {
+            for p in problems {
+                eprintln!("warning: {p}");
+            }
+            s
+        }
+        Err(e) => {
+            eprintln!("{}: {e}", paths.settings(slug).display());
+            return ExitCode::FAILURE;
+        }
+    };
     let display = if args.headless {
         Display::Headless
     } else {
@@ -318,7 +321,11 @@ mod tests {
         let a = parse(&["--game", "id6", "--render", "3840x2160", "--crt", "lottes"])
             .unwrap()
             .unwrap();
-        assert_eq!(a.options, ["render = 3840x2160", "crt = lottes"]);
+        let set = |k: &str, v: &str| (k.to_string(), v.to_string());
+        assert_eq!(
+            a.options,
+            [set("render", "3840x2160"), set("crt", "lottes")]
+        );
         assert!(parse(&["--game", "id6", "--crt", "rainbow"]).is_err());
         assert!(parse(&["--render"]).is_err());
         assert!(parse(&["--bogus"]).is_err());
@@ -334,7 +341,7 @@ mod tests {
         };
         std::fs::create_dir_all(t.path().join("settings")).unwrap();
         std::fs::write(p.settings("id6"), "# mine\nupscaler = nis\n").unwrap();
-        save_options(&p, "id6", &["render = 2560x1440".into()]).unwrap();
+        save_options(&p, "id6", &[("render".into(), "2560x1440".into())]).unwrap();
         let text = std::fs::read_to_string(p.settings("id6")).unwrap();
         assert!(text.starts_with("# mine\nupscaler = nis\n"), "{text}");
         assert!(text.contains("render = 2560x1440"));

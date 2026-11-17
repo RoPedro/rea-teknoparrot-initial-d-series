@@ -720,7 +720,7 @@ mod tests {
         assert!(!plain.join(" ").contains("bwrap"));
         // the CRT effect: gamescope with the runtime's HOME, the game with the player's
         let crt = Settings {
-            crt: initiald_core::settings::Crt::Lottes,
+            crt: rea_launcher::gamescope::Crt::Lottes,
             ..Settings::default()
         };
         let plan = launch::plan(
