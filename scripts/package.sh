@@ -4,14 +4,15 @@
 #   scripts/package.sh linux     dist/pkg/InitialDLauncher-<version>-linux-x86_64.tar.gz
 #   scripts/package.sh windows   dist/pkg/InitialDLauncher-<version>-windows-x86_64.zip
 #
-# Built pieces (scripts/build-launcher.sh, the release workflow):
+# Built pieces (sdk/packaging/build-launcher.sh, the build workflow):
 #   linux    dist/linux/initiald-launcher, dist/linux/lib/libSDL2-2.0.so.0
 #   windows  target/x86_64-pc-windows-gnu/release/initiald-launcher.exe, dist/sdl2/SDL2.dll
 # The components are built or fetched once into dist/components with
 # scripts/build-components.sh (windowsarcadeloader from source with
 # patches/wal, both its launchers; GE-Proton, winetricks, Flycast and
-# Microsoft's Visual C++ 2008 x86 installer by SHA-256; the CRT effect, the
-# art and fonts), then copied into each package.
+# Microsoft's Visual C++ 2008 x86 installer through packaging/components.pins;
+# the CRT effect and the art), then copied into each package. The launcher is
+# built with the SDK's sdk/packaging/build-launcher.sh (Windows: its pinned SDL2).
 #
 # lindbergh-loader (CC BY-NC-SA) is never packaged: the Linux package
 # carries the script, its container recipe and patches/lindbergh, and the
@@ -39,7 +40,7 @@ copy_wal() { # the launcher's own program of windowsarcadeloader
 	cp "$comps/wal/$1" "$out/components/wal/"
 	cp -r "$comps/wal/payloads" "$comps/wal/systemprofiles" "$out/components/wal/"
 	cp "$comps/wal/LICENSE" "$out/licenses/windowsarcadeloader-LICENSE.txt"
-	cp -r "$comps/art" "$comps/fonts" "$comps/shaders" "$out/components/"
+	cp -r "$comps/art" "$comps/shaders" "$out/components/"
 }
 
 if [ "$os" = linux ]; then
@@ -60,14 +61,15 @@ if [ "$os" = linux ]; then
 	cp -r "$root/patches/lindbergh" "$out/patches/lindbergh"
 else
 	exe=${CARGO_TARGET_DIR:-$root/target}/x86_64-pc-windows-gnu/release/initiald-launcher.exe
-	[ -f "$exe" ] || die "missing $exe - run scripts/build-launcher.sh windows"
+	[ -f "$exe" ] || die "missing $exe - run sdk/packaging/build-launcher.sh windows initiald-launcher"
 	[ -f "$root/dist/sdl2/SDL2.dll" ] || die "missing dist/sdl2/SDL2.dll"
 	"$root/scripts/build-components.sh" "$comps" wal flycast vcredist shaders assets
 	cp "$exe" "$root/dist/sdl2/SDL2.dll" "$out/"
-	sdl=$(sed -n 's/^dir=//p' "$root/packaging/sdl2.pin")
-	cp "$root/dist/sdl2/${sdl%/*}/LICENSE.txt" "$out/licenses/SDL2-LICENSE.txt"
+	for l in "$root"/dist/sdl2/SDL2-*/LICENSE.txt; do cp "$l" "$out/licenses/SDL2-LICENSE.txt"; done
 	copy_wal arcade-launcher.exe
-	cp -r "$comps/flycast" "$out/components/flycast"
+	mkdir -p "$out/components/flycast"
+	cp "$comps/flycast/flycast.exe" "$out/components/flycast/"
+	cp "$comps/flycast/LICENSE" "$out/licenses/Flycast-LICENSE.txt"
 	# installed by the launcher on the first start of Initial D 6, 7 or 8
 	cp -r "$comps/vcredist" "$out/components/vcredist"
 fi
@@ -76,7 +78,7 @@ cp "$root/packaging/README-player.txt" "$out/README.txt"
 cp "$root/packaging/SOURCES.txt" "$out/licenses/SOURCES.txt"
 cp "$root/LICENSE" "$out/licenses/LICENSE-GPL-3.0.txt"
 cp "$root/THIRD_PARTY.md" "$out/licenses/"
-cp "$root/assets/fonts/OFL.txt" "$out/licenses/Barlow-OFL.txt"
+cp "$root/packaging/Barlow-OFL.txt" "$out/licenses/Barlow-OFL.txt"
 
 cd "$root/dist/pkg"
 if [ "$os" = linux ]; then

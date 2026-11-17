@@ -1,0 +1,21 @@
+# Every file the Linux package may hold (sdk/packaging/smoke-package.sh).
+initiald-launcher x
+lib/libSDL2-2.0.so.0
+README.txt
+licenses/LICENSE-GPL-3.0.txt
+licenses/THIRD_PARTY.md
+licenses/SOURCES.txt
+licenses/Barlow-OFL.txt
+licenses/windowsarcadeloader-LICENSE.txt
+licenses/SDL2-copyright.txt optional
+components/wal/arcade-launcher x
+components/wal/payloads/*
+components/wal/systemprofiles/*
+components/runner/*
+components/winetricks x
+components/shaders/crt-lottes.fx
+components/art/*.jpg
+# lindbergh-loader is built on the player's machine on first use, never shipped
+scripts/build-components.sh x
+scripts/lindbergh-in-container.sh x
+patches/lindbergh/*.patch

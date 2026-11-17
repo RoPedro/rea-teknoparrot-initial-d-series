@@ -7,14 +7,16 @@
 #               arcade-launcher.exe (its Windows build, linked with LLD), payloads/,
 #               systemprofiles/  (needs Rust with the i686/x86_64-pc-windows-gnu targets, MinGW,
 #               LLD and mono's mcs); not rebuilt while its commit and patches are unchanged
-#   runner/     GE-Proton 11-12, checked by SHA-256
-#   winetricks  pinned, checked by SHA-256 (windowsarcadeloader installs native XAudio with it)
-#   flycast/    Flycast for Windows (GPL-2.0), pinned, checked by SHA-256
-#   vcredist/   Microsoft's Visual C++ 2008 SP1 Redistributable (x86), Microsoft's own download,
-#               checked by SHA-256 (signed by Microsoft): Initial D 6, 7 and 8 on Windows need
-#               it, the launcher installs it on their first start
+#   runner/     GE-Proton 11-12
+#   winetricks  windowsarcadeloader installs native XAudio with it
+#   flycast/    Flycast for Windows (GPL-2.0) and its licence
+#   vcredist/   Microsoft's Visual C++ 2008 SP1 Redistributable (x86), Microsoft's own download
+#               (signed by Microsoft): Initial D 6, 7 and 8 on Windows need it, the launcher
+#               installs it on their first start
 #   shaders/    the launcher's own CRT effect
-#   art/ fonts/ the window's original illustrations and the Barlow typefaces (OFL)
+#   art/        the window's original illustrations
+# The downloads are pinned in packaging/components.pins and fetched through the SDK's
+# sdk/packaging/pins.sh (checked by SHA-256; a download cut short is never used).
 # usage: scripts/build-components.sh <components dir> [lindbergh|wal|runner|winetricks|flycast|vcredist|shaders|assets ...]
 # LAUNCHER_FEATURES: passed to windowsarcadeloader's build (packages: sdl3/build-from-source-static)
 set -eu
@@ -28,14 +30,13 @@ LINDBERGH_COMMIT=0af606d845b70339c335785c0eba68b47b78df3c
 WAL_REPO=https://github.com/aderumier/windowsarcadeloader
 WAL_COMMIT=4f42c6d86ddaaa9d2e4e8c21e0046bb3027b111d
 RUNNER=GE-Proton11-12-x86_64
-RUNNER_URL=https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton11-12/$RUNNER.tar.gz
-RUNNER_SHA256=0595159e417c3dbbfb7cc3ae0d3ed15a617cc607aa23ef756ea79029d7af5d70
-WINETRICKS_URL=https://raw.githubusercontent.com/Winetricks/winetricks/20260125/src/winetricks
-WINETRICKS_SHA256=431f82fc74000e6c864409f1d8fb495d696c03928808e3e8acffc45179312a7b
-FLYCAST_URL=https://github.com/flyinghead/flycast/releases/download/v2.7/flycast-win64-2.7.zip
-FLYCAST_SHA256=7edf489ba6b3053703a18ce8233767eb71a2d89e4bda0421b312c2167a739161
-VCREDIST_URL=https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe
-VCREDIST_SHA256=8742bcbf24ef328a72d2a27b693cc7071e38d3bb4b9b44dec42aa3d2c8d61d92
+
+# fetch NAME: the pinned download NAME in the work folder (its path)
+fetch() {
+  . "$here/sdk/packaging/pins.sh"
+  PIN_FILE="$here/packaging/components.pins" PIN_DIR='' pin_fetch "$1" "$work" \
+    || { echo "$1: download failed (see above)" >&2; exit 1; }
+}
 
 checkout() { # repo commit dir
   [ -d "$3/.git" ] || git clone -q "$1" "$3"
@@ -81,36 +82,30 @@ wal)
   echo "$stamp" > "$out/wal/.stamp"
   ;;
 flycast)
-  f="$work/flycast-win64.zip"
-  [ -f "$f" ] || curl -fsSL -o "$f" "$FLYCAST_URL"
-  echo "$FLYCAST_SHA256  $f" | sha256sum -c -
+  f=$(fetch flycast-win)
+  l=$(fetch flycast-license)
   rm -rf "$out/flycast"; mkdir -p "$out/flycast"
   unzip -q -o "$f" flycast.exe -d "$out/flycast"
+  cp "$l" "$out/flycast/LICENSE"
   ;;
 vcredist)
-  f="$work/vcredist_x86.exe"
-  [ -f "$f" ] || curl -fsSL -o "$f" "$VCREDIST_URL"
-  echo "$VCREDIST_SHA256  $f" | sha256sum -c -
+  f=$(fetch vcredist)
   mkdir -p "$out/vcredist"; cp "$f" "$out/vcredist/vcredist_x86.exe"
   ;;
 runner)
-  f="$work/$RUNNER.tar.gz"
-  [ -f "$f" ] || curl -fsSL -o "$f" "$RUNNER_URL"
-  echo "$RUNNER_SHA256  $f" | sha256sum -c -
+  f=$(fetch runner)
   tar -xzf "$f" -C "$work"
   rm -rf "$out/runner"; mv "$work/$RUNNER/files" "$out/runner"
   ;;
 winetricks)
-  f="$work/winetricks"
-  [ -f "$f" ] || curl -fsSL -o "$f" "$WINETRICKS_URL"
-  echo "$WINETRICKS_SHA256  $f" | sha256sum -c -
+  f=$(fetch winetricks)
   install -m 755 "$f" "$out/winetricks"
   ;;
 shaders)
   mkdir -p "$out/shaders"; cp "$here"/assets/shaders/*.fx "$out/shaders/"
   ;;
 assets)
-  rm -rf "$out/art" "$out/fonts"; cp -r "$here/assets/art" "$out/art"; cp -r "$here/assets/fonts" "$out/fonts"
+  rm -rf "$out/art" "$out/fonts"; cp -r "$here/assets/art" "$out/art"
   ;;
 *) echo "unknown part $part" >&2; exit 2;;
 esac; done

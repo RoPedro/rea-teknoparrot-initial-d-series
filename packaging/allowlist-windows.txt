@@ -1,0 +1,18 @@
+# Every file the Windows package may hold (sdk/packaging/smoke-package.sh).
+initiald-launcher.exe
+SDL2.dll
+README.txt
+licenses/LICENSE-GPL-3.0.txt
+licenses/THIRD_PARTY.md
+licenses/SOURCES.txt
+licenses/Barlow-OFL.txt
+licenses/windowsarcadeloader-LICENSE.txt
+licenses/SDL2-LICENSE.txt
+licenses/Flycast-LICENSE.txt
+components/wal/arcade-launcher.exe
+components/wal/payloads/*
+components/wal/systemprofiles/*
+components/flycast/flycast.exe
+components/vcredist/vcredist_x86.exe
+components/shaders/crt-lottes.fx
+components/art/*.jpg

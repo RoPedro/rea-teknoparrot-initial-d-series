@@ -1,0 +1,52 @@
+name: Unknown edition
+description: "The launcher listed one of your games as an unknown build."
+title: "Unknown edition: "
+labels: ["edition"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The launcher only starts builds it has identified (the SHA-256 of the game's program, or
+        the SHA-1 a NAOMI 2 CHD records), so it listed yours as unknown and left it untouched.
+        Tell us about your copy: a build we can verify gets added. Never attach or link game files.
+  - type: dropdown
+    id: game
+    attributes:
+      label: Which game?
+      options:
+        - Initial D Arcade Stage (Ver. 1)
+        - Initial D Arcade Stage Ver. 2
+        - Initial D Arcade Stage Ver. 3
+        - Initial D Arcade Stage 4
+        - Initial D Arcade Stage 5
+        - Initial D Arcade Stage 6 AA
+        - Initial D Arcade Stage 7 AAX
+        - Initial D Arcade Stage 8 Infinity
+        - Initial D Arcade Stage Zero Ver. 2
+        - Initial D THE ARCADE Season 3
+        - Initial D THE ARCADE Season 5
+    validations:
+      required: true
+  - type: input
+    id: digest
+    attributes:
+      label: Digest
+      description: >-
+        The digest that `initiald-launcher --list` (or launcher.log) showed for the unknown build.
+    validations:
+      required: true
+  - type: input
+    id: file
+    attributes:
+      label: The file it named, and its size in bytes
+      description: e.g. "id5.elf, 9437184".
+  - type: input
+    id: details
+    attributes:
+      label: Version and region
+      description: e.g. "Export 2.0". Where the folder name or the game's test menu says it.
+  - type: input
+    id: version
+    attributes:
+      label: Launcher version
+      description: The release you downloaded.

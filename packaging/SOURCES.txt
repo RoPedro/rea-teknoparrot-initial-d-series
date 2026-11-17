@@ -11,7 +11,8 @@ windowsarcadeloader (GPL-3.0-or-later): components/wal
   applied (in the launcher's source: patches/wal/*.patch).
 
 Flycast (GPL-2.0), Windows package only: components/flycast
-  https://github.com/flyinghead/flycast/tree/v2.7 (release v2.7, unmodified)
+  https://github.com/flyinghead/flycast/tree/v2.7 (release v2.7, unmodified;
+  its licence is licenses/Flycast-LICENSE.txt)
 
 Microsoft Visual C++ 2008 SP1 Redistributable (x86), Windows package only:
 components/vcredist (Microsoft's own installer, unmodified, not open source;

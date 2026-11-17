@@ -1,0 +1,9 @@
+# Components the weekly watch-upstream workflow checks, one per line:
+#
+#   name owner/repo asset-name-prefix
+#
+# `name` is a pin in packaging/components.pins whose url is a file that
+# owner/repo's releases upload. Moving a pin stays a human decision, made
+# after playing with the new release.
+runner GloriousEggroll/proton-ge-custom GE-Proton
+flycast-win flyinghead/flycast flycast-win64

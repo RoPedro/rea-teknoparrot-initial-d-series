@@ -13,7 +13,8 @@ Windows:  initiald-launcher.exe
 
 The first window asks for your game folders (a TeknoParrot-style folder of
 games, a MAME-style naomi2 folder) and the NAOMI 2 BIOS (naomi2.zip). Then
-pick a game and press Play.
+pick a game and press Play. The window works with a pad too: the d-pad
+moves, A chooses, B goes back, Y opens a game's settings.
 
 What it needs on Linux
 ----------------------
@@ -55,8 +56,8 @@ Linux:    ~/.local/share/rea-initiald/
 Windows:  %LOCALAPPDATA%\rea-initiald\
 
 Settings, logs, and runtimes/<game>/ (each game's private folder, your
-saves included). If a game doesn't start, runtimes/<game>/session.log
-says why. To uninstall, delete this folder and that one (back up
-runtimes/ first).
+saves included). If a game doesn't start, the window says why, and
+launcher.log and runtimes/<game>/session.log have the details. To
+uninstall, delete this folder and that one (back up runtimes/ first).
 
 Licences: licenses/. Source: https://github.com/akitaonrails/rea-teknoparrot-initial-d-series
