@@ -7,25 +7,31 @@ $ initiald-launcher --play id1 --headless
 exit 1
 -- stdout
 -- stderr
-Initial D Arcade Stage needs launcher components that are missing:
+warning: <tmp>/lib/tp/junk/initdv3e/gds-0033.chd: failed to fill whole buffer
+Initial D Launcher: Initial D Arcade Stage needs launcher components that are missing:
   <tmp>/components/flycast/flycast.exe
 (see README, "Components")
+Report a problem: https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new/choose
 
 $ initiald-launcher --play id2 --headless
 exit 1
 -- stdout
 -- stderr
-Initial D Arcade Stage Ver. 2 needs launcher components that are missing:
+warning: <tmp>/lib/tp/junk/initdv3e/gds-0033.chd: failed to fill whole buffer
+Initial D Launcher: Initial D Arcade Stage Ver. 2 needs launcher components that are missing:
   <tmp>/components/flycast/flycast.exe
 (see README, "Components")
+Report a problem: https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new/choose
 
 $ initiald-launcher --play id1 --headless
 exit 1
 -- stdout
 -- stderr
-Initial D Arcade Stage needs launcher components that are missing:
+warning: <tmp>/lib/tp/junk/initdv3e/gds-0033.chd: failed to fill whole buffer
+Initial D Launcher: Initial D Arcade Stage needs launcher components that are missing:
   <tmp>/components/flycast/flycast.exe
 (see README, "Components")
+Report a problem: https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new/choose
 
 $ initiald-launcher --naomi2-bios <tmp>/bios/naomi2.zip
 exit 0
@@ -36,9 +42,11 @@ $ initiald-launcher --play id1 --headless --seconds 1
 exit 1
 -- stdout
 -- stderr
-Initial D Arcade Stage needs launcher components that are missing:
+warning: <tmp>/lib/tp/junk/initdv3e/gds-0033.chd: failed to fill whole buffer
+Initial D Launcher: Initial D Arcade Stage needs launcher components that are missing:
   <tmp>/components/flycast/flycast.exe
 (see README, "Components")
+Report a problem: https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new/choose
 
 -- data/runtimes/id1/session.log
 (no such file)

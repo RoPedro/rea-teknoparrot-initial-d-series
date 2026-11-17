@@ -120,10 +120,7 @@ fn machine_free(text: &str) -> String {
 #[test]
 fn prepare_builds_the_runtime_folders() {
     let t = tempfile::tempdir().unwrap();
-    let paths = Paths {
-        data: t.path().join("data"),
-        components: t.path().join("components"),
-    };
+    let paths = crate::paths::in_dir(t.path());
     let c = paths.components();
     for dir in [
         c.wal.join("payloads"),
@@ -156,7 +153,15 @@ fn prepare_builds_the_runtime_folders() {
                 edition: &g.editions[0],
             },
         };
-        let prepared = prepare(&paths, g, &entry, &Settings::default(), Display::Headless).unwrap();
+        let prepared = prepare(
+            &paths,
+            g,
+            &entry,
+            &Settings::default(),
+            &HubConfig::new(&crate::paths::FIELDS),
+            Display::Headless,
+        )
+        .unwrap();
         let _ = writeln!(
             out,
             "== {}\nfirst start marker {:?}",

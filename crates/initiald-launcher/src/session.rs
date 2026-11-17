@@ -18,6 +18,7 @@ use initiald_core::runtime;
 use initiald_core::settings::Settings;
 use rea_launcher::catalog::{Host, Support};
 use rea_launcher::gamescope::CommandLine;
+use rea_launcher::hub::{HubConfig, HubPaths};
 use rea_launcher::library::Entry;
 use rea_launcher::linkfarm::{self, Occupied, Op};
 use rea_launcher::wheel::Script;
@@ -27,7 +28,7 @@ use rea_launcher_native::group::{Group, Tag};
 use rea_launcher_native::supervise::{self, Ended, Hold, Options, Outcome, Watcher};
 
 use crate::input::Wal;
-use crate::paths::Paths;
+use crate::paths::Folders;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Display {
@@ -39,6 +40,8 @@ pub enum Display {
 pub struct Prepared {
     pub plan: Plan,
     pub route: Route,
+    /// The library folders, bound read-only around the game on Linux.
+    pub libraries: Vec<PathBuf>,
     pub runtime: PathBuf,
     /// [`Game::first_start_marker`] in the runtime, when the game has one.
     pub first_start: Option<PathBuf>,
@@ -79,7 +82,7 @@ impl Feed {
     }
 }
 
-fn check_components(game: &Game, p: &Paths) -> Result<()> {
+fn check_components(game: &Game, p: &HubPaths) -> Result<()> {
     let c = p.components();
     let windows = Host::current() == Host::Windows;
     let need: Vec<PathBuf> = match game.route {
@@ -173,7 +176,7 @@ pub enum Setup {
 }
 
 /// What `game` needs set up before it can start, if anything.
-pub fn setup_needed(paths: &Paths, game: &Game) -> Option<Setup> {
+pub fn setup_needed(paths: &HubPaths, game: &Game) -> Option<Setup> {
     if needs_lindbergh_build(paths, game) {
         Some(Setup::Lindbergh)
     } else if Host::current() == Host::Windows
@@ -186,7 +189,7 @@ pub fn setup_needed(paths: &Paths, game: &Game) -> Option<Setup> {
     }
 }
 
-pub fn set_up(paths: &Paths, setup: Setup) -> Result<()> {
+pub fn set_up(paths: &HubPaths, setup: Setup) -> Result<()> {
     match setup {
         Setup::Lindbergh => build_lindbergh(paths),
         Setup::VisualCpp2008 => install_vc2008(&paths.vcredist()),
@@ -264,14 +267,14 @@ const DEFAULT_WAL_PORT: u16 = 33700;
 
 /// Whether `game` needs lindbergh-loader built first (its first start on
 /// this computer).
-fn needs_lindbergh_build(paths: &Paths, game: &Game) -> bool {
+fn needs_lindbergh_build(paths: &HubPaths, game: &Game) -> bool {
     game.route == Route::Lindbergh && !paths.lindbergh().join("lindbergh.so").is_file()
 }
 
 /// Builds lindbergh-loader into the data folder with
 /// `scripts/build-components.sh` (git and docker or podman, a few minutes);
 /// its output goes to `lindbergh-build.log` there.
-fn build_lindbergh(paths: &Paths) -> Result<()> {
+fn build_lindbergh(paths: &HubPaths) -> Result<()> {
     let script = paths.build_script();
     if !script.is_file() {
         bail!("the build script is missing ({})", script.display());
@@ -305,7 +308,7 @@ fn build_lindbergh(paths: &Paths) -> Result<()> {
     Ok(())
 }
 
-pub fn which(program: &str) -> Option<PathBuf> {
+fn which(program: &str) -> Option<PathBuf> {
     std::env::var_os("PATH").and_then(|path| {
         std::env::split_paths(&path)
             .map(|d| d.join(program))
@@ -313,35 +316,42 @@ pub fn which(program: &str) -> Option<PathBuf> {
     })
 }
 
-/// Build the runtime folder and write the game's files.
-pub fn prepare(
-    paths: &Paths,
-    game: &Game,
-    entry: &Entry<Game>,
-    settings: &Settings,
-    display: Display,
-) -> Result<Prepared> {
+/// Whether `game`, found in `dir`, can start: supported here, the
+/// launcher's components in place, a NAOMI 2 game's cartridge key and BIOS.
+pub fn check(paths: &HubPaths, game: &Game, dir: &Path, config: &HubConfig) -> Result<()> {
     if let Support::Blocked(why) = game.support_on(Host::current()) {
         bail!("{} can't start yet: {why}", game.title);
     }
     check_components(game, paths)?;
-    let rt = paths.runtime(game.slug);
-    let config = paths.config();
     if let Route::Flycast { set } = game.route {
-        if !entry.dir.join(format!("{set}.zip")).is_file() {
+        if !dir.join(format!("{set}.zip")).is_file() {
             bail!(
                 "{} needs {set}.zip (the cartridge key) next to the {set}/ folder in {}",
                 game.title,
-                entry.dir.display()
+                dir.display()
             );
         }
-        if config.naomi2_bios.as_ref().is_none_or(|b| !b.is_file()) {
+        if config.paths[0].as_ref().is_none_or(|b| !b.is_file()) {
             bail!(
                 "{} needs the NAOMI 2 BIOS (naomi2.zip): run with --naomi2-bios <file>",
                 game.title
             );
         }
     }
+    Ok(())
+}
+
+/// Build the runtime folder and write the game's files.
+pub fn prepare(
+    paths: &HubPaths,
+    game: &Game,
+    entry: &Entry<Game>,
+    settings: &Settings,
+    config: &HubConfig,
+    display: Display,
+) -> Result<Prepared> {
+    check(paths, game, &entry.dir, config)?;
+    let rt = paths.runtime(game.slug);
     let ops = runtime::plan(game, &entry.dir, &rt, &linkfarm::list)
         .with_context(|| format!("reading {}", entry.dir.display()))?;
     if rt.is_dir() {
@@ -354,7 +364,7 @@ pub fn prepare(
     let places = Places {
         runtime: rt.clone(),
         wal_root: paths.wal_root(),
-        naomi2_bios: config.naomi2_bios.clone(),
+        naomi2_bios: config.paths[0].clone(),
         wal_port: wal::free_port_block(DEFAULT_WAL_PORT),
     };
     let nic =
@@ -390,6 +400,7 @@ pub fn prepare(
     Ok(Prepared {
         plan,
         route: game.route,
+        libraries: config.libraries.clone(),
         runtime: rt,
         first_start,
     })
@@ -434,16 +445,16 @@ const MARKER_SETTLE: Duration = Duration::from_secs(10);
 /// session started. A game on its first start (see
 /// [`Game::first_start_marker`]) is started again, once, as soon as that
 /// start has written its marker.
-pub fn run(paths: &Paths, p: &Prepared, feed: &Feed, stop: &AtomicBool) -> Result<Outcome> {
+pub fn run(p: &Prepared, feed: &Feed, stop: &AtomicBool) -> Result<Outcome> {
     let log: supervise::Log = Arc::new(Mutex::new(fs::File::create(log_path(&p.runtime))?));
     let marker = p.first_start.clone().filter(|m| !m.exists());
     let first_start = marker.is_some();
-    let out = run_once(paths, p, feed, stop, &log, marker)?;
+    let out = run_once(p, feed, stop, &log, marker)?;
     if !(first_start && matches!(out.ended, Ended::Watcher(_))) {
         return Ok(out);
     }
     writeln!(log.lock().unwrap(), "# starting again")?;
-    run_once(paths, p, feed, stop, &log, None)
+    run_once(p, feed, stop, &log, None)
 }
 
 /// How a run ended for the player: a game that closed by itself at once
@@ -471,14 +482,13 @@ fn session_argv(plan: &Plan, libraries: &[PathBuf]) -> Vec<String> {
 }
 
 fn run_once(
-    paths: &Paths,
     p: &Prepared,
     feed: &Feed,
     stop: &AtomicBool,
     log: &supervise::Log,
     marker: Option<PathBuf>,
 ) -> Result<Outcome> {
-    let argv = session_argv(&p.plan, &paths.config().libraries);
+    let argv = session_argv(&p.plan, &p.libraries);
     let mut cmd = Command::new(&argv[0]);
     cmd.args(&argv[1..])
         .current_dir(&p.plan.game.cwd)
@@ -536,9 +546,9 @@ impl Watcher for Watch {
         None
     }
 
-    /// Linux, Flycast: Flycast alone, which saves and quits (gamescope
-    /// then ends with it); stopping gamescope with it lets gamescope's
-    /// reaper kill Flycast before it has saved. Otherwise the session.
+    /// Linux, Flycast: Flycast alone, which saves and quits (stopping
+    /// gamescope with it lets gamescope's reaper kill Flycast before it has
+    /// saved). Otherwise the session.
     fn ask_to_stop(&mut self, group: &Group) {
         #[cfg(target_os = "linux")]
         if self.flycast
@@ -550,8 +560,9 @@ impl Watcher for Watch {
         group.terminate();
     }
 
-    /// Linux, Flycast: while Flycast runs. Otherwise until the session
-    /// ends (the caller watches it).
+    /// Linux, Flycast: while Flycast runs; then what is left is ended at
+    /// once (gamescope 3.17 crashes, dumping core, on its way out once its
+    /// game is gone). Otherwise until the session ends.
     fn saving(&mut self, _group: &Group) -> bool {
         #[cfg(target_os = "linux")]
         if self.flycast {

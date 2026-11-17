@@ -4,7 +4,8 @@ exit 0
 -- stderr
 
 -- data/launcher.cfg
-# Written by the launcher.
+# my libraries
+future = 1
 library = <tmp>/lib/naomi2
 library = <tmp>/lib/tp
 $ initiald-launcher --naomi2-bios <tmp>/bios/naomi2.zip
@@ -13,7 +14,8 @@ exit 0
 -- stderr
 
 -- data/launcher.cfg
-# Written by the launcher.
+# my libraries
+future = 1
 library = <tmp>/lib/naomi2
 library = <tmp>/lib/tp
 naomi2_bios = <tmp>/bios/naomi2.zip
@@ -30,9 +32,11 @@ unknown id5.elf 957d7bf0323df209dd69bc8eaa9c9edf028e38bd5154d4923dc548d5fbd1bf21
 warning: <tmp>/lib/tp/junk/initdv3e/gds-0033.chd: failed to fill whole buffer
 
 $ initiald-launcher --game id6
-exit 0
+exit 2
 -- stdout
 -- stderr
+--set id6 needs options to save, e.g. --set id6 --render <value>
+<usage text>
 
 -- data/settings/id6.cfg
 (no such file)
@@ -53,7 +57,9 @@ $ initiald-launcher --play id7 --deadzone 0.1 --output 1920x1080
 exit 1
 -- stdout
 -- stderr
-Initial D Arcade Stage 7 AAX is not in your library folders
+warning: <tmp>/lib/tp/junk/initdv3e/gds-0033.chd: failed to fill whole buffer
+Initial D Launcher: Initial D Arcade Stage 7 AAX is not in your library folders
+Report a problem: https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new/choose
 
 -- data/settings/id7.cfg
 # Settings for one game of the Initial D launcher.
@@ -85,5 +91,5 @@ crt = off
 fullscreen = true
 
 # How far a controller stick moves before the car starts to steer.
-# Values: 0 to 0.3.
+# Values: 0.00 to 0.30.
 deadzone = 0.10

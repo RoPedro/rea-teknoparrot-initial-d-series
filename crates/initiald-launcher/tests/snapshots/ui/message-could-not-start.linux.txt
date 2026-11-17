@@ -22,8 +22,8 @@ Tab label="Controls" toggled=False @412,17 91x38
 Tab label="Settings" toggled=False @511,17 91x38
 Label value="Controller: No controller"
 Label value="Initial D Arcade Stage 6 AA couldn't start"
-Label value="Initial D Arcade Stage 6 AA needs launcher components that are missing:\n  <tmp>/components/wal/arcade-launcher\n  <tmp>/components/wal/payloads\n  <tmp>/components/wal/systemprofiles\n  <tmp>/components/runner/bin/wine\n(see README, \"Components\")."
-Button label="OK" @354,421 140x50
+Label value="Initial D Arcade Stage 6 AA needs launcher components that are missing:\n  <tmp>/components/wal/arcade-launcher\n  <tmp>/components/wal/payloads\n  <tmp>/components/wal/systemprofiles\n  <tmp>/components/runner/bin/wine\n(see README, \"Components\").\n\nCheck that the game folder is complete, then try again. Details are in <tmp>/data/launcher.log."
+Button label="OK" @354,448 140x50
 == 1280x800
 Label value="Initial D Arcade Stage 6 AA"
 Label value="Sega RingEdge · 2011 · Japan (SBUU)"
@@ -48,5 +48,5 @@ Tab label="Controls" toggled=False @457,19 101x42
 Tab label="Settings" toggled=False @568,19 101x42
 Label value="Controller: No controller"
 Label value="Initial D Arcade Stage 6 AA couldn't start"
-Label value="Initial D Arcade Stage 6 AA needs launcher components that are missing:\n  <tmp>/components/wal/arcade-launcher\n  <tmp>/components/wal/payloads\n  <tmp>/components/wal/systemprofiles\n  <tmp>/components/runner/bin/wine\n(see README, \"Components\")."
-Button label="OK" @322,468 156x56
+Label value="Initial D Arcade Stage 6 AA needs launcher components that are missing:\n  <tmp>/components/wal/arcade-launcher\n  <tmp>/components/wal/payloads\n  <tmp>/components/wal/systemprofiles\n  <tmp>/components/runner/bin/wine\n(see README, \"Components\").\n\nCheck that the game folder is complete, then try again. Details are in <tmp>/data/launcher.log."
+Button label="OK" @322,498 156x56

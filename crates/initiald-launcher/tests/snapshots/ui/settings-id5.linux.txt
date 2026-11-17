@@ -52,6 +52,7 @@ Label value="<tmp>/games"
 Label value="1 of 11 games found. 1 folder holds a build this launcher doesn't know; launcher.log has its digest."
 Button label="Rescan" @862,367 333x51
 Button label="Folders and BIOS" @862,433 333x51
+Label value="The size the game draws at. Bigger is sharper and needs a stronger GPU."
 Tab label="Games" toggled=False @362,19 86x42
 Tab label="Controls" toggled=False @457,19 101x42
 Tab label="Settings" toggled=True @568,19 101x42

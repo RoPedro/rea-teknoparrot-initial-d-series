@@ -9,14 +9,14 @@ $ initiald-launcher --render
 exit 2
 -- stdout
 -- stderr
---render needs a value
+--render needs <WxH|native>
 <usage text>
 
 $ initiald-launcher --game id6 --crt rainbow
 exit 2
 -- stdout
 -- stderr
-bad value for --crt: rainbow
+bad value for --crt: rainbow (it takes off or lottes)
 <usage text>
 
 $ initiald-launcher --play id1 --seconds soon
@@ -30,36 +30,42 @@ $ initiald-launcher --crt off
 exit 2
 -- stdout
 -- stderr
-options need --play <game> or --game <game>
+options need --play <game> or --set <game>
+<usage text>
 
 $ initiald-launcher --game nope --crt off
 exit 2
 -- stdout
 -- stderr
-unknown game nope
+unknown game nope; the games are id1, id2, id3, id4, id5, id6, id7, id8, zero, ta3, ta5
+<usage text>
 
 $ initiald-launcher --play nope
 exit 2
 -- stdout
 -- stderr
-unknown game nope
+unknown game nope; the games are id1, id2, id3, id4, id5, id6, id7, id8, zero, ta3, ta5
+<usage text>
 
 $ initiald-launcher --list
 exit 1
 -- stdout
 -- stderr
-no library yet: run with --library <folder>
+Initial D Launcher: No library yet: run with --library <folder>.
+Report a problem: https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new/choose
 
 $ initiald-launcher --library <tmp>/missing
-exit 2
+exit 1
 -- stdout
 -- stderr
-<tmp>/missing is not a folder
+Initial D Launcher: <tmp>/missing isn't a folder this computer can open. Check the path and try again.
+Report a problem: https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new/choose
 
 $ initiald-launcher --naomi2-bios <tmp>/missing
-exit 2
+exit 1
 -- stdout
 -- stderr
-<tmp>/missing is not a file
+Initial D Launcher: <tmp>/missing isn't a file this computer can open. Check the path and try again.
+Report a problem: https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new/choose
 
--- the data folder holds 0 entries
+-- the data folder holds 1 entries

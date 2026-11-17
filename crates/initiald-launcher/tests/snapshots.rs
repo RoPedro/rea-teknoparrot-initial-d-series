@@ -11,6 +11,9 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
+/// The launchers the tests start take the same instance on Windows.
+static ONE_AT_A_TIME: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 /// A temporary data folder, components folder and library.
 struct Fixture {
     root: tempfile::TempDir,
@@ -52,7 +55,21 @@ impl Fixture {
         let mut cmd = Command::new(env!("CARGO_BIN_EXE_initiald-launcher"));
         cmd.args(args)
             .env("INITIALD_DATA", self.path("data"))
-            .env("INITIALD_COMPONENTS", self.path("components"));
+            .env("INITIALD_COMPONENTS", self.path("components"))
+            // the single-instance lock of this fixture's launcher (Linux)
+            .env("XDG_RUNTIME_DIR", self.path("bin"))
+            // headless: a refusal is never shown in a message window
+            .env_remove("DISPLAY")
+            .env_remove("WAYLAND_DISPLAY");
+        // Windows: a command's refusal (--list, --check) is a dialog for a
+        // player without a terminal, which would wait forever under Wine;
+        // `--linux` says the output is read (the SDK template's rule). A
+        // --play refusal is never a dialog (a run without the window).
+        if cfg!(windows) && args.iter().any(|a| matches!(*a, "--list" | "--check")) {
+            cmd.arg("--linux");
+        }
+        // Windows: one launcher at a time per user session, whatever the fixture
+        let _one = ONE_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
         // no git, docker or flycast: what the launcher says without them
         if cfg!(unix) {
             cmd.env("PATH", self.path("bin"));
@@ -121,6 +138,8 @@ fn help() {
     let o = Command::new(env!("CARGO_BIN_EXE_initiald-launcher"))
         .arg("--help")
         .env("INITIALD_DATA", f.path("data"))
+        .env_remove("DISPLAY")
+        .env_remove("WAYLAND_DISPLAY")
         .output()
         .expect("run the launcher");
     assert!(o.status.success());

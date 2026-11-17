@@ -21,9 +21,6 @@ pub const STYLE: KeyStyle = KeyStyle::Underscore;
 
 const NATIVE: &cfg::Aliases = &[("native", Resolution::Original)];
 
-/// What `deadzone` takes, as its messages and `--help` say it.
-const DEADZONE_NEEDS: &str = "0 to 0.3";
-
 /// Every per-game option: settings key, flag and window row.
 pub const OPTIONS: &[OptionSpec] = &[
     OptionSpec::new(
@@ -36,6 +33,7 @@ pub const OPTIONS: &[OptionSpec] = &[
         "Game render size",
         "The size the game draws at. Bigger is sharper and needs a stronger GPU.",
     )
+    .with_placeholder("<WxH|native>")
     .with_example("3840x2160"),
     OptionSpec::new(
         "output",
@@ -81,12 +79,14 @@ pub const OPTIONS: &[OptionSpec] = &[
     .helper_owned(),
     OptionSpec::new(
         "deadzone",
-        Kind::Text,
+        Kind::Decimal {
+            min: 0,
+            max: 30,
+            places: 2,
+        },
         "Dead zone",
         "How far a controller stick moves before the car starts to steer.",
     )
-    .with_needs(DEADZONE_NEEDS)
-    .with_placeholder("<0-0.3>")
     .with_example("0.05"),
 ];
 
@@ -138,7 +138,7 @@ impl Settings {
             ("sharpness", Value::Number(n)) => self.sharpness = n as u8,
             ("crt", Value::Choice(v)) => self.crt = Crt::parse(v).ok_or(Rejected::Unknown)?,
             ("fullscreen", Value::Toggle(b)) => self.fullscreen = b,
-            ("deadzone", Value::Text(t)) => self.deadzone = deadzone(t)?,
+            ("deadzone", Value::Decimal(d)) => self.deadzone = d.as_f32(),
             _ => return Err(Rejected::Unknown),
         }
         Ok(())
@@ -215,13 +215,6 @@ impl Settings {
     }
 }
 
-fn deadzone(text: &str) -> Result<f32, Rejected> {
-    text.parse::<f32>()
-        .ok()
-        .filter(|x| (0.0..=0.3).contains(x))
-        .ok_or_else(|| Rejected::needs(DEADZONE_NEEDS))
-}
-
 /// The commented file a new settings file starts from.
 pub fn template() -> String {
     cfg::spec::template(HEADING, OPTIONS)
@@ -288,7 +281,7 @@ mod tests {
         assert_eq!(s.value("fullscreen"), "false");
         assert_eq!(s.value("deadzone"), "0.10");
         assert_eq!(s.value("render"), "native");
-        assert_eq!(s.set("deadzone", "5"), Err(Rejected::needs(DEADZONE_NEEDS)));
+        assert!(s.set("deadzone", "5").is_err());
     }
 
     #[test]

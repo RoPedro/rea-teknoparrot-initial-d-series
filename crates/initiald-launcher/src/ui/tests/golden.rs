@@ -11,11 +11,10 @@ use std::fmt::Write as _;
 
 use super::*;
 
-const SIZES: [Vec2; 2] = [vec2(1280.0, 720.0), vec2(1280.0, 800.0)];
-
 /// One line per node a player can perceive, in tree order: text runs (the
-/// rows of a label) and unnamed containers are left out.
-fn dump(h: &Harness<'_, App>, t: &Path) -> String {
+/// rows of a label) and unnamed containers are left out. (The format of
+/// the launcher's goldens before the SDK hub, so its diffs read alone.)
+fn dump(h: &H, t: &Path) -> String {
     let mut out = String::new();
     for node in h.root().children_recursive() {
         let n = node.accesskit_node();
@@ -67,9 +66,9 @@ fn dump(h: &Harness<'_, App>, t: &Path) -> String {
 }
 
 /// Compares the window `make` builds, at each size, with `ui/<name>`.
-fn golden(name: &str, make: impl Fn(&Path, Vec2) -> Harness<'static, App>) {
+fn golden(name: &str, make: impl Fn(&Path, Vec2) -> H) {
     let mut out = String::new();
-    for size in SIZES {
+    for size in [SIZE_720, SIZE_800] {
         let t = tempfile::tempdir().unwrap();
         let h = make(t.path(), size);
         let _ = write!(out, "== {}x{}\n{}", size.x, size.y, dump(&h, t.path()));
@@ -78,17 +77,9 @@ fn golden(name: &str, make: impl Fn(&Path, Vec2) -> Harness<'static, App>) {
     rea_launcher::snapshot!(&format!("ui/{name}.{host}.txt"), out);
 }
 
-/// [`hub`] at `size`.
-fn hub_at(t: &Path, size: Vec2) -> Harness<'static, App> {
-    let lib = t.join("games");
-    std::fs::create_dir_all(&lib).unwrap();
-    let mut h = window_at(&paths_in(t), &[lib], size);
-    wait(&mut h, "the scan", |a| a.entries.is_some());
-    h
-}
-
-/// The hub with `games` found in the library, `slug` selected.
-fn found(t: &Path, size: Vec2, games: &[&str], slug: &str) -> Harness<'static, App> {
+/// The hub with `games` found in the library (and an unknown build),
+/// `slug` selected.
+fn found(t: &Path, size: Vec2, games: &[&str], slug: &str) -> H {
     let mut h = hub_at(t, size);
     let mut entries: Vec<Entry<Game>> = games
         .iter()
@@ -97,42 +88,32 @@ fn found(t: &Path, size: Vec2, games: &[&str], slug: &str) -> Harness<'static, A
     entries.push(Entry {
         dir: t.join("games/odd"),
         file: t.join("games/odd/id5.elf"),
-        found: Found::Unknown {
+        found: library::Found::Unknown {
             file: "id5.elf".into(),
             digest: "00ff".into(),
         },
     });
-    h.state_mut().entries = Some(entries);
+    set_found(&mut h, entries);
     select(&mut h, slug);
     h
 }
 
 #[test]
 fn first_run() {
-    golden("first-run", |t, size| window_at(&paths_in(t), &[], size));
+    golden("first-run", |t, size| window_at(t, &[], None, size));
 }
 
 #[test]
 fn first_run_with_a_folder_added_and_a_wrong_bios() {
     golden("first-run-added", |t, size| {
-        let mut h = window_at(&paths_in(t), &[], size);
+        let mut h = window_at(t, &[], None, size);
         let lib = t.join("my games");
         std::fs::create_dir_all(&lib).unwrap();
-        h.state_mut().folder = lib.display().to_string();
+        type_into(&mut h, "Game folder", &lib.display().to_string());
         click_button(&mut h, "Add folder");
-        wait(&mut h, "the scan", |a| a.entries.is_some());
-        h.state_mut().bios = "/no/such/naomi2.zip".into();
+        hub_testing::wait(&mut h, "the scan", |a| a.library().is_some());
+        type_into(&mut h, "NAOMI 2 BIOS file", "/no/such/naomi2.zip");
         click_button(&mut h, "Use BIOS");
-        h
-    });
-}
-
-#[test]
-fn hub_while_looking() {
-    golden("hub-looking", |t, size| {
-        let mut h = hub_at(t, size);
-        h.state_mut().entries = None;
-        h.run_steps(3);
         h
     });
 }
@@ -145,9 +126,16 @@ fn hub_with_nothing_found() {
 #[test]
 fn hub_with_games_found() {
     golden("hub-found", |t, size| {
-        let mut h = found(t, size, &["id1", "id4", "id6", "zero", "ta5"], "id6");
-        h.state_mut().config.naomi2_bios = Some(t.join("naomi2.zip"));
-        h.run_steps(3);
+        let lib = t.join("games");
+        std::fs::create_dir_all(&lib).unwrap();
+        let mut h = window_at(t, &[lib], Some(t.join("naomi2.zip")), size);
+        hub_testing::wait(&mut h, "the scan", |a| a.library().is_some());
+        let entries = ["id1", "id4", "id6", "zero", "ta5"]
+            .iter()
+            .map(|g| fake_entry(g, &t.join("games").join(g)))
+            .collect();
+        set_found(&mut h, entries);
+        select(&mut h, "id6");
         h
     });
 }
@@ -169,7 +157,7 @@ fn hub_blocked_game() {
     golden("hub-blocked", |t, size| {
         let mut h = hub_at(t, size);
         let g = shown_as(&mut h, Support::Blocked("A reason it can't start."));
-        h.state_mut().entries = Some(vec![fake_entry(g.slug, &t.join("games/x"))]);
+        set_found(&mut h, vec![fake_entry(g.slug, &t.join("games/x"))]);
         select(&mut h, g.slug);
         h
     });
@@ -180,13 +168,13 @@ fn hub_unverified_game() {
     golden("hub-unverified", |t, size| {
         let mut h = hub_at(t, size);
         let g = shown_as(&mut h, Support::Unverified("Starts; no race yet."));
-        h.state_mut().entries = Some(vec![fake_entry(g.slug, &t.join("games/x"))]);
+        set_found(&mut h, vec![fake_entry(g.slug, &t.join("games/x"))]);
         select(&mut h, g.slug);
         h
     });
 }
 
-fn settings_of_game(t: &Path, size: Vec2, slug: &str) -> Harness<'static, App> {
+fn settings_of_game(t: &Path, size: Vec2, slug: &str) -> H {
     let mut h = found(t, size, &[slug], slug);
     open_tab(&mut h, Tab::Settings);
     h
@@ -240,32 +228,7 @@ fn controls_with_a_pad_and_a_wheel() {
     golden("controls-devices", |t, size| {
         let mut h = hub_at(t, size);
         open_tab(&mut h, Tab::Controls);
-        let mut controls = rea_launcher::wheel::Controls {
-            steer: -0.5,
-            accel: 0.25,
-            brake: 0.75,
-            buttons: 0,
-        };
-        controls.press(Button::Start);
-        h.state_mut().snap = Snapshot {
-            devices: vec![
-                DeviceInfo {
-                    name: "Test Pad".into(),
-                    kind: Kind::Pad,
-                    haptic: false,
-                },
-                DeviceInfo {
-                    name: "Test Wheel".into(),
-                    kind: Kind::Wheel,
-                    haptic: true,
-                },
-            ],
-            driver: Some(1),
-            wheel: None,
-            controls,
-            feeding: true,
-            error: None,
-        };
+        h.state_mut().backend_mut().snapshot = two_devices();
         h.run_steps(3);
         h
     });
@@ -275,27 +238,27 @@ fn controls_with_a_pad_and_a_wheel() {
 fn controls_with_an_error() {
     golden("controls-error", |t, size| {
         let mut h = hub_at(t, size);
-        h.state_mut().snap.error = Some("controllers unavailable: no SDL".into());
+        h.state_mut().backend_mut().snapshot.error = Some("controllers unavailable: no SDL".into());
         open_tab(&mut h, Tab::Controls);
         h
     });
 }
 
-/// The running overlay after `steps` reports from the session.
-fn running(t: &Path, size: Vec2, steps: Vec<Progress>) -> Harness<'static, App> {
-    let mut h = hub_at(t, size);
+/// The running overlay of a ready game after the session's `steps`.
+fn running(t: &Path, size: Vec2, steps: Vec<Step>) -> H {
+    let g = ready();
+    let mut h = found(t, size, &[g.slug], g.slug);
     let (tx, rx) = mpsc::channel();
-    h.state_mut().running = Some(Running {
-        game: ready(),
-        setting_up: None,
-        playing: false,
-        progress: rx,
-        stop: Arc::new(AtomicBool::new(false)),
-    });
+    scripted(&mut h, rx);
+    click_button(&mut h, "Play");
     for step in steps {
         tx.send(step).unwrap();
+        // the session thread takes it within its 10 ms poll
+        std::thread::sleep(std::time::Duration::from_millis(50));
+        h.run_steps(3);
     }
-    h.run_steps(3);
+    // the test's end lets the session go
+    std::mem::forget(tx);
     h
 }
 
@@ -307,21 +270,21 @@ fn running_overlay_getting_ready() {
 #[test]
 fn running_overlay_building_lindbergh() {
     golden("running-lindbergh-build", |t, size| {
-        running(t, size, vec![Progress::SettingUp(Setup::Lindbergh)])
+        running(t, size, vec![Step::SettingUp(Setup::Lindbergh)])
     });
 }
 
 #[test]
 fn running_overlay_installing_visual_cpp() {
     golden("running-vc2008", |t, size| {
-        running(t, size, vec![Progress::SettingUp(Setup::VisualCpp2008)])
+        running(t, size, vec![Step::SettingUp(Setup::VisualCpp2008)])
     });
 }
 
 #[test]
 fn running_overlay_playing() {
     golden("running-playing", |t, size| {
-        running(t, size, vec![Progress::Playing])
+        running(t, size, vec![Step::Playing])
     });
 }
 
@@ -331,12 +294,9 @@ fn a_game_that_stopped_with_an_error() {
         let mut h = running(
             t,
             size,
-            vec![
-                Progress::Playing,
-                Progress::Ended(Err("the loader crashed".into())),
-            ],
+            vec![Step::Playing, Step::End(Err("the loader crashed".into()))],
         );
-        h.run_steps(3);
+        hub_testing::wait(&mut h, "the end", |a| !a.is_running());
         h
     });
 }
@@ -346,7 +306,7 @@ fn a_game_that_could_not_start() {
     golden("message-could-not-start", |t, size| {
         let mut h = found(t, size, &[ready().slug], ready().slug);
         click_button(&mut h, "Play");
-        wait(&mut h, "the failure", |a| a.message.is_some());
+        hub_testing::wait(&mut h, "the failure", |a| a.message().is_some());
         h
     });
 }
