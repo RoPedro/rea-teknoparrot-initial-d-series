@@ -10,11 +10,12 @@
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
-use initiald_core::catalog::{GAMES, Game, Host};
+use initiald_core::catalog::{GAMES, Game};
 use initiald_core::input::{Button, StickLayout};
 use initiald_core::launch::{self, Components, Places};
 use initiald_core::runtime::{self, Item, Op};
 use initiald_core::settings::{Crt, Settings, Size, Upscaler};
+use rea_launcher::catalog::Host;
 use rea_launcher::wheel::{Control, Controls};
 
 /// A path as the snapshot spells it on every system (Windows joins with `\`).

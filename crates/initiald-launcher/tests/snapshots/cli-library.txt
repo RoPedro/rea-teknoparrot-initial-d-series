@@ -27,6 +27,7 @@ id2   Initial D Arcade Stage Ver. 2        Export (GDS-0027)          ready
 unknown id5.elf 957d7bf0323df209dd69bc8eaa9c9edf028e38bd5154d4923dc548d5fbd1bf21
       <tmp>/lib/tp/Initial D 5
 -- stderr
+warning: <tmp>/lib/tp/junk/initdv3e/gds-0033.chd: failed to fill whole buffer
 
 $ initiald-launcher --game id6
 exit 0

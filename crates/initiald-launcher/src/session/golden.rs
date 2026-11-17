@@ -9,8 +9,8 @@ use std::path::Path;
 
 use initiald_core::catalog::{GAMES, GameId, game};
 use initiald_core::launch::Components;
-use initiald_core::library::Found;
 use initiald_core::settings::{Crt, Size, Upscaler};
+use rea_launcher::library::Found;
 
 use super::*;
 
@@ -149,6 +149,7 @@ fn prepare_builds_the_runtime_folders() {
         fs::write(main, b"main").unwrap();
         fs::write(dir.join("Setting.ini"), b"[game]\n").unwrap();
         let entry = Entry {
+            file: dir.join(g.main_file),
             dir,
             found: Found::Known {
                 game: g,

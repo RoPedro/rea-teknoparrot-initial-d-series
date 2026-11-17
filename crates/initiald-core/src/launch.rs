@@ -7,7 +7,9 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::catalog::{Game, Host, Route};
+use rea_launcher::catalog::Host;
+
+use crate::catalog::{Game, Route};
 use crate::input::StickLayout;
 use crate::settings::{Crt, Settings, Size};
 

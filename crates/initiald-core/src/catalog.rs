@@ -5,6 +5,8 @@
 //! Only builds listed here are launched; anything else is reported with
 //! its digest so the player can file it (STANDARDS: "Exact binary identity").
 
+use rea_launcher::catalog::{self, Edition, Host, Support, Title};
+
 use crate::settings::Size;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -36,57 +38,6 @@ pub enum Route {
         system: &'static str,
         profile: &'static str,
     },
-}
-
-/// Whether the launcher can start a game today, and why not.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Support {
-    /// Verified in the real game (a race played), see docs/RUNTIME_NOTES.md.
-    Ready,
-    /// Starts, but no race was verified yet; the text says what is known.
-    Unverified(&'static str),
-    /// Known not to work yet; the text says why, for the player.
-    Blocked(&'static str),
-}
-
-/// The system the launcher runs on: what it can start depends on it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Host {
-    Linux,
-    Windows,
-}
-
-impl Host {
-    pub const fn current() -> Host {
-        if cfg!(windows) {
-            Host::Windows
-        } else {
-            Host::Linux
-        }
-    }
-}
-
-/// What identifies an edition.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Ident {
-    /// SHA-256 of the main file.
-    Sha256(&'static str),
-    /// The data SHA-1 in a CHD (v5) header.
-    ChdSha1(&'static str),
-}
-
-impl Ident {
-    pub fn digest(self) -> &'static str {
-        match self {
-            Ident::Sha256(d) | Ident::ChdSha1(d) => d,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Edition {
-    pub ident: Ident,
-    pub label: &'static str,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -154,17 +105,19 @@ impl Game {
     }
 }
 
-const fn sha(d: &'static str, label: &'static str) -> Edition {
-    Edition {
-        ident: Ident::Sha256(d),
-        label,
-    }
-}
+impl Title for Game {
+    type Id = GameId;
 
-const fn chd(d: &'static str, label: &'static str) -> Edition {
-    Edition {
-        ident: Ident::ChdSha1(d),
-        label,
+    fn id(&self) -> GameId {
+        self.id
+    }
+
+    fn main_file(&self) -> &'static str {
+        self.main_file
+    }
+
+    fn editions(&self) -> &'static [Edition] {
+        self.editions
     }
 }
 
@@ -178,7 +131,7 @@ pub const GAMES: &[Game] = &[
         board: "Sega NAOMI 2",
         route: Route::Flycast { set: "initdexp" },
         main_file: "initdexp/gds-0025a.chd",
-        editions: &[chd(
+        editions: &[Edition::chd_sha1(
             "d6ec4295122e3d69b9e109778ab1cb0cb0dfc839",
             "Export, Rev. A (GDS-0025A)",
         )],
@@ -194,7 +147,7 @@ pub const GAMES: &[Game] = &[
         board: "Sega NAOMI 2",
         route: Route::Flycast { set: "initdv2e" },
         main_file: "initdv2e/gds-0027.chd",
-        editions: &[chd(
+        editions: &[Edition::chd_sha1(
             "c146e8c4d71d1a0cbe836a0b50dea87797869da8",
             "Export (GDS-0027)",
         )],
@@ -210,7 +163,7 @@ pub const GAMES: &[Game] = &[
         board: "Sega NAOMI 2",
         route: Route::Flycast { set: "initdv3e" },
         main_file: "initdv3e/gds-0033.chd",
-        editions: &[chd(
+        editions: &[Edition::chd_sha1(
             "98fb1bd119fc33ef14fcaba3eb2347836469a75b",
             "Export (GDS-0033)",
         )],
@@ -226,7 +179,7 @@ pub const GAMES: &[Game] = &[
         board: "Sega Lindbergh",
         route: Route::Lindbergh,
         main_file: "id4.elf",
-        editions: &[sha(
+        editions: &[Edition::sha256(
             "9e05b93215714e0dab38ee5e2819bfe62090f7ec8e0c1f9d5ef695ed4baf3859",
             "Export Rev. D (1.5)",
         )],
@@ -242,7 +195,7 @@ pub const GAMES: &[Game] = &[
         board: "Sega Lindbergh",
         route: Route::Lindbergh,
         main_file: "id5.elf",
-        editions: &[sha(
+        editions: &[Edition::sha256(
             "5bef53f3b9fd38e3b27d450866468301626515b17d01c77e3c720a42f33cb6ad",
             "Export 2.0",
         )],
@@ -261,7 +214,7 @@ pub const GAMES: &[Game] = &[
             profile: "initial-d-arcade-stage-6",
         },
         main_file: "id6_dump_.exe",
-        editions: &[sha(
+        editions: &[Edition::sha256(
             "90716d7e27901628e620ad15ebffca22038b28f89da79eb7f24c9b91d58a7cff",
             "Japan (SBUU)",
         )],
@@ -280,7 +233,7 @@ pub const GAMES: &[Game] = &[
             profile: "initial-d-arcade-stage-7",
         },
         main_file: "InitialD7_GLW_RE_SBYD.exe",
-        editions: &[sha(
+        editions: &[Edition::sha256(
             "961b50a5689f773a43058b23e3fa754d666bcc3f686d841cd121dd2af7c826ab",
             "Japan (SBYD)",
         )],
@@ -299,7 +252,7 @@ pub const GAMES: &[Game] = &[
             profile: "initial-d-arcade-stage-8",
         },
         main_file: "InitialD8_GLW_RE_SBZZ_redumped_.exe",
-        editions: &[sha(
+        editions: &[Edition::sha256(
             "ce8e3c35cf41b08c922e42400187ddd525d27c2f1aae6d634659f918c63d7fec",
             "Japan (SBZZ)",
         )],
@@ -318,7 +271,7 @@ pub const GAMES: &[Game] = &[
             profile: "initial-d-arcade-stage-zero-ver-2",
         },
         main_file: "InitialD0_DX11_Nu.exe",
-        editions: &[sha(
+        editions: &[Edition::sha256(
             "baf84728c06ab3d13e9c067199501e6d109c9cf83cd2aca6f6e47a15a0f04ab0",
             "2.30.00 (Japan, Export)",
         )],
@@ -337,7 +290,7 @@ pub const GAMES: &[Game] = &[
             profile: "initial-d-the-arcade-season-3",
         },
         main_file: "App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe",
-        editions: &[sha(
+        editions: &[Edition::sha256(
             "e0218e37c64ccba4d0dc845c3977f21383696a97ed85c45741c8943bc0a79a86",
             "2.31.00 Rev. 1",
         )],
@@ -356,7 +309,7 @@ pub const GAMES: &[Game] = &[
             profile: "initial-d-the-arcade-season-5",
         },
         main_file: "App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe",
-        editions: &[sha(
+        editions: &[Edition::sha256(
             "a28d8fd68261d9785747d99e8691f785a51cb7e466f0a5122084b7421816d7e6",
             "3.10.00 Rev. 1",
         )],
@@ -366,24 +319,11 @@ pub const GAMES: &[Game] = &[
 ];
 
 pub fn game(id: GameId) -> &'static Game {
-    GAMES
-        .iter()
-        .find(|g| g.id == id)
-        .expect("every id is in GAMES")
+    catalog::by_id(GAMES, id).expect("every id is in GAMES")
 }
 
 pub fn by_slug(slug: &str) -> Option<&'static Game> {
     GAMES.iter().find(|g| g.slug == slug)
-}
-
-/// The game and edition a digest belongs to (either kind of identity).
-pub fn identify(digest: &str) -> Option<(&'static Game, &'static Edition)> {
-    GAMES.iter().find_map(|g| {
-        g.editions
-            .iter()
-            .find(|e| e.ident.digest().eq_ignore_ascii_case(digest))
-            .map(|e| (g, e))
-    })
 }
 
 #[cfg(test)]
@@ -393,33 +333,23 @@ mod tests {
 
     #[test]
     fn ids_slugs_and_digests_are_unique_and_well_formed() {
-        let ids: HashSet<_> = GAMES.iter().map(|g| g.id).collect();
+        assert_eq!(catalog::check_table(GAMES), Ok(()));
         let slugs: HashSet<_> = GAMES.iter().map(|g| g.slug).collect();
-        assert_eq!(ids.len(), GAMES.len());
         assert_eq!(slugs.len(), GAMES.len());
-        let mut digests = HashSet::new();
-        for g in GAMES {
-            for e in g.editions {
-                let (d, len) = match e.ident {
-                    Ident::Sha256(d) => (d, 64),
-                    Ident::ChdSha1(d) => (d, 40),
-                };
-                assert_eq!(d.len(), len, "{}", g.slug);
-                assert!(d.chars().all(|c| c.is_ascii_hexdigit()));
-                assert!(digests.insert(d), "duplicate digest {d}");
-            }
-        }
     }
 
     #[test]
     fn identify_finds_the_right_game_by_either_identity() {
-        let (g, _) =
-            identify("CE8E3C35CF41B08C922E42400187DDD525D27C2F1AAE6D634659F918C63D7FEC").unwrap();
+        let (g, _) = catalog::identify(
+            GAMES,
+            "CE8E3C35CF41B08C922E42400187DDD525D27C2F1AAE6D634659F918C63D7FEC",
+        )
+        .unwrap();
         assert_eq!(g.id, GameId::Id8);
-        let (g, e) = identify("98fb1bd119fc33ef14fcaba3eb2347836469a75b").unwrap();
+        let (g, e) = catalog::identify(GAMES, "98fb1bd119fc33ef14fcaba3eb2347836469a75b").unwrap();
         assert_eq!(g.id, GameId::Id3);
-        assert!(matches!(e.ident, Ident::ChdSha1(_)));
-        assert!(identify("00").is_none());
+        assert!(matches!(e.ident, rea_launcher::catalog::Ident::ChdSha1(_)));
+        assert!(catalog::identify(GAMES, "00").is_none());
     }
 
     #[test]
@@ -460,5 +390,18 @@ mod tests {
                 assert_eq!(windows, g.support, "{}", g.slug);
             }
         }
+    }
+
+    /// The owner's real library, when present
+    /// (`INITIALD_LIBRARIES=dir1:dir2 cargo test -- --ignored`).
+    #[test]
+    #[ignore]
+    fn real_library_finds_every_game() {
+        let Ok(roots) = std::env::var("INITIALD_LIBRARIES") else {
+            return;
+        };
+        let roots: Vec<_> = std::env::split_paths(&roots).collect();
+        let scan = rea_launcher::library::Library::new(GAMES).scan(&roots);
+        assert_eq!(scan.by_game().len(), GAMES.len(), "{scan:#?}");
     }
 }

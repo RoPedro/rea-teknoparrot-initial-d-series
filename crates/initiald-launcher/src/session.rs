@@ -12,11 +12,12 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, bail};
-use initiald_core::catalog::{Game, Host, Route, Support};
+use initiald_core::catalog::{Game, Route};
 use initiald_core::launch::{self, Places, Plan};
-use initiald_core::library::Entry;
 use initiald_core::runtime;
 use initiald_core::settings::Settings;
+use rea_launcher::catalog::{Host, Support};
+use rea_launcher::library::Entry;
 
 use crate::input::{self, Script};
 use crate::paths::Paths;
@@ -330,7 +331,7 @@ pub fn which(program: &str) -> Option<PathBuf> {
 pub fn prepare(
     paths: &Paths,
     game: &Game,
-    entry: &Entry,
+    entry: &Entry<Game>,
     settings: &Settings,
     display: Display,
 ) -> Result<Prepared> {

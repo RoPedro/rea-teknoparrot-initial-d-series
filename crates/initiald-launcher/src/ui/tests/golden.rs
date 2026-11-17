@@ -90,12 +90,13 @@ fn hub_at(t: &Path, size: Vec2) -> Harness<'static, App> {
 /// The hub with `games` found in the library, `slug` selected.
 fn found(t: &Path, size: Vec2, games: &[&str], slug: &str) -> Harness<'static, App> {
     let mut h = hub_at(t, size);
-    let mut entries: Vec<Entry> = games
+    let mut entries: Vec<Entry<Game>> = games
         .iter()
         .map(|g| fake_entry(g, &t.join("games").join(g)))
         .collect();
     entries.push(Entry {
         dir: t.join("games/odd"),
+        file: t.join("games/odd/id5.elf"),
         found: Found::Unknown {
             file: "id5.elf".into(),
             digest: "00ff".into(),
