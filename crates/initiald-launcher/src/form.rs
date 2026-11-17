@@ -8,7 +8,7 @@
 use std::io;
 use std::path::Path;
 
-use initiald_core::settings::{self, LOOK_KEYS, Look, Settings};
+use initiald_core::settings::{self, LOOK_KEYS, Look, PICTURE_KEYS, Settings};
 use rea_launcher::gamescope::{Size, Upscaler};
 use rea_launcher::hub::{pick, size_name};
 use rea_launcher_ui::hub::HubForm;
@@ -142,7 +142,7 @@ impl HubForm for Form {
             self.changed(&LOOK_KEYS);
         } else {
             self.changed(&[spec.key]);
-            if LOOK_KEYS.contains(&spec.key) || matches!(spec.key, "sharpness" | "fullscreen") {
+            if PICTURE_KEYS.contains(&spec.key) {
                 self.settings.look = None;
                 self.changed(&["look"]);
             }

@@ -43,6 +43,9 @@ pub const LOOKS: &[(&str, &str)] = &[
 /// The keys a look sets.
 pub const LOOK_KEYS: [&str; 4] = ["look", "render", "output", "upscaler"];
 
+/// The picture settings: changing one by hand leaves the look ("Custom").
+pub const PICTURE_KEYS: [&str; 5] = ["render", "output", "upscaler", "sharpness", "fullscreen"];
+
 impl Look {
     pub const ALL: [Look; 3] = [Look::Original, Look::Recommended, Look::SteamDeck];
 

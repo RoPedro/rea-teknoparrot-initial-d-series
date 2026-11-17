@@ -69,7 +69,7 @@ Report a problem: https://github.com/akitaonrails/rea-teknoparrot-initial-d-seri
 # Sets the picture at once: the cabinet's own, sharper for your screen, or
 # for the Steam Deck. Options set after it win.
 # Values: original, recommended or steam_deck.
-look = recommended
+#look =
 
 # The size the game draws at. Bigger is sharper and needs a stronger GPU.
 # Values: WIDTHxHEIGHT or native.

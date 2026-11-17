@@ -19,7 +19,7 @@ use std::time::Duration;
 
 use initiald_core::catalog::{self, GAMES, Game, Route};
 use initiald_core::input::Button;
-use initiald_core::settings::{self, LOOK_KEYS, Look, Settings};
+use initiald_core::settings::{self, LOOK_KEYS, Look, PICTURE_KEYS, Settings};
 use rea_launcher::catalog::{Host, Support};
 use rea_launcher::cfg::Value;
 use rea_launcher::hub::cli::{self, CliSpec, Invocation, Mode};
@@ -203,7 +203,8 @@ fn by_slug(slug: &str) -> &'static Game {
 }
 
 /// The command line's options over `s`, and the keys they set: a look
-/// first (with its picture keys), so the flags after it win.
+/// first (with its picture keys), so the flags after it win; a picture
+/// flag without a look makes the look "Custom", as the window does.
 fn apply_options(inv: &Invocation, s: &mut Settings, game: &Game) -> Vec<&'static str> {
     let mut keys = Vec::new();
     inv.apply_options(settings::OPTIONS, &["look"], |spec, v| match v {
@@ -218,6 +219,11 @@ fn apply_options(inv: &Invocation, s: &mut Settings, game: &Game) -> Vec<&'stati
             keys.push(spec.key);
         }
     });
+    let looked = keys.contains(&"look");
+    if !looked && keys.iter().any(|k| PICTURE_KEYS.contains(k)) {
+        s.look = None;
+        keys.push("look");
+    }
     keys
 }
 
@@ -447,6 +453,39 @@ mod tests {
         set(&p, by_slug("id6"), &inv).unwrap();
         let s = Settings::parse(&std::fs::read_to_string(p.settings("id6")).unwrap()).0;
         assert_eq!((s.look, s.render), (Some(Look::Original), None));
+    }
+
+    #[test]
+    fn a_picture_flag_without_a_look_makes_it_custom() {
+        let t = tempfile::tempdir().unwrap();
+        let p = crate::paths::in_dir(t.path());
+        set(
+            &p,
+            by_slug("id6"),
+            &parse_v(&["--set", "id6", "--look", "original"]).unwrap(),
+        )
+        .unwrap();
+        set(
+            &p,
+            by_slug("id6"),
+            &parse_v(&["--set", "id6", "--deadzone", "0.1"]).unwrap(),
+        )
+        .unwrap();
+        let read = || Settings::parse(&std::fs::read_to_string(p.settings("id6")).unwrap()).0;
+        assert_eq!(
+            read().look,
+            Some(Look::Original),
+            "the dead zone is not a picture value"
+        );
+        set(
+            &p,
+            by_slug("id6"),
+            &parse_v(&["--set", "id6", "--render", "1280x720"]).unwrap(),
+        )
+        .unwrap();
+        let text = std::fs::read_to_string(p.settings("id6")).unwrap();
+        assert_eq!(read().look, None, "{text}");
+        assert!(!text.contains("\nlook ="), "{text}");
     }
 
     #[test]
