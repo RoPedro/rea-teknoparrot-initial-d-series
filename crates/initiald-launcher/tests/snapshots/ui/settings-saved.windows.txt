@@ -1,0 +1,36 @@
+== 1280x720
+Label value="Initial D Arcade Stage Zero Ver. 2 settings"
+Label value="Changes are saved as you make them and used the next time you press Play."
+Button label="Game render size" value="1920 × 1080 (1080p)" description="The size the game draws at. Bigger is sharper and needs a stronger GPU." @60,214 796x58
+Button label="Game render size: previous" @572,223 28x40
+Button label="Game render size: next" @818,223 28x40
+Button label="Dead zone" value="5%" description="How far a controller stick moves before the car starts to steer." @60,272 796x58
+Button label="Dead zone: previous" @572,281 28x40
+Button label="Dead zone: next" @818,281 28x40
+Label value="<tmp>/games"
+Label value="1 of 11 games found. 1 folder holds a build this launcher doesn't know; launcher.log has its digest."
+Button label="Rescan" @904,330 300x46
+Button label="Folders and BIOS" @904,390 300x46
+Label value="Saved. The game uses it the next time you press Play."
+Tab label="Games" toggled=False @326,17 78x38
+Tab label="Controls" toggled=False @412,17 91x38
+Tab label="Settings" toggled=True @511,17 91x38
+Label value="Controller: No controller"
+== 1280x800
+Label value="Initial D Arcade Stage Zero Ver. 2 settings"
+Label value="Changes are saved as you make them and used the next time you press Play."
+Button label="Game render size" value="1920 × 1080 (1080p)" description="The size the game draws at. Bigger is sharper and needs a stronger GPU." @67,238 742x64
+Button label="Game render size: previous" @493,248 31x44
+Button label="Game render size: next" @767,248 31x44
+Button label="Dead zone" value="5%" description="How far a controller stick moves before the car starts to steer." @67,302 742x64
+Button label="Dead zone: previous" @493,312 31x44
+Button label="Dead zone: next" @767,312 31x44
+Label value="<tmp>/games"
+Label value="1 of 11 games found. 1 folder holds a build this launcher doesn't know; launcher.log has its digest."
+Button label="Rescan" @862,367 333x51
+Button label="Folders and BIOS" @862,433 333x51
+Label value="Saved. The game uses it the next time you press Play."
+Tab label="Games" toggled=False @362,19 86x42
+Tab label="Controls" toggled=False @457,19 101x42
+Tab label="Settings" toggled=True @568,19 101x42
+Label value="Controller: No controller"

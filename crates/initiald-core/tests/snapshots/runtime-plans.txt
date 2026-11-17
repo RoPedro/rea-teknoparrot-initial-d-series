@@ -1,0 +1,140 @@
+== id1
+dir /rt/id1
+game folder ""; loader path "initdexp/gds-0025a.chd"; first start marker None
+== id2
+dir /rt/id2
+game folder ""; loader path "initdv2e/gds-0027.chd"; first start marker None
+== id3
+dir /rt/id3
+game folder ""; loader path "initdv3e/gds-0033.chd"; first start marker None
+== id4
+dir /rt/id4
+link /rt/id4/AMFS -> /lib/id4/AMFS
+link /rt/id4/AppData -> /lib/id4/AppData
+link /rt/id4/WindowsLoader -> /lib/id4/WindowsLoader
+link /rt/id4/Y -> /lib/id4/Y
+link /rt/id4/amfs -> /lib/id4/amfs
+link /rt/id4/big.bin -> /lib/id4/big.bin
+link /rt/id4/data -> /lib/id4/data
+link /rt/id4/hook.dll -> /lib/id4/hook.dll
+link /rt/id4/id4.elf -> /lib/id4/id4.elf
+link /rt/id4/old.windowsloader -> /lib/id4/old.windowsloader
+link /rt/id4/playaccount.dat -> /lib/id4/playaccount.dat
+link /rt/id4/small.manifest -> /lib/id4/small.manifest
+link /rt/id4/Setting.ini -> /lib/id4/Setting.ini
+link /rt/id4/exactly4m.bin -> /lib/id4/exactly4m.bin
+game folder ""; loader path "id4.elf"; first start marker None
+== id5
+dir /rt/id5
+link /rt/id5/AMFS -> /lib/id5/AMFS
+link /rt/id5/AppData -> /lib/id5/AppData
+link /rt/id5/WindowsLoader -> /lib/id5/WindowsLoader
+link /rt/id5/Y -> /lib/id5/Y
+link /rt/id5/amfs -> /lib/id5/amfs
+link /rt/id5/big.bin -> /lib/id5/big.bin
+link /rt/id5/data -> /lib/id5/data
+link /rt/id5/hook.dll -> /lib/id5/hook.dll
+link /rt/id5/id5.elf -> /lib/id5/id5.elf
+link /rt/id5/old.windowsloader -> /lib/id5/old.windowsloader
+link /rt/id5/playaccount.dat -> /lib/id5/playaccount.dat
+link /rt/id5/small.manifest -> /lib/id5/small.manifest
+link /rt/id5/Setting.ini -> /lib/id5/Setting.ini
+link /rt/id5/exactly4m.bin -> /lib/id5/exactly4m.bin
+game folder ""; loader path "id5.elf"; first start marker None
+== id6
+dir /rt/id6
+copy once /rt/id6/Card_01.crd <- /lib/id6/Card_01.crd
+link /rt/id6/big.bin -> /lib/id6/big.bin
+copy once /rt/id6/controls.ini <- /lib/id6/controls.ini
+link /rt/id6/data -> /lib/id6/data
+copy once /rt/id6/eeprom.bin <- /lib/id6/eeprom.bin
+link /rt/id6/hook.dll -> /lib/id6/hook.dll
+copy once /rt/id6/lindbergh.ini <- /lib/id6/lindbergh.ini
+link /rt/id6/id6_dump_.exe -> /lib/id6/id6_dump_.exe
+copy once /rt/id6/playaccount.dat <- /lib/id6/playaccount.dat
+link /rt/id6/small.manifest -> /lib/id6/small.manifest
+copy once /rt/id6/sram.bin <- /lib/id6/sram.bin
+copy once /rt/id6/Setting.ini <- /lib/id6/Setting.ini
+link /rt/id6/exactly4m.bin -> /lib/id6/exactly4m.bin
+game folder ""; loader path "id6_dump_.exe"; first start marker None
+== id7
+dir /rt/id7
+copy once /rt/id7/Card_01.crd <- /lib/id7/Card_01.crd
+link /rt/id7/big.bin -> /lib/id7/big.bin
+copy once /rt/id7/controls.ini <- /lib/id7/controls.ini
+link /rt/id7/data -> /lib/id7/data
+copy once /rt/id7/eeprom.bin <- /lib/id7/eeprom.bin
+link /rt/id7/hook.dll -> /lib/id7/hook.dll
+copy once /rt/id7/lindbergh.ini <- /lib/id7/lindbergh.ini
+link /rt/id7/InitialD7_GLW_RE_SBYD.exe -> /lib/id7/InitialD7_GLW_RE_SBYD.exe
+copy once /rt/id7/playaccount.dat <- /lib/id7/playaccount.dat
+link /rt/id7/small.manifest -> /lib/id7/small.manifest
+copy once /rt/id7/sram.bin <- /lib/id7/sram.bin
+copy once /rt/id7/Setting.ini <- /lib/id7/Setting.ini
+link /rt/id7/exactly4m.bin -> /lib/id7/exactly4m.bin
+game folder ""; loader path "InitialD7_GLW_RE_SBYD.exe"; first start marker None
+== id8
+dir /rt/id8
+copy once /rt/id8/Card_01.crd <- /lib/id8/Card_01.crd
+link /rt/id8/big.bin -> /lib/id8/big.bin
+copy once /rt/id8/controls.ini <- /lib/id8/controls.ini
+link /rt/id8/data -> /lib/id8/data
+copy once /rt/id8/eeprom.bin <- /lib/id8/eeprom.bin
+link /rt/id8/hook.dll -> /lib/id8/hook.dll
+copy once /rt/id8/lindbergh.ini <- /lib/id8/lindbergh.ini
+link /rt/id8/InitialD8_GLW_RE_SBZZ_redumped_.exe -> /lib/id8/InitialD8_GLW_RE_SBZZ_redumped_.exe
+copy once /rt/id8/playaccount.dat <- /lib/id8/playaccount.dat
+link /rt/id8/small.manifest -> /lib/id8/small.manifest
+copy once /rt/id8/sram.bin <- /lib/id8/sram.bin
+copy once /rt/id8/Setting.ini <- /lib/id8/Setting.ini
+link /rt/id8/exactly4m.bin -> /lib/id8/exactly4m.bin
+game folder ""; loader path "InitialD8_GLW_RE_SBZZ_redumped_.exe"; first start marker None
+== zero
+dir /rt/zero
+dir /rt/zero/package
+copy once /rt/zero/package/Card_01.crd <- /lib/zero/Card_01.crd
+link /rt/zero/package/big.bin -> /lib/zero/big.bin
+copy once /rt/zero/package/controls.ini <- /lib/zero/controls.ini
+link /rt/zero/package/data -> /lib/zero/data
+copy once /rt/zero/package/eeprom.bin <- /lib/zero/eeprom.bin
+link /rt/zero/package/hook.dll -> /lib/zero/hook.dll
+copy once /rt/zero/package/lindbergh.ini <- /lib/zero/lindbergh.ini
+link /rt/zero/package/InitialD0_DX11_Nu.exe -> /lib/zero/InitialD0_DX11_Nu.exe
+copy once /rt/zero/package/playaccount.dat <- /lib/zero/playaccount.dat
+link /rt/zero/package/small.manifest -> /lib/zero/small.manifest
+copy once /rt/zero/package/sram.bin <- /lib/zero/sram.bin
+copy once /rt/zero/package/Setting.ini <- /lib/zero/Setting.ini
+link /rt/zero/package/exactly4m.bin -> /lib/zero/exactly4m.bin
+game folder "package"; loader path "package\\InitialD0_DX11_Nu.exe"; first start marker None
+== ta3
+dir /rt/ta3
+copy once /rt/ta3/Card_01.crd <- /lib/ta3/Card_01.crd
+link /rt/ta3/big.bin -> /lib/ta3/big.bin
+copy once /rt/ta3/controls.ini <- /lib/ta3/controls.ini
+link /rt/ta3/data -> /lib/ta3/data
+copy once /rt/ta3/eeprom.bin <- /lib/ta3/eeprom.bin
+link /rt/ta3/hook.dll -> /lib/ta3/hook.dll
+copy once /rt/ta3/lindbergh.ini <- /lib/ta3/lindbergh.ini
+link /rt/ta3/App -> /lib/ta3/App
+copy once /rt/ta3/playaccount.dat <- /lib/ta3/playaccount.dat
+link /rt/ta3/small.manifest -> /lib/ta3/small.manifest
+copy once /rt/ta3/sram.bin <- /lib/ta3/sram.bin
+copy once /rt/ta3/Setting.ini <- /lib/ta3/Setting.ini
+link /rt/ta3/exactly4m.bin -> /lib/ta3/exactly4m.bin
+game folder ""; loader path "App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe"; first start marker None
+== ta5
+dir /rt/ta5
+copy once /rt/ta5/Card_01.crd <- /lib/ta5/Card_01.crd
+link /rt/ta5/big.bin -> /lib/ta5/big.bin
+copy once /rt/ta5/controls.ini <- /lib/ta5/controls.ini
+link /rt/ta5/data -> /lib/ta5/data
+copy once /rt/ta5/eeprom.bin <- /lib/ta5/eeprom.bin
+link /rt/ta5/hook.dll -> /lib/ta5/hook.dll
+copy once /rt/ta5/lindbergh.ini <- /lib/ta5/lindbergh.ini
+link /rt/ta5/App -> /lib/ta5/App
+copy once /rt/ta5/playaccount.dat <- /lib/ta5/playaccount.dat
+link /rt/ta5/small.manifest -> /lib/ta5/small.manifest
+copy once /rt/ta5/sram.bin <- /lib/ta5/sram.bin
+copy once /rt/ta5/Setting.ini <- /lib/ta5/Setting.ini
+link /rt/ta5/exactly4m.bin -> /lib/ta5/exactly4m.bin
+game folder ""; loader path "App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe"; first start marker Some("AMFS/sysfile.dat")

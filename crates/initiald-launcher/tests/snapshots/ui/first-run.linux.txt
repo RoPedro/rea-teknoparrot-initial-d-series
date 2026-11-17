@@ -1,0 +1,20 @@
+== 1280x720
+Label value="Choose your game folders"
+Label value="Type the path of a folder that holds your Initial D game folders and add it. The launcher looks inside for each game and never changes what's there."
+Label value="No folder yet."
+TextInput label="Game folder" value="" @96,232 704x46
+Button label="Add folder" @816,230 180x50
+Label value="NAOMI 2 BIOS (naomi2.zip), needed for Initial D 1 to 3"
+TextInput label="NAOMI 2 BIOS file" value="" @96,328 704x46
+Button label="Use BIOS" @816,326 180x50
+Button label="Done" description="Add a game folder first." disabled @96,394 180x50
+== 1280x800
+Label value="Choose your game folders"
+Label value="Type the path of a folder that holds your Initial D game folders and add it. The launcher looks inside for each game and never changes what's there."
+Label value="No folder yet."
+TextInput label="Game folder" value="" @107,259 782x51
+Button label="Add folder" @907,257 200x56
+Label value="NAOMI 2 BIOS (naomi2.zip), needed for Initial D 1 to 3"
+TextInput label="NAOMI 2 BIOS file" value="" @107,366 782x51
+Button label="Use BIOS" @907,364 200x56
+Button label="Done" description="Add a game folder first." disabled @107,439 200x56

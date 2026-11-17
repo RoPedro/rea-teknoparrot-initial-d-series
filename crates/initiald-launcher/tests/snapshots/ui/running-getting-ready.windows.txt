@@ -1,0 +1,50 @@
+== 1280x720
+Label value="Initial D Arcade Stage"
+Label value="Sega NAOMI 2 · 2002"
+Label value="Not in your library"
+Label value="Not found in your game folders. Add its folder in Settings, then choose Rescan."
+Button label="Play" description="Not found in your game folders." disabled @56,472 170x50
+Button label="Settings" @242,472 170x50
+Label value="Your games · 0 of 11 found"
+RadioButton label="Initial D Arcade Stage" description="2002, Sega NAOMI 2, Not in your library" toggled=True @56,548 97x55
+RadioButton label="Initial D Arcade Stage Ver. 2" description="2003, Sega NAOMI 2, Not in your library" toggled=False @163,548 97x55
+RadioButton label="Initial D Arcade Stage Ver. 3" description="2004, Sega NAOMI 2, Not in your library" toggled=False @270,548 97x55
+RadioButton label="Initial D Arcade Stage 4" description="2008, Sega Lindbergh, Not supported yet" toggled=False @377,548 97x55
+RadioButton label="Initial D Arcade Stage 5" description="2009, Sega Lindbergh, Not supported yet" toggled=False @484,548 97x55
+RadioButton label="Initial D Arcade Stage 6 AA" description="2011, Sega RingEdge, Not in your library" toggled=False @591,548 97x55
+RadioButton label="Initial D Arcade Stage 7 AAX" description="2012, Sega RingEdge, Not in your library" toggled=False @699,548 97x55
+RadioButton label="Initial D Arcade Stage 8 Infinity" description="2014, Sega RingEdge, Not in your library" toggled=False @806,548 97x55
+RadioButton label="Initial D Arcade Stage Zero Ver. 2" description="2017, Sega Nu, Not in your library" toggled=False @913,548 97x55
+RadioButton label="Initial D THE ARCADE Season 3" description="2024, Sega ALLS UX, Not in your library" toggled=False @1020,548 97x55
+RadioButton label="Initial D THE ARCADE Season 5" description="2025, Sega ALLS UX, Not in your library" toggled=False @1127,548 97x55
+Tab label="Games" toggled=True @326,17 78x38
+Tab label="Controls" toggled=False @412,17 91x38
+Tab label="Settings" toggled=False @511,17 91x38
+Label value="Controller: No controller"
+Label value="Getting Initial D Arcade Stage 6 AA ready…"
+Label value="This takes a few seconds the first time."
+== 1280x800
+Label value="Initial D Arcade Stage"
+Label value="Sega NAOMI 2 · 2002"
+Label value="Not in your library"
+Label value="Not found in your game folders. Add its folder in Settings, then choose Rescan."
+Button label="Play" description="Not found in your game folders." disabled @62,524 189x56
+Button label="Settings" @269,524 189x56
+Label value="Your games · 0 of 11 found"
+RadioButton label="Initial D Arcade Stage" description="2002, Sega NAOMI 2, Not in your library" toggled=True @62,609 95x53
+RadioButton label="Initial D Arcade Stage Ver. 2" description="2003, Sega NAOMI 2, Not in your library" toggled=False @168,609 95x53
+RadioButton label="Initial D Arcade Stage Ver. 3" description="2004, Sega NAOMI 2, Not in your library" toggled=False @274,609 95x53
+RadioButton label="Initial D Arcade Stage 4" description="2008, Sega Lindbergh, Not supported yet" toggled=False @380,609 95x53
+RadioButton label="Initial D Arcade Stage 5" description="2009, Sega Lindbergh, Not supported yet" toggled=False @486,609 95x53
+RadioButton label="Initial D Arcade Stage 6 AA" description="2011, Sega RingEdge, Not in your library" toggled=False @593,609 95x53
+RadioButton label="Initial D Arcade Stage 7 AAX" description="2012, Sega RingEdge, Not in your library" toggled=False @699,609 95x53
+RadioButton label="Initial D Arcade Stage 8 Infinity" description="2014, Sega RingEdge, Not in your library" toggled=False @805,609 95x53
+RadioButton label="Initial D Arcade Stage Zero Ver. 2" description="2017, Sega Nu, Not in your library" toggled=False @911,609 95x53
+RadioButton label="Initial D THE ARCADE Season 3" description="2024, Sega ALLS UX, Not in your library" toggled=False @1017,609 95x53
+RadioButton label="Initial D THE ARCADE Season 5" description="2025, Sega ALLS UX, Not in your library" toggled=False @1123,609 95x53
+Tab label="Games" toggled=True @362,19 86x42
+Tab label="Controls" toggled=False @457,19 101x42
+Tab label="Settings" toggled=False @568,19 101x42
+Label value="Controller: No controller"
+Label value="Getting Initial D Arcade Stage 6 AA ready…"
+Label value="This takes a few seconds the first time."

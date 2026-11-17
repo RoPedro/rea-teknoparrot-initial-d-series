@@ -1,0 +1,24 @@
+== 1280x720
+Label value="Your game folders"
+Label value="Type the path of a folder that holds your Initial D game folders and add it. The launcher looks inside for each game and never changes what's there."
+Label value="<tmp>/my games"
+TextInput label="Game folder" value="" @96,232 704x46
+Button label="Add folder" @816,230 180x50
+Label value="Added <tmp>/my games."
+Label value="NAOMI 2 BIOS (naomi2.zip), needed for Initial D 1 to 3"
+TextInput label="NAOMI 2 BIOS file" value="/no/such/naomi2.zip" @96,352 704x46
+Button label="Use BIOS" @816,350 180x50
+Label value="/no/such/naomi2.zip isn't a file this computer can open. Check the path and try again."
+Button label="Done" @96,442 180x50
+== 1280x800
+Label value="Your game folders"
+Label value="Type the path of a folder that holds your Initial D game folders and add it. The launcher looks inside for each game and never changes what's there."
+Label value="<tmp>/my games"
+TextInput label="Game folder" value="" @107,259 782x51
+Button label="Add folder" @907,257 200x56
+Label value="Added <tmp>/my games."
+Label value="NAOMI 2 BIOS (naomi2.zip), needed for Initial D 1 to 3"
+TextInput label="NAOMI 2 BIOS file" value="/no/such/naomi2.zip" @107,393 782x51
+Button label="Use BIOS" @907,390 200x56
+Label value="/no/such/naomi2.zip isn't a file this computer can open. Check the path and try again."
+Button label="Done" @107,493 200x56

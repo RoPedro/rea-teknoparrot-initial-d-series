@@ -674,6 +674,9 @@ mod host_tests {
     }
 }
 
+#[cfg(all(test, unix))]
+mod golden;
+
 // the Linux command line (gamescope, bubblewrap)
 #[cfg(all(test, unix))]
 mod tests {

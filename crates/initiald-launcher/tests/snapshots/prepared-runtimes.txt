@@ -1,0 +1,127 @@
+== id5
+first start marker None
+== id6
+first start marker None
+== zero
+first start marker None
+== ta5
+first start marker Some("data/runtimes/ta5/AMFS/sysfile.dat")
+dir  data/components
+dir  data/components/lindbergh
+file data/components/lindbergh/lindbergh
+file data/components/lindbergh/lindbergh.so
+dir  data/runtimes
+dir  data/runtimes/id5
+link data/runtimes/id5/Setting.ini -> <tmp>/games/id5/Setting.ini
+file data/runtimes/id5/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+link data/runtimes/id5/data -> <tmp>/games/id5/data
+link data/runtimes/id5/id5.elf -> <tmp>/games/id5/id5.elf
+file data/runtimes/id5/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 1360
+HEIGHT = 768
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = <nic>
+dir  data/runtimes/id6
+file data/runtimes/id6/Setting.ini
+[game]
+link data/runtimes/id6/data -> <tmp>/games/id6/data
+link data/runtimes/id6/id6_dump_.exe -> <tmp>/games/id6/id6_dump_.exe
+file data/runtimes/id6/initial-d-arcade-stage-6.windowsloader
+id6_dump_.exe
+dir  data/runtimes/ta5
+link data/runtimes/ta5/App -> <tmp>/games/ta5/App
+file data/runtimes/ta5/Setting.ini
+[game]
+link data/runtimes/ta5/data -> <tmp>/games/ta5/data
+file data/runtimes/ta5/initial-d-the-arcade-season-5.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+dir  data/runtimes/zero
+file data/runtimes/zero/initial-d-arcade-stage-zero-ver-2.windowsloader
+package\InitialD0_DX11_Nu.exe
+dir  data/runtimes/zero/package
+link data/runtimes/zero/package/InitialD0_DX11_Nu.exe -> <tmp>/games/zero/InitialD0_DX11_Nu.exe
+file data/runtimes/zero/package/Setting.ini
+[game]
+link data/runtimes/zero/package/data -> <tmp>/games/zero/data
+dir  data/wal
+dir  data/wal/dist
+link data/wal/dist/payloads -> <tmp>/components/wal/payloads
+file data/wal/layer-id6.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: <free>
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+file data/wal/layer-ta5.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: <free>
+file data/wal/layer-zero.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: <free>
+link data/wal/systemprofiles -> <tmp>/components/wal/systemprofiles
+dir  data/wal/wine-runners
+link data/wal/wine-runners/runner -> <tmp>/components/runner
+link data/wal/wine-runners/winetricks -> <tmp>/components/winetricks

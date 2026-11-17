@@ -1,0 +1,65 @@
+$ initiald-launcher --bogus
+exit 2
+-- stdout
+-- stderr
+unknown option --bogus
+<usage text>
+
+$ initiald-launcher --render
+exit 2
+-- stdout
+-- stderr
+--render needs a value
+<usage text>
+
+$ initiald-launcher --game id6 --crt rainbow
+exit 2
+-- stdout
+-- stderr
+bad value for --crt: rainbow
+<usage text>
+
+$ initiald-launcher --play id1 --seconds soon
+exit 2
+-- stdout
+-- stderr
+--seconds needs a number
+<usage text>
+
+$ initiald-launcher --crt off
+exit 2
+-- stdout
+-- stderr
+options need --play <game> or --game <game>
+
+$ initiald-launcher --game nope --crt off
+exit 2
+-- stdout
+-- stderr
+unknown game nope
+
+$ initiald-launcher --play nope
+exit 2
+-- stdout
+-- stderr
+unknown game nope
+
+$ initiald-launcher --list
+exit 1
+-- stdout
+-- stderr
+no library yet: run with --library <folder>
+
+$ initiald-launcher --library <tmp>/missing
+exit 2
+-- stdout
+-- stderr
+<tmp>/missing is not a folder
+
+$ initiald-launcher --naomi2-bios <tmp>/missing
+exit 2
+-- stdout
+-- stderr
+<tmp>/missing is not a file
+
+-- the data folder holds 0 entries

@@ -1,0 +1,3809 @@
+== Linux id1 defaults
+size 853x480
+program flycast
+args /lib/id1/initdexp.zip
+cwd /d/runtimes/id1
+env XDG_CONFIG_HOME=/d/runtimes/id1/config
+env XDG_DATA_HOME=/d/runtimes/id1/data
+gamescope -w 853 -h 480 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input None
+link /d/runtimes/id1/data/flycast/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id1/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id1/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id1/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id1 custom
+size 2560x1440
+program flycast
+args /lib/id1/initdexp.zip
+cwd /d/runtimes/id1
+env XDG_CONFIG_HOME=/d/runtimes/id1/config
+env XDG_DATA_HOME=/d/runtimes/id1/data
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F nis --sharpness 12 --reshade-effect crt-lottes.fx
+gamescope home /d/runtimes/id1/gamescope-home
+input None
+link /d/runtimes/id1/data/flycast/naomi2.zip -> /bios/naomi2.zip
+link /d/runtimes/id1/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id1/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id1/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id1/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id1 linear
+size 853x480
+program flycast
+args /lib/id1/initdexp.zip
+cwd /d/runtimes/id1
+env XDG_CONFIG_HOME=/d/runtimes/id1/config
+env XDG_DATA_HOME=/d/runtimes/id1/data
+gamescope -w 853 -h 480 -W 3840 -H 2160 -r 60 -F linear -f
+input None
+link /d/runtimes/id1/data/flycast/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id1/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id1/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id1/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id1 headless
+size 2560x1440
+program flycast
+args /lib/id1/initdexp.zip
+cwd /d/runtimes/id1
+env XDG_CONFIG_HOME=/d/runtimes/id1/config
+env XDG_DATA_HOME=/d/runtimes/id1/data
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F linear --reshade-effect crt-lottes.fx --backend headless
+gamescope home /d/runtimes/id1/gamescope-home
+input None
+link /d/runtimes/id1/data/flycast/naomi2.zip -> /bios/naomi2.zip
+link /d/runtimes/id1/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id1/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id1/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id1/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id1 defaults, no BIOS
+size 853x480
+program flycast
+args /lib/id1/initdexp.zip
+cwd /d/runtimes/id1
+env XDG_CONFIG_HOME=/d/runtimes/id1/config
+env XDG_DATA_HOME=/d/runtimes/id1/data
+gamescope -w 853 -h 480 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input None
+file /d/runtimes/id1/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id1/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id1/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id2 defaults
+size 853x480
+program flycast
+args /lib/id2/initdv2e.zip
+cwd /d/runtimes/id2
+env XDG_CONFIG_HOME=/d/runtimes/id2/config
+env XDG_DATA_HOME=/d/runtimes/id2/data
+gamescope -w 853 -h 480 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input None
+link /d/runtimes/id2/data/flycast/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id2/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id2/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id2/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id2 custom
+size 2560x1440
+program flycast
+args /lib/id2/initdv2e.zip
+cwd /d/runtimes/id2
+env XDG_CONFIG_HOME=/d/runtimes/id2/config
+env XDG_DATA_HOME=/d/runtimes/id2/data
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F nis --sharpness 12 --reshade-effect crt-lottes.fx
+gamescope home /d/runtimes/id2/gamescope-home
+input None
+link /d/runtimes/id2/data/flycast/naomi2.zip -> /bios/naomi2.zip
+link /d/runtimes/id2/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id2/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id2/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id2/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id2 linear
+size 853x480
+program flycast
+args /lib/id2/initdv2e.zip
+cwd /d/runtimes/id2
+env XDG_CONFIG_HOME=/d/runtimes/id2/config
+env XDG_DATA_HOME=/d/runtimes/id2/data
+gamescope -w 853 -h 480 -W 3840 -H 2160 -r 60 -F linear -f
+input None
+link /d/runtimes/id2/data/flycast/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id2/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id2/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id2/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id2 headless
+size 2560x1440
+program flycast
+args /lib/id2/initdv2e.zip
+cwd /d/runtimes/id2
+env XDG_CONFIG_HOME=/d/runtimes/id2/config
+env XDG_DATA_HOME=/d/runtimes/id2/data
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F linear --reshade-effect crt-lottes.fx --backend headless
+gamescope home /d/runtimes/id2/gamescope-home
+input None
+link /d/runtimes/id2/data/flycast/naomi2.zip -> /bios/naomi2.zip
+link /d/runtimes/id2/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id2/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id2/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id2/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id2 defaults, no BIOS
+size 853x480
+program flycast
+args /lib/id2/initdv2e.zip
+cwd /d/runtimes/id2
+env XDG_CONFIG_HOME=/d/runtimes/id2/config
+env XDG_DATA_HOME=/d/runtimes/id2/data
+gamescope -w 853 -h 480 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input None
+file /d/runtimes/id2/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id2/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id2/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id3 defaults
+size 853x480
+program flycast
+args /lib/id3/initdv3e.zip
+cwd /d/runtimes/id3
+env XDG_CONFIG_HOME=/d/runtimes/id3/config
+env XDG_DATA_HOME=/d/runtimes/id3/data
+gamescope -w 853 -h 480 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input None
+link /d/runtimes/id3/data/flycast/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id3/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id3/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id3/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id3 custom
+size 2560x1440
+program flycast
+args /lib/id3/initdv3e.zip
+cwd /d/runtimes/id3
+env XDG_CONFIG_HOME=/d/runtimes/id3/config
+env XDG_DATA_HOME=/d/runtimes/id3/data
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F nis --sharpness 12 --reshade-effect crt-lottes.fx
+gamescope home /d/runtimes/id3/gamescope-home
+input None
+link /d/runtimes/id3/data/flycast/naomi2.zip -> /bios/naomi2.zip
+link /d/runtimes/id3/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id3/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id3/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id3/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id3 linear
+size 853x480
+program flycast
+args /lib/id3/initdv3e.zip
+cwd /d/runtimes/id3
+env XDG_CONFIG_HOME=/d/runtimes/id3/config
+env XDG_DATA_HOME=/d/runtimes/id3/data
+gamescope -w 853 -h 480 -W 3840 -H 2160 -r 60 -F linear -f
+input None
+link /d/runtimes/id3/data/flycast/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id3/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id3/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id3/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id3 headless
+size 2560x1440
+program flycast
+args /lib/id3/initdv3e.zip
+cwd /d/runtimes/id3
+env XDG_CONFIG_HOME=/d/runtimes/id3/config
+env XDG_DATA_HOME=/d/runtimes/id3/data
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F linear --reshade-effect crt-lottes.fx --backend headless
+gamescope home /d/runtimes/id3/gamescope-home
+input None
+link /d/runtimes/id3/data/flycast/naomi2.zip -> /bios/naomi2.zip
+link /d/runtimes/id3/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id3/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id3/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id3/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id3 defaults, no BIOS
+size 853x480
+program flycast
+args /lib/id3/initdv3e.zip
+cwd /d/runtimes/id3
+env XDG_CONFIG_HOME=/d/runtimes/id3/config
+env XDG_DATA_HOME=/d/runtimes/id3/data
+gamescope -w 853 -h 480 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input None
+file /d/runtimes/id3/config/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id3/config/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id3/config/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Linux id4 defaults
+size 1360x768
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id4/lindbergh.ini -o /d/runtimes/id4/controls.ini -g /d/runtimes/id4
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id4/lib
+gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input None
+file /d/runtimes/id4/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 1360
+HEIGHT = 768
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id4/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Linux id4 custom
+size 2560x1440
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id4/lindbergh.ini -o /d/runtimes/id4/controls.ini -g /d/runtimes/id4
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id4/lib
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F nis --sharpness 12 --reshade-effect crt-lottes.fx
+gamescope home /d/runtimes/id4/gamescope-home
+input None
+link /d/runtimes/id4/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id4/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 2560
+HEIGHT = 1440
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id4/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Linux id4 linear
+size 1360x768
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id4/lindbergh.ini -o /d/runtimes/id4/controls.ini -g /d/runtimes/id4
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id4/lib
+gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F linear -f
+input None
+file /d/runtimes/id4/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 1360
+HEIGHT = 768
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id4/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Linux id4 headless
+size 2560x1440
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id4/lindbergh.ini -o /d/runtimes/id4/controls.ini -g /d/runtimes/id4
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id4/lib
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F linear --reshade-effect crt-lottes.fx --backend headless
+gamescope home /d/runtimes/id4/gamescope-home
+input None
+link /d/runtimes/id4/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id4/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 2560
+HEIGHT = 1440
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id4/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Linux id5 defaults
+size 1360x768
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id5/lindbergh.ini -o /d/runtimes/id5/controls.ini -g /d/runtimes/id5
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id5/lib
+gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input None
+file /d/runtimes/id5/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 1360
+HEIGHT = 768
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id5/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Linux id5 custom
+size 2560x1440
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id5/lindbergh.ini -o /d/runtimes/id5/controls.ini -g /d/runtimes/id5
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id5/lib
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F nis --sharpness 12 --reshade-effect crt-lottes.fx
+gamescope home /d/runtimes/id5/gamescope-home
+input None
+link /d/runtimes/id5/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id5/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 2560
+HEIGHT = 1440
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id5/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Linux id5 linear
+size 1360x768
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id5/lindbergh.ini -o /d/runtimes/id5/controls.ini -g /d/runtimes/id5
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id5/lib
+gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F linear -f
+input None
+file /d/runtimes/id5/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 1360
+HEIGHT = 768
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id5/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Linux id5 headless
+size 2560x1440
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id5/lindbergh.ini -o /d/runtimes/id5/controls.ini -g /d/runtimes/id5
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id5/lib
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F linear --reshade-effect crt-lottes.fx --backend headless
+gamescope home /d/runtimes/id5/gamescope-home
+input None
+link /d/runtimes/id5/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id5/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 2560
+HEIGHT = 1440
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id5/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Linux id6 defaults
+size 1360x768
+program /c/wal/arcade-launcher
+args run /d/runtimes/id6 --root /d/wal --profile /d/wal/layer-id6.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/id6/initial-d-arcade-stage-6.windowsloader
+id6_dump_.exe
+file /d/wal/layer-id6.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Linux id6 custom
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/id6 --root /d/wal --profile /d/wal/layer-id6.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F nis --sharpness 12 --reshade-effect crt-lottes.fx
+gamescope home /d/runtimes/id6/gamescope-home
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/id6/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id6/initial-d-arcade-stage-6.windowsloader
+id6_dump_.exe
+file /d/wal/layer-id6.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Linux id6 linear
+size 1360x768
+program /c/wal/arcade-launcher
+args run /d/runtimes/id6 --root /d/wal --profile /d/wal/layer-id6.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F linear -f
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/id6/initial-d-arcade-stage-6.windowsloader
+id6_dump_.exe
+file /d/wal/layer-id6.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Linux id6 headless
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/id6 --root /d/wal --profile /d/wal/layer-id6.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F linear --reshade-effect crt-lottes.fx --backend headless
+gamescope home /d/runtimes/id6/gamescope-home
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/id6/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id6/initial-d-arcade-stage-6.windowsloader
+id6_dump_.exe
+file /d/wal/layer-id6.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Linux id7 defaults
+size 1360x768
+program /c/wal/arcade-launcher
+args run /d/runtimes/id7 --root /d/wal --profile /d/wal/layer-id7.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/id7/initial-d-arcade-stage-7.windowsloader
+InitialD7_GLW_RE_SBYD.exe
+file /d/wal/layer-id7.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Linux id7 custom
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/id7 --root /d/wal --profile /d/wal/layer-id7.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F nis --sharpness 12 --reshade-effect crt-lottes.fx
+gamescope home /d/runtimes/id7/gamescope-home
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/id7/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id7/initial-d-arcade-stage-7.windowsloader
+InitialD7_GLW_RE_SBYD.exe
+file /d/wal/layer-id7.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Linux id7 linear
+size 1360x768
+program /c/wal/arcade-launcher
+args run /d/runtimes/id7 --root /d/wal --profile /d/wal/layer-id7.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F linear -f
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/id7/initial-d-arcade-stage-7.windowsloader
+InitialD7_GLW_RE_SBYD.exe
+file /d/wal/layer-id7.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Linux id7 headless
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/id7 --root /d/wal --profile /d/wal/layer-id7.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F linear --reshade-effect crt-lottes.fx --backend headless
+gamescope home /d/runtimes/id7/gamescope-home
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/id7/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id7/initial-d-arcade-stage-7.windowsloader
+InitialD7_GLW_RE_SBYD.exe
+file /d/wal/layer-id7.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Linux id8 defaults
+size 1360x768
+program /c/wal/arcade-launcher
+args run /d/runtimes/id8 --root /d/wal --profile /d/wal/layer-id8.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/id8/initial-d-arcade-stage-8.windowsloader
+InitialD8_GLW_RE_SBZZ_redumped_.exe
+file /d/wal/layer-id8.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Linux id8 custom
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/id8 --root /d/wal --profile /d/wal/layer-id8.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F nis --sharpness 12 --reshade-effect crt-lottes.fx
+gamescope home /d/runtimes/id8/gamescope-home
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/id8/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id8/initial-d-arcade-stage-8.windowsloader
+InitialD8_GLW_RE_SBZZ_redumped_.exe
+file /d/wal/layer-id8.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Linux id8 linear
+size 1360x768
+program /c/wal/arcade-launcher
+args run /d/runtimes/id8 --root /d/wal --profile /d/wal/layer-id8.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F linear -f
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/id8/initial-d-arcade-stage-8.windowsloader
+InitialD8_GLW_RE_SBZZ_redumped_.exe
+file /d/wal/layer-id8.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Linux id8 headless
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/id8 --root /d/wal --profile /d/wal/layer-id8.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F linear --reshade-effect crt-lottes.fx --backend headless
+gamescope home /d/runtimes/id8/gamescope-home
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/id8/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/id8/initial-d-arcade-stage-8.windowsloader
+InitialD8_GLW_RE_SBZZ_redumped_.exe
+file /d/wal/layer-id8.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Linux zero defaults
+size 1920x1080
+program /c/wal/arcade-launcher
+args run /d/runtimes/zero --root /d/wal --profile /d/wal/layer-zero.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1920 -h 1080 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/zero/initial-d-arcade-stage-zero-ver-2.windowsloader
+package\InitialD0_DX11_Nu.exe
+file /d/wal/layer-zero.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Linux zero custom
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/zero --root /d/wal --profile /d/wal/layer-zero.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F nis --sharpness 12 --reshade-effect crt-lottes.fx
+gamescope home /d/runtimes/zero/gamescope-home
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/zero/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/zero/initial-d-arcade-stage-zero-ver-2.windowsloader
+package\InitialD0_DX11_Nu.exe
+file /d/wal/layer-zero.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Linux zero linear
+size 1920x1080
+program /c/wal/arcade-launcher
+args run /d/runtimes/zero --root /d/wal --profile /d/wal/layer-zero.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1920 -h 1080 -W 3840 -H 2160 -r 60 -F linear -f
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/zero/initial-d-arcade-stage-zero-ver-2.windowsloader
+package\InitialD0_DX11_Nu.exe
+file /d/wal/layer-zero.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Linux zero headless
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/zero --root /d/wal --profile /d/wal/layer-zero.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F linear --reshade-effect crt-lottes.fx --backend headless
+gamescope home /d/runtimes/zero/gamescope-home
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/zero/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/zero/initial-d-arcade-stage-zero-ver-2.windowsloader
+package\InitialD0_DX11_Nu.exe
+file /d/wal/layer-zero.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Linux ta3 defaults
+size 1920x1080
+program /c/wal/arcade-launcher
+args run /d/runtimes/ta3 --root /d/wal --profile /d/wal/layer-ta3.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1920 -h 1080 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/ta3/initial-d-the-arcade-season-3.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta3.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Linux ta3 custom
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/ta3 --root /d/wal --profile /d/wal/layer-ta3.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F nis --sharpness 12 --reshade-effect crt-lottes.fx
+gamescope home /d/runtimes/ta3/gamescope-home
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/ta3/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/ta3/initial-d-the-arcade-season-3.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta3.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Linux ta3 linear
+size 1920x1080
+program /c/wal/arcade-launcher
+args run /d/runtimes/ta3 --root /d/wal --profile /d/wal/layer-ta3.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1920 -h 1080 -W 3840 -H 2160 -r 60 -F linear -f
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/ta3/initial-d-the-arcade-season-3.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta3.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Linux ta3 headless
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/ta3 --root /d/wal --profile /d/wal/layer-ta3.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F linear --reshade-effect crt-lottes.fx --backend headless
+gamescope home /d/runtimes/ta3/gamescope-home
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/ta3/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/ta3/initial-d-the-arcade-season-3.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta3.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Linux ta5 defaults
+size 1920x1080
+program /c/wal/arcade-launcher
+args run /d/runtimes/ta5 --root /d/wal --profile /d/wal/layer-ta5.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1920 -h 1080 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/ta5/initial-d-the-arcade-season-5.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta5.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Linux ta5 custom
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/ta5 --root /d/wal --profile /d/wal/layer-ta5.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F nis --sharpness 12 --reshade-effect crt-lottes.fx
+gamescope home /d/runtimes/ta5/gamescope-home
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/ta5/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/ta5/initial-d-the-arcade-season-5.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta5.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Linux ta5 linear
+size 1920x1080
+program /c/wal/arcade-launcher
+args run /d/runtimes/ta5 --root /d/wal --profile /d/wal/layer-ta5.yaml --input-pipe
+cwd /d/wal
+gamescope -w 1920 -h 1080 -W 3840 -H 2160 -r 60 -F linear -f
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+file /d/runtimes/ta5/initial-d-the-arcade-season-5.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta5.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Linux ta5 headless
+size 2560x1440
+program /c/wal/arcade-launcher
+args run /d/runtimes/ta5 --root /d/wal --profile /d/wal/layer-ta5.yaml --input-pipe
+cwd /d/wal
+gamescope -w 2560 -h 1440 -W 1920 -H 1080 -r 60 -F linear --reshade-effect crt-lottes.fx --backend headless
+gamescope home /d/runtimes/ta5/gamescope-home
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+link /d/wal/wine-runners/runner -> /c/runner
+link /d/wal/wine-runners/winetricks -> /c/winetricks
+link /d/runtimes/ta5/gamescope-home/.local/share/gamescope/reshade/Shaders/crt-lottes.fx -> /c/shaders/crt-lottes.fx
+file /d/runtimes/ta5/initial-d-the-arcade-season-5.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta5.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows id1 defaults
+size 853x480
+program /d/runtimes/id1/flycast/flycast.exe
+args /lib/id1/initdexp.zip
+cwd /d/runtimes/id1/flycast
+gamescope 
+input None
+link /d/runtimes/id1/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id1/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id1/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id1/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id1/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id1 custom
+size 2560x1440
+program /d/runtimes/id1/flycast/flycast.exe
+args /lib/id1/initdexp.zip
+cwd /d/runtimes/id1/flycast
+gamescope 
+input None
+link /d/runtimes/id1/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id1/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id1/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id1/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id1/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id1 linear
+size 853x480
+program /d/runtimes/id1/flycast/flycast.exe
+args /lib/id1/initdexp.zip
+cwd /d/runtimes/id1/flycast
+gamescope 
+input None
+link /d/runtimes/id1/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id1/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id1/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id1/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id1/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id1 headless
+size 2560x1440
+program /d/runtimes/id1/flycast/flycast.exe
+args /lib/id1/initdexp.zip
+cwd /d/runtimes/id1/flycast
+gamescope 
+input None
+link /d/runtimes/id1/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id1/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id1/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id1/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id1/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id1 defaults, no BIOS
+size 853x480
+program /d/runtimes/id1/flycast/flycast.exe
+args /lib/id1/initdexp.zip
+cwd /d/runtimes/id1/flycast
+gamescope 
+input None
+link /d/runtimes/id1/flycast/flycast.exe -> /c/flycast/flycast.exe
+file /d/runtimes/id1/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id1/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id1/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id2 defaults
+size 853x480
+program /d/runtimes/id2/flycast/flycast.exe
+args /lib/id2/initdv2e.zip
+cwd /d/runtimes/id2/flycast
+gamescope 
+input None
+link /d/runtimes/id2/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id2/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id2/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id2/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id2/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id2 custom
+size 2560x1440
+program /d/runtimes/id2/flycast/flycast.exe
+args /lib/id2/initdv2e.zip
+cwd /d/runtimes/id2/flycast
+gamescope 
+input None
+link /d/runtimes/id2/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id2/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id2/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id2/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id2/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id2 linear
+size 853x480
+program /d/runtimes/id2/flycast/flycast.exe
+args /lib/id2/initdv2e.zip
+cwd /d/runtimes/id2/flycast
+gamescope 
+input None
+link /d/runtimes/id2/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id2/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id2/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id2/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id2/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id2 headless
+size 2560x1440
+program /d/runtimes/id2/flycast/flycast.exe
+args /lib/id2/initdv2e.zip
+cwd /d/runtimes/id2/flycast
+gamescope 
+input None
+link /d/runtimes/id2/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id2/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id2/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id2/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id2/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id2 defaults, no BIOS
+size 853x480
+program /d/runtimes/id2/flycast/flycast.exe
+args /lib/id2/initdv2e.zip
+cwd /d/runtimes/id2/flycast
+gamescope 
+input None
+link /d/runtimes/id2/flycast/flycast.exe -> /c/flycast/flycast.exe
+file /d/runtimes/id2/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id2/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id2/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id3 defaults
+size 853x480
+program /d/runtimes/id3/flycast/flycast.exe
+args /lib/id3/initdv3e.zip
+cwd /d/runtimes/id3/flycast
+gamescope 
+input None
+link /d/runtimes/id3/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id3/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id3/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id3/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id3/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id3 custom
+size 2560x1440
+program /d/runtimes/id3/flycast/flycast.exe
+args /lib/id3/initdv3e.zip
+cwd /d/runtimes/id3/flycast
+gamescope 
+input None
+link /d/runtimes/id3/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id3/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id3/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id3/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id3/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id3 linear
+size 853x480
+program /d/runtimes/id3/flycast/flycast.exe
+args /lib/id3/initdv3e.zip
+cwd /d/runtimes/id3/flycast
+gamescope 
+input None
+link /d/runtimes/id3/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id3/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id3/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id3/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id3/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id3 headless
+size 2560x1440
+program /d/runtimes/id3/flycast/flycast.exe
+args /lib/id3/initdv3e.zip
+cwd /d/runtimes/id3/flycast
+gamescope 
+input None
+link /d/runtimes/id3/flycast/flycast.exe -> /c/flycast/flycast.exe
+link /d/runtimes/id3/flycast/data/naomi2.zip -> /bios/naomi2.zip
+file /d/runtimes/id3/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 1440
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id3/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id3/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id3 defaults, no BIOS
+size 853x480
+program /d/runtimes/id3/flycast/flycast.exe
+args /lib/id3/initdv3e.zip
+cwd /d/runtimes/id3/flycast
+gamescope 
+input None
+link /d/runtimes/id3/flycast/flycast.exe -> /c/flycast/flycast.exe
+file /d/runtimes/id3/flycast/emu.cfg
+# Written by the launcher before every start.
+[config]
+rend.Resolution = 480
+rend.WideScreen = yes
+rend.WidescreenGameHacks = yes
+Dynarec.Enabled = yes
+[window]
+fullscreen = yes
+file /d/runtimes/id3/flycast/mappings/SDL_Keyboard.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+file /d/runtimes/id3/flycast/mappings/SDL_Keyboard_arcade.cfg
+# Written by the launcher before every start.
+[emulator]
+dead_zone = 10
+mapping_name = Keyboard
+version = 3
+
+[digital]
+bind0 = 34:btn_d
+bind1 = 40:btn_start
+bind2 = 58:btn_z
+bind3 = 59:btn_c
+bind4 = 82:btn_dpad1_up
+bind5 = 81:btn_dpad1_down
+bind6 = 80:btn_analog_left
+bind7 = 79:btn_analog_right
+bind8 = 29:btn_trigger_right
+bind9 = 27:btn_trigger_left
+bind10 = 4:btn_a
+bind11 = 22:btn_b
+== Windows id4 defaults
+size 1360x768
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id4/lindbergh.ini -o /d/runtimes/id4/controls.ini -g /d/runtimes/id4
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id4/lib
+gamescope 
+input None
+file /d/runtimes/id4/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 1360
+HEIGHT = 768
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id4/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Windows id4 custom
+size 2560x1440
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id4/lindbergh.ini -o /d/runtimes/id4/controls.ini -g /d/runtimes/id4
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id4/lib
+gamescope 
+input None
+file /d/runtimes/id4/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 2560
+HEIGHT = 1440
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id4/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Windows id4 linear
+size 1360x768
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id4/lindbergh.ini -o /d/runtimes/id4/controls.ini -g /d/runtimes/id4
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id4/lib
+gamescope 
+input None
+file /d/runtimes/id4/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 1360
+HEIGHT = 768
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id4/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Windows id4 headless
+size 2560x1440
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id4/lindbergh.ini -o /d/runtimes/id4/controls.ini -g /d/runtimes/id4
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id4/lib
+gamescope 
+input None
+file /d/runtimes/id4/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 2560
+HEIGHT = 1440
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id4/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Windows id5 defaults
+size 1360x768
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id5/lindbergh.ini -o /d/runtimes/id5/controls.ini -g /d/runtimes/id5
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id5/lib
+gamescope 
+input None
+file /d/runtimes/id5/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 1360
+HEIGHT = 768
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id5/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Windows id5 custom
+size 2560x1440
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id5/lindbergh.ini -o /d/runtimes/id5/controls.ini -g /d/runtimes/id5
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id5/lib
+gamescope 
+input None
+file /d/runtimes/id5/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 2560
+HEIGHT = 1440
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id5/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Windows id5 linear
+size 1360x768
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id5/lindbergh.ini -o /d/runtimes/id5/controls.ini -g /d/runtimes/id5
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id5/lib
+gamescope 
+input None
+file /d/runtimes/id5/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 1360
+HEIGHT = 768
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id5/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Windows id5 headless
+size 2560x1440
+program /c/lindbergh/lindbergh
+args -c /d/runtimes/id5/lindbergh.ini -o /d/runtimes/id5/controls.ini -g /d/runtimes/id5
+cwd /c/lindbergh
+env LD_LIBRARY_PATH=/c/lindbergh:/d/runtimes/id5/lib
+gamescope 
+input None
+file /d/runtimes/id5/lindbergh.ini
+# Written by the launcher before every start.
+[Display]
+WIDTH = 2560
+HEIGHT = 1440
+BOOST_RENDER_RES = true
+FULLSCREEN = true
+KEEP_ASPECT_RATIO = true
+HIDE_CURSOR = true
+BORDER_ENABLED = false
+[Input]
+INPUT_MODE = 0
+[Emulation]
+REGION = EX
+FREEPLAY = true
+EMULATE_JVS = true
+EMULATE_DRIVEBOARD = AUTO
+EMULATE_ID_CARDREADER = AUTO
+[System]
+DEBUG_MSGS = false
+[Cards]
+ID_CARDFILE_AUTOLOAD = true
+CARDFILE_01 = "Card_01.crd"
+CARDFILE_02 = "Card_02.crd"
+[Paths]
+SRAM_PATH = "sram.bin"
+EEPROM_PATH = "eeprom.bin"
+[Graphics]
+GPU_VENDOR = 0
+FPS_LIMITER_ENABLED = true
+FPS_TARGET = 60.0
+[Network]
+NIC_NAME = "eth0"
+file /d/runtimes/id5/controls.ini
+# Written by the launcher before every start.
+[Common]
+Test = KEY_T
+P1_Coin = KEY_5, GC0_BUTTON_BACK
+P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
+P1_Service = KEY_S
+[Driving]
+P1_Steer_Left = KEY_Left
+P1_Steer_Right = KEY_Right
+P1_Gas_Digital = KEY_Up
+P1_Brake_Digital = KEY_Down
+ViewChange = KEY_V, GC0_BUTTON_Y
+GearUp = KEY_A, GC0_BUTTON_RIGHTSHOULDER
+GearDown = KEY_Z, GC0_BUTTON_LEFTSHOULDER
+CardInsert = KEY_F7, GC0_BUTTON_X
+P1_Steer = GC0_AXIS_LEFTX
+P1_Gas = GC0_AXIS_RIGHTTRIGGER
+P1_Brake = GC0_AXIS_LEFTTRIGGER
+== Windows id6 defaults
+size 1360x768
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id6 --root /d/wal --profile /d/wal/layer-id6.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id6/initial-d-arcade-stage-6.windowsloader
+id6_dump_.exe
+file /d/wal/layer-id6.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Windows id6 custom
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id6 --root /d/wal --profile /d/wal/layer-id6.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id6/initial-d-arcade-stage-6.windowsloader
+id6_dump_.exe
+file /d/wal/layer-id6.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Windows id6 linear
+size 1360x768
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id6 --root /d/wal --profile /d/wal/layer-id6.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id6/initial-d-arcade-stage-6.windowsloader
+id6_dump_.exe
+file /d/wal/layer-id6.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Windows id6 headless
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id6 --root /d/wal --profile /d/wal/layer-id6.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id6/initial-d-arcade-stage-6.windowsloader
+id6_dump_.exe
+file /d/wal/layer-id6.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Windows id7 defaults
+size 1360x768
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id7 --root /d/wal --profile /d/wal/layer-id7.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id7/initial-d-arcade-stage-7.windowsloader
+InitialD7_GLW_RE_SBYD.exe
+file /d/wal/layer-id7.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Windows id7 custom
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id7 --root /d/wal --profile /d/wal/layer-id7.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id7/initial-d-arcade-stage-7.windowsloader
+InitialD7_GLW_RE_SBYD.exe
+file /d/wal/layer-id7.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Windows id7 linear
+size 1360x768
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id7 --root /d/wal --profile /d/wal/layer-id7.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id7/initial-d-arcade-stage-7.windowsloader
+InitialD7_GLW_RE_SBYD.exe
+file /d/wal/layer-id7.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Windows id7 headless
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id7 --root /d/wal --profile /d/wal/layer-id7.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id7/initial-d-arcade-stage-7.windowsloader
+InitialD7_GLW_RE_SBYD.exe
+file /d/wal/layer-id7.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Windows id8 defaults
+size 1360x768
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id8 --root /d/wal --profile /d/wal/layer-id8.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id8/initial-d-arcade-stage-8.windowsloader
+InitialD8_GLW_RE_SBZZ_redumped_.exe
+file /d/wal/layer-id8.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Windows id8 custom
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id8 --root /d/wal --profile /d/wal/layer-id8.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id8/initial-d-arcade-stage-8.windowsloader
+InitialD8_GLW_RE_SBZZ_redumped_.exe
+file /d/wal/layer-id8.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Windows id8 linear
+size 1360x768
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id8 --root /d/wal --profile /d/wal/layer-id8.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id8/initial-d-arcade-stage-8.windowsloader
+InitialD8_GLW_RE_SBZZ_redumped_.exe
+file /d/wal/layer-id8.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "1360x768"
+== Windows id8 headless
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/id8 --root /d/wal --profile /d/wal/layer-id8.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(RingEdge)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/id8/initial-d-arcade-stage-8.windowsloader
+InitialD8_GLW_RE_SBZZ_redumped_.exe
+file /d/wal/layer-id8.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+env:
+  WAL_RINGEDGE_GL_SCALE: "2560x1440"
+== Windows zero defaults
+size 1920x1080
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/zero --root /d/wal --profile /d/wal/layer-zero.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/zero/initial-d-arcade-stage-zero-ver-2.windowsloader
+package\InitialD0_DX11_Nu.exe
+file /d/wal/layer-zero.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows zero custom
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/zero --root /d/wal --profile /d/wal/layer-zero.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/zero/initial-d-arcade-stage-zero-ver-2.windowsloader
+package\InitialD0_DX11_Nu.exe
+file /d/wal/layer-zero.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows zero linear
+size 1920x1080
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/zero --root /d/wal --profile /d/wal/layer-zero.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/zero/initial-d-arcade-stage-zero-ver-2.windowsloader
+package\InitialD0_DX11_Nu.exe
+file /d/wal/layer-zero.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows zero headless
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/zero --root /d/wal --profile /d/wal/layer-zero.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/zero/initial-d-arcade-stage-zero-ver-2.windowsloader
+package\InitialD0_DX11_Nu.exe
+file /d/wal/layer-zero.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows ta3 defaults
+size 1920x1080
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/ta3 --root /d/wal --profile /d/wal/layer-ta3.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/ta3/initial-d-the-arcade-season-3.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta3.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows ta3 custom
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/ta3 --root /d/wal --profile /d/wal/layer-ta3.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/ta3/initial-d-the-arcade-season-3.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta3.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows ta3 linear
+size 1920x1080
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/ta3 --root /d/wal --profile /d/wal/layer-ta3.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/ta3/initial-d-the-arcade-season-3.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta3.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows ta3 headless
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/ta3 --root /d/wal --profile /d/wal/layer-ta3.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/ta3/initial-d-the-arcade-season-3.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta3.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows ta5 defaults
+size 1920x1080
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/ta5 --root /d/wal --profile /d/wal/layer-ta5.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/ta5/initial-d-the-arcade-season-5.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta5.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows ta5 custom
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/ta5 --root /d/wal --profile /d/wal/layer-ta5.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/ta5/initial-d-the-arcade-season-5.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta5.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows ta5 linear
+size 1920x1080
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/ta5 --root /d/wal --profile /d/wal/layer-ta5.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/ta5/initial-d-the-arcade-season-5.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta5.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700
+== Windows ta5 headless
+size 2560x1440
+program /c/wal/arcade-launcher.exe
+args run /d/runtimes/ta5 --root /d/wal --profile /d/wal/layer-ta5.yaml --input-pipe
+cwd /d/wal
+gamescope 
+input Some(Alls)
+link /d/wal/systemprofiles -> /c/wal/systemprofiles
+link /d/wal/dist/payloads -> /c/wal/payloads
+file /d/runtimes/ta5/initial-d-the-arcade-season-5.windowsloader
+App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
+file /d/wal/layer-ta5.yaml
+# Written by the launcher before every start.
+runner: runner
+prefix: wine-prefix/initiald
+prefix_tricks: [xact]
+reshade: false
+gamescope:
+  enabled: false
+port: 33700

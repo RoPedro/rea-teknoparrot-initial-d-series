@@ -1,0 +1,35 @@
+== plain
+Settings { render: None, output: Size { w: 2560, h: 1440 }, upscaler: Linear, sharpness: 5, crt: Off, fullscreen: false, deadzone: 0.123 }
+problem line 6: bad value for sharpness: 50
+problem line 10: no '='
+-- saved
+# my notes
+upscaler = linear
+# crt = lottes
+future_key = 7
+output = 2560x1440
+sharpness = 5
+render = native
+deadzone = 0.12
+fullscreen = false
+no equals sign
+upscaler = linear
+crt = off
+== bom
+Settings { render: None, output: Size { w: 2560, h: 1440 }, upscaler: Linear, sharpness: 5, crt: Off, fullscreen: false, deadzone: 0.123 }
+problem line 1: no '='
+problem line 6: bad value for sharpness: 50
+problem line 10: no '='
+-- saved
+﻿# my notes
+upscaler = linear
+# crt = lottes
+future_key = 7
+output = 2560x1440
+sharpness = 5
+render = native
+deadzone = 0.12
+fullscreen = false
+no equals sign
+upscaler = linear
+crt = off

@@ -2622,6 +2622,8 @@ mod tests {
 
     use crate::input::DeviceInfo;
 
+    mod golden;
+
     const SCREEN: Vec2 = vec2(1280.0, 720.0);
 
     fn paths_in(t: &Path) -> Paths {
@@ -2633,6 +2635,11 @@ mod tests {
 
     /// A window over an app that has `libraries` saved, with no controllers.
     fn window(paths: &Paths, libraries: &[PathBuf]) -> Harness<'static, App> {
+        window_at(paths, libraries, SCREEN)
+    }
+
+    /// [`window`] at `size`.
+    fn window_at(paths: &Paths, libraries: &[PathBuf], size: Vec2) -> Harness<'static, App> {
         let mut config = Config::default();
         for l in libraries {
             config.add_library(l);
@@ -2642,7 +2649,7 @@ mod tests {
         }
         let fonts = paths.fonts();
         let mut h = Harness::builder()
-            .with_size(SCREEN)
+            .with_size(size)
             .with_theme(egui::Theme::Dark)
             .with_context_setup(move |ctx| {
                 theme::install_fonts(ctx, &fonts);

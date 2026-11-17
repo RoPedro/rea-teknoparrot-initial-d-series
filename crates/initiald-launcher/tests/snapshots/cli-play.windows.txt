@@ -1,0 +1,44 @@
+$ initiald-launcher --library <tmp>/lib/naomi2 --library <tmp>/lib/tp
+exit 0
+-- stdout
+-- stderr
+
+$ initiald-launcher --play id1 --headless
+exit 1
+-- stdout
+-- stderr
+Initial D Arcade Stage needs launcher components that are missing:
+  <tmp>/components/flycast/flycast.exe
+(see README, "Components")
+
+$ initiald-launcher --play id2 --headless
+exit 1
+-- stdout
+-- stderr
+Initial D Arcade Stage Ver. 2 needs launcher components that are missing:
+  <tmp>/components/flycast/flycast.exe
+(see README, "Components")
+
+$ initiald-launcher --play id1 --headless
+exit 1
+-- stdout
+-- stderr
+Initial D Arcade Stage needs launcher components that are missing:
+  <tmp>/components/flycast/flycast.exe
+(see README, "Components")
+
+$ initiald-launcher --naomi2-bios <tmp>/bios/naomi2.zip
+exit 0
+-- stdout
+-- stderr
+
+$ initiald-launcher --play id1 --headless --seconds 1
+exit 1
+-- stdout
+-- stderr
+Initial D Arcade Stage needs launcher components that are missing:
+  <tmp>/components/flycast/flycast.exe
+(see README, "Components")
+
+-- data/runtimes/id1/session.log
+(no such file)

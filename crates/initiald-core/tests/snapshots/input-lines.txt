@@ -1,0 +1,24 @@
+== RingEdge
+gear_up    p1 10 0 0 0 0 0 0
+gear_down  p1 20 0 0 0 0 0 0
+view       p1 40 0 0 0 0 0 0
+start      p1 1000 0 0 0 0 0 0
+card       p1 10000 0 0 0 0 0 0
+coin       p1 2000 0 0 0 0 0 0
+test       p1 8000 0 0 0 0 0 0
+service    p1 4000 0 0 0 0 0 0
+steer -1.5 accel 0.5 brake 0: p1 0 -32767 0 0 0 16384 0
+steer 1 accel 1 brake 1: p1 0 32767 0 0 0 32767 32767
+steer 0.25 accel -1 brake 2: p1 0 8192 0 0 0 0 32767
+== Alls
+gear_up    p1 400 0 0 0 0 0 0
+gear_down  p1 200 0 0 0 0 0 0
+view       p1 10 0 0 0 0 0 0
+start      p1 1000 0 0 0 0 0 0
+card       p1 10000 0 0 0 0 0 0
+coin       p1 2000 0 0 0 0 0 0
+test       p1 8000 0 0 0 0 0 0
+service    p1 4000 0 0 0 0 0 0
+steer -1.5 accel 0.5 brake 0: p1 0 -32767 0 0 0 16384 0
+steer 1 accel 1 brake 1: p1 0 32767 0 0 0 32767 32767
+steer 0.25 accel -1 brake 2: p1 0 8192 0 0 0 0 32767

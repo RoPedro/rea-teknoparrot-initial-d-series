@@ -1,0 +1,22 @@
+initiald-launcher — the Initial D arcade series
+
+  initiald-launcher                      open the window (games, settings, controls)
+  initiald-launcher --library <folder>   add a folder with your games (repeatable)
+  initiald-launcher --naomi2-bios <file> where your naomi2.zip is (Ver. 1–3)
+  initiald-launcher --list               list the games found and their state
+  initiald-launcher --play <game>        start a game (id1 … id8, zero, ta3, ta5)
+  initiald-launcher --game <game> <options>   save options for a game without starting it
+  Options (saved in that game's settings):
+      --render <WxH|native>            the size the game draws at, e.g. 3840x2160
+      --output <WxH>                   the size gamescope shows on the screen
+      --upscaler <fsr|nis|linear|nearest>
+      --sharpness <0-20>               FSR/NIS sharpness, 0 is sharpest
+      --crt <off|lottes>               CRT scanlines and mask
+      --fullscreen <on|off>
+      --deadzone <0-0.3>               controller stick dead zone
+  Test options for --play:
+      --headless                       run in an invisible display
+      --no-input                       no controller input
+      --input-script <file>            timed inputs (Windows games), see docs
+      --seconds <n>                    stop the game after n seconds
+  initiald-launcher --help             this text
