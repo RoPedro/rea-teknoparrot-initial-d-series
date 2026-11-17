@@ -204,3 +204,28 @@ nothing, no window, no message.
   block (33700, 33900, …) for each start and writes it to the game's layer
   (`port:`). Checked under Wine (Windows build) and on Linux with 33700
   held: port 33900, ID8 to its attract screen.
+
+## On the SDK's hub pieces (rea-launcher-sdk v0.10.0, 2026-11-17)
+
+The launcher moved onto the SDK's shared hub code (window, command line,
+process group and supervisor, input thread, runtime folder). Rerun
+headless through the launcher (`--play <game> --headless --seconds <n>`,
+release build, library on the NAS bound read-only, a private PipeWire with
+one null sink, `DISPLAY`/`WAYLAND_DISPLAY` unset for the launcher so no
+message window can open on the desktop), one game per route:
+
+| Game | Route | Result |
+|---|---|---|
+| ID6 | windowsarcadeloader (Wine) | starts; the scripted input reaches the payload (60 changes in `wal-ringedge.log`, `input: P1 buttons 0x1000` for Start); stopped after 240 s: loader, game, Wine and gamescope gone, `stopped 0 leftover process(es)` |
+| ID1 | Flycast | boots (`Game ID is [INITIAL D]`); stopped after 120 s and 60 s: Flycast alone is asked to quit and writes its `initdexp.zip.nvmem` within a second of the stop, then gamescope is ended; 0 leftovers |
+| ID5 | lindbergh-loader | boots (`GAME: Initial D5 EXP 2.0`, 3840×2160 as its settings say); stopped after 120 s; 0 leftovers |
+
+### Quitting and leftovers
+
+| How the game ends | Seen |
+|---|---|
+| Stop (the window's Stop button, `--seconds`, SIGINT/SIGTERM to `initiald-launcher --play`: one stop flag) | ID6, ID1, ID5 above: everything the session started is gone, 0 leftovers. Linux, Flycast: only Flycast is asked first (gamescope's reaper used to kill it before it saved: the save now lands, `nvmem` written at the stop) |
+| The game itself closes (the player closes the game's window; here SIGTERM to Flycast, or to `id6_dump_.exe`) | ID1 after 77 s, ID6 after 103 s: Flycast saved (`nvmem`), windowsarcadeloader ended with its game, then gamescope 3.17 crashed on its own way out (`SIGSEGV`, also before this change; nothing of the game left); 0 leftovers, no "couldn't start" message (it ran longer than 20 s) |
+| Quit from the game's menu | none of these arcade games has one |
+| The launcher's window closed (or Alt+F4) while a game runs | the window stops the game first and closes once it has ended (headless window test `closing_the_window_stops_the_game_first`) |
+| The launcher killed | Linux: the session is tied to the launcher (its group dies with it; the SDK's sentinel ends tagged processes that left it); covered by the SDK's `group` tests |

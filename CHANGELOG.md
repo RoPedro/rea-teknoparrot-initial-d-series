@@ -12,6 +12,9 @@ All notable changes to this launcher. The format follows
   game's processes, the controller input and the runtime folders now come
   from the SDK's shared code for the arcade hub launchers (Initial D,
   Nintendo, Sega, Wangan). The window looks the same.
+- The window works with a pad: the d-pad moves, A chooses, B goes back,
+  LB/RB switch pages, Start plays, Y opens a game's settings (the pad
+  belongs to the game while it runs).
 - The window's fonts are built into the launcher; the packages no longer
   carry a `components/fonts/` folder.
 - On Windows, the settings that only apply to gamescope on Linux (output

@@ -13,42 +13,10 @@ No game files are included or downloaded. Your game folders are only
 read, never changed: every game runs from a private folder that links to
 your dump.
 
-| | |
-|---|---|
-| ![Initial D Arcade Stage (NAOMI 2) in Flycast](docs/images/id1-race.jpg) | ![Initial D Arcade Stage 4, racing at Lake Akina](docs/images/id4-race.jpg) |
-| Arcade Stage Ver. 1 (NAOMI 2, Flycast) | Arcade Stage 4: crashed at every game start before this launcher's fix |
-| ![Initial D Arcade Stage 8 Infinity, tuning](docs/images/id8-tuning.jpg) | ![Initial D Arcade Stage Zero Ver. 2, the first race](docs/images/zero-race.jpg) |
-| Arcade Stage 8 Infinity | Arcade Stage Zero Ver. 2: stayed on its steering calibration screen before the fix |
-| ![THE ARCADE Season 5](docs/images/ta5-race.jpg) | ![The hub on Windows](docs/images/hub-windows.jpg) |
-| THE ARCADE Season 5 | The Windows version (Initial D 4 and 5 are Linux-only) |
+> The Windows version was tested under Wine only so far, not on a Windows
+> PC; a real wheel and its force feedback are not checked yet.
 
-## What runs
-
-| Game | Board | How it runs | Linux | Windows |
-|---|---|---|---|---|
-| Arcade Stage (Export Rev. A) | NAOMI 2 | Flycast | **plays** | boots (under Wine) |
-| Arcade Stage Ver. 2 (Export) | NAOMI 2 | Flycast | **plays** | not yet run |
-| Arcade Stage Ver. 3 (Export) | NAOMI 2 | Flycast | **plays** | not yet run |
-| Arcade Stage 4 (Export Rev. D, 1.5) | Lindbergh | lindbergh-loader, natively (patched) | **plays** | no (Linux game) |
-| Arcade Stage 5 (Export 2.0) | Lindbergh | lindbergh-loader, natively | **plays** | no (Linux game) |
-| Arcade Stage 6 AA (Japan) | RingEdge | windowsarcadeloader | **plays** | **plays** (under Wine) |
-| Arcade Stage 7 AAX (Japan) | RingEdge | windowsarcadeloader | **plays** | not yet run |
-| Arcade Stage 8 Infinity (Japan) | RingEdge | windowsarcadeloader | **plays** | not yet run |
-| Arcade Stage Zero Ver. 2 (2.30.00) | Nu | windowsarcadeloader (patched) | **plays** | **plays** (under Wine, see below) |
-| THE ARCADE Season 3 (2.31.00 Rev. 1) | ALLS UX | windowsarcadeloader | **plays** | not yet run |
-| THE ARCADE Season 5 (3.10.00 Rev. 1) | ALLS UX | windowsarcadeloader | **plays** | **plays** (under Wine, see below) |
-
-"Plays" means a race was driven in the real game through the launcher,
-with its own input path; each run is recorded in
-[docs/RUNTIME_NOTES.md](docs/RUNTIME_NOTES.md). The Windows version was
-tested only under Wine so far, not on a Windows PC; under Wine the
-cabinet drive letters of Zero and Season 5 had to be stood in for (Wine
-does not apply `DefineDosDevice` to its files). Only the exact builds
-listed in the hub are started (each is identified by the SHA-256 of its
-main file, or the SHA-1 of the GD-ROM); another build shows its digest so
-you can report it.
-
-## Why not just TeknoParrot?
+## Problems this launcher solves
 
 TeknoParrot is the usual way to play these dumps on a PC. This is what we
 ran into setting these games up, especially on Linux (details in
@@ -78,7 +46,7 @@ ran into setting these games up, especially on Linux (details in
   Season 5's very first start stays on "Initializing".
 - **Controls are set up per game**, by device, in the UI.
 
-## What this launcher does about it
+### What this launcher does about it
 
 - **Open loaders only, no TeknoParrot:** lindbergh-loader natively for 4 and
   5, windowsarcadeloader for 6 to THE ARCADE, Flycast for the NAOMI 2
@@ -103,7 +71,7 @@ ran into setting these games up, especially on Linux (details in
 - **Clean exit.** Stopping a game ends the loader, the game and its helper
   programs (amdaemon, the store server) and gives back what was set up.
 
-## What it adds
+### What it adds
 
 - **One hub for the whole series**, with an original illustration per game,
   driven by pad, keyboard or mouse.
@@ -125,28 +93,70 @@ ran into setting these games up, especially on Linux (details in
 - **Initial D 4 and 5 without shipping lindbergh-loader**: its licence
   forbids including it, so the first Play builds it on your computer.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Initial D Arcade Stage (NAOMI 2) in Flycast](docs/images/id1-race.jpg) | ![Initial D Arcade Stage 4, racing at Lake Akina](docs/images/id4-race.jpg) |
+| Arcade Stage Ver. 1 (NAOMI 2, Flycast) | Arcade Stage 4: crashed at every game start before this launcher's fix |
+| ![Initial D Arcade Stage 8 Infinity, tuning](docs/images/id8-tuning.jpg) | ![Initial D Arcade Stage Zero Ver. 2, the first race](docs/images/zero-race.jpg) |
+| Arcade Stage 8 Infinity | Arcade Stage Zero Ver. 2: stayed on its steering calibration screen before the fix |
+| ![THE ARCADE Season 5](docs/images/ta5-race.jpg) | ![The hub on Windows](docs/images/hub-windows.jpg) |
+| THE ARCADE Season 5 | The Windows version (Initial D 4 and 5 are Linux-only) |
+
+## What you need
+
+**Linux:** gamescope and bubblewrap (`bwrap`); Flycast, for Ver. 1 to 3;
+a Vulkan driver, 32-bit OpenGL, and `cabextract` (winetricks installs the
+games' Windows sound with it, once); for Initial D 4 and 5, git and docker
+or podman (the first Play of either builds lindbergh-loader on your
+computer, a few minutes, once).
+
+**Windows:** Windows 10 or 11 (64-bit), and Microsoft's DirectX End-User
+Runtime (June 2010) for the sound of Initial D 6, 7 and 8. Initial D 4
+and 5 are Linux-only.
+
+**Your games:** your own dumps of the builds below (the launcher brings no
+game files). The NAOMI 2 games also need the NAOMI 2 BIOS (`naomi2.zip`)
+and each game's `<set>.zip` next to its `<set>/` CHD folder.
+
+| Game | Board | How it runs | Linux | Windows |
+|---|---|---|---|---|
+| Arcade Stage (Export Rev. A) | NAOMI 2 | Flycast | **plays** | boots (under Wine) |
+| Arcade Stage Ver. 2 (Export) | NAOMI 2 | Flycast | **plays** | not yet run |
+| Arcade Stage Ver. 3 (Export) | NAOMI 2 | Flycast | **plays** | not yet run |
+| Arcade Stage 4 (Export Rev. D, 1.5) | Lindbergh | lindbergh-loader, natively (patched) | **plays** | no (Linux game) |
+| Arcade Stage 5 (Export 2.0) | Lindbergh | lindbergh-loader, natively | **plays** | no (Linux game) |
+| Arcade Stage 6 AA (Japan) | RingEdge | windowsarcadeloader | **plays** | **plays** (under Wine) |
+| Arcade Stage 7 AAX (Japan) | RingEdge | windowsarcadeloader | **plays** | not yet run |
+| Arcade Stage 8 Infinity (Japan) | RingEdge | windowsarcadeloader | **plays** | not yet run |
+| Arcade Stage Zero Ver. 2 (2.30.00) | Nu | windowsarcadeloader (patched) | **plays** | **plays** (under Wine, see below) |
+| THE ARCADE Season 3 (2.31.00 Rev. 1) | ALLS UX | windowsarcadeloader | **plays** | not yet run |
+| THE ARCADE Season 5 (3.10.00 Rev. 1) | ALLS UX | windowsarcadeloader | **plays** | **plays** (under Wine, see below) |
+
+"Plays" means a race was driven in the real game through the launcher,
+with its own input path; each run is recorded in
+[docs/RUNTIME_NOTES.md](docs/RUNTIME_NOTES.md). The Windows version was
+tested only under Wine so far, not on a Windows PC; under Wine the
+cabinet drive letters of Zero and Season 5 had to be stood in for (Wine
+does not apply `DefineDosDevice` to its files). Only the exact builds
+listed in the hub are started (each is identified by the SHA-256 of its
+main file, or the SHA-1 of the GD-ROM); another build shows its digest so
+you can report it.
+
 ## Download and install
 
 Packages are on the [releases page](https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/releases).
 
 **Linux** (`InitialDLauncher-<version>-linux-x86_64.tar.gz`): unpack it
 anywhere and run `./initiald-launcher`. It brings windowsarcadeloader and
-its Wine (GE-Proton). You need:
-
-- gamescope and bubblewrap (`bwrap`);
-- Flycast, for Ver. 1 to 3;
-- a Vulkan driver, 32-bit OpenGL, and `cabextract` (winetricks installs the
-  games' Windows sound with it, once);
-- for Initial D 4 and 5: git and docker or podman. The first Play of either
-  builds lindbergh-loader on your computer (a few minutes, once).
+its Wine (GE-Proton).
 
 **Windows** (`InitialDLauncher-<version>-windows-x86_64.zip`): unpack it
 anywhere and run `initiald-launcher.exe`. It brings windowsarcadeloader and
 Flycast, and Microsoft's Visual C++ 2008 runtime (x86), which Initial D 6,
 7 and 8 need and Windows doesn't include: the launcher installs it the first
-time you play one of them (Windows asks for your permission). You need
-Windows 10 or 11 (64-bit), and Microsoft's DirectX End-User Runtime (June
-2010) for the sound of Initial D 6, 7 and 8. Initial D 4 and 5 are Linux-only.
+time you play one of them (Windows asks for your permission).
 
 ## First run
 
@@ -163,7 +173,22 @@ initiald-launcher --list
 The NAOMI 2 games need `naomi2.zip` and each game's `<set>.zip` next to
 its `<set>/` CHD folder.
 
-## Controls
+## The settings window
+
+Pick a game on the hub and press **Settings** (or Y on a pad). Each row
+is one setting of that game; left and right (or a click on the arrows)
+change it, and it is saved at once and used the next time you press
+**Play**: the size the game draws at and the stick dead zone; on Linux
+also the size shown on the screen, the upscaler and its sharpness, and full
+screen. On Windows the Linux-only rows are shown switched off, with the
+reason. **Folders and BIOS** opens the page where you add game folders and
+the NAOMI 2 BIOS; **Rescan** looks through the folders again.
+
+The whole window works with a pad: the d-pad moves, A chooses, B goes
+back, LB/RB switch pages, Start plays, Y opens the settings. While a game
+runs, the pad belongs to the game.
+
+## Gamepad
 
 | Pad | Cabinet |
 |---|---|
@@ -190,7 +215,7 @@ and its sharpness, and full screen.
 
 ```sh
 initiald-launcher --play id6
-initiald-launcher --game id5 --render 3840x2160 --output 3840x2160 --upscaler fsr
+initiald-launcher --set id5 --render 3840x2160 --output 3840x2160 --upscaler fsr
 ```
 
 ## Where things live
@@ -204,6 +229,24 @@ initiald-launcher --game id5 --render 3840x2160 --output 3840x2160 --upscaler fs
 Each run writes `runtimes/<game>/session.log`; windowsarcadeloader's own
 log is in its run folder (`wal-<system>.log`). A game that couldn't start
 is also noted in `launcher.log`, and the hub shows why.
+
+## Troubleshooting
+
+- **A game is "Not in your library"**: check that its folder is inside one
+  of your game folders (or is one), then press Rescan. A build the launcher
+  doesn't know is listed by `initiald-launcher --list` with its digest;
+  please report it with the
+  [unknown edition form](https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new?template=unknown-edition.yml).
+- **A game couldn't start**: the message says why; `launcher.log` and the
+  game's `runtimes/<game>/session.log` have the details.
+  `initiald-launcher --check <game>` says what is missing without starting
+  it.
+- **A game closes right after starting** (Windows): the message lists the
+  error lines from its log; Initial D 6, 7 and 8 need Visual C++ 2008 and
+  the DirectX June 2010 runtime.
+- **Something else**: the
+  [bug report form](https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new?template=bug-report.yml)
+  asks for what we need.
 
 ## Known limitations
 
@@ -228,7 +271,7 @@ first: your saves are there).
 
 ```sh
 cargo test                              # core and window tests, headless
-scripts/build-launcher.sh linux         # or: windows (MinGW, LLD)
+sdk/packaging/build-launcher.sh linux initiald-launcher   # or: windows (MinGW, LLD)
 scripts/build-components.sh <dir>       # loaders and components from pinned sources
 scripts/package.sh linux                # or: windows
 ```
@@ -252,10 +295,31 @@ windowsarcadeloader's launcher with `--input-pipe` (`patches/wal`): the
 launcher's input thread writes the virtual stick to it and plays back the
 force feedback lines it prints.
 
+## Built on rea-launcher-sdk
+
+The window (the SDK's hub look), the command line, the library scan, the
+runtime folders, the game's processes and the controller input come from
+[rea-launcher-sdk](https://github.com/akitaonrails/rea-launcher-sdk),
+pinned by tag in `Cargo.toml` and vendored in `sdk/` with its packaging
+scripts and CI workflows. The games' table, their routes, the loaders'
+files and patches, and the art are this launcher's own.
+
 ## Contributing
 
-Issues about the shared code (pads, wheels, the window toolkit) belong in
-the [SDK repository](https://github.com/akitaonrails/rea-launcher-sdk).
+- **About Initial D** (its builds, loaders, patches, settings, this
+  README): issues and pull requests here.
+- **Shared code** (the hub window, the processes, controller input, the
+  runtime folder, the option table, packaging, CI workflows, anything under
+  `sdk/`): issues and pull requests at
+  [rea-launcher-sdk](https://github.com/akitaonrails/rea-launcher-sdk/issues).
+- **How to tell:** code under `sdk/` or from a `rea_launcher*` crate is the
+  SDK's. If the same problem would happen with another rea launcher, it's
+  the SDK's. Not sure? Open it here and it will be moved.
+- Never patch `sdk/` or copy SDK code here: fix the SDK and bump the tag.
+- Never attach game files (programs, dumps, saves, BIOS) to an issue.
+- Test reports are welcome: the
+  [bug report form](https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new?template=bug-report.yml)
+  has a "What worked?" list.
 
 ## Credits
 
