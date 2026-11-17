@@ -20,3 +20,10 @@ opt-level = "s"
 lto = true
 strip = true
 panic = "abort"
+
+# Until rea-launcher-sdk v0.10.0 is tagged: the SDK's feat/hub branch, checked out beside this repository.
+[patch."https://github.com/akitaonrails/rea-launcher-sdk"]
+rea-launcher = { path = "../rea-launcher-sdk-hub/crates/rea-launcher" }
+rea-launcher-native = { path = "../rea-launcher-sdk-hub/crates/rea-launcher-native" }
+rea-launcher-ui = { path = "../rea-launcher-sdk-hub/crates/rea-launcher-ui" }
+rea-launcher-win32 = { path = "../rea-launcher-sdk-hub/crates/rea-launcher-win32" }
