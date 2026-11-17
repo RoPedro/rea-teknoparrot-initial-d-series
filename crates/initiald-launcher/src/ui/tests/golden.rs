@@ -261,6 +261,7 @@ fn controls_with_a_pad_and_a_wheel() {
                 },
             ],
             driver: Some(1),
+            wheel: None,
             controls,
             feeding: true,
             error: None,

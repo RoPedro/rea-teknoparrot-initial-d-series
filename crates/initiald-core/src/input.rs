@@ -7,6 +7,7 @@
 //! two the Initial D profiles use (read from their `native_map`/`gamepad`
 //! sections at the pinned commit).
 
+use rea_launcher::wal::{self, Stick, button};
 use rea_launcher::wheel::{Action, Control, Controls as Read, PadInput, PadMap};
 
 /// Every button an Initial D cabinet has (besides wheel and pedals), plus
@@ -84,20 +85,6 @@ pub fn default_pad_map() -> PadMap<Button> {
     ])
 }
 
-/// windowsarcadeloader's virtual stick bits (`wal_protocol::button`).
-pub mod wal {
-    pub const B1: u32 = 1 << 4;
-    pub const B2: u32 = 1 << 5;
-    pub const B3: u32 = 1 << 6;
-    pub const B6: u32 = 1 << 9;
-    pub const B7: u32 = 1 << 10;
-    pub const START: u32 = 1 << 12;
-    pub const COIN: u32 = 1 << 13;
-    pub const SERVICE: u32 = 1 << 14;
-    pub const TEST: u32 = 1 << 15;
-    pub const CARD: u32 = 1 << 16;
-}
-
 /// Which virtual stick buttons a family of system profiles reads.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StickLayout {
@@ -111,35 +98,24 @@ impl StickLayout {
     fn bit(self, b: Button) -> u32 {
         use StickLayout::*;
         match (self, b) {
-            (RingEdge, Button::GearUp) => wal::B1,
-            (RingEdge, Button::GearDown) => wal::B2,
-            (RingEdge, Button::View) => wal::B3,
-            (Alls, Button::GearUp) => wal::B7,
-            (Alls, Button::GearDown) => wal::B6,
-            (Alls, Button::View) => wal::B1,
-            (_, Button::Start) => wal::START,
-            (_, Button::Card) => wal::CARD,
-            (_, Button::Coin) => wal::COIN,
-            (_, Button::Test) => wal::TEST,
-            (_, Button::Service) => wal::SERVICE,
+            (RingEdge, Button::GearUp) => button::B1,
+            (RingEdge, Button::GearDown) => button::B2,
+            (RingEdge, Button::View) => button::B3,
+            (Alls, Button::GearUp) => button::B7,
+            (Alls, Button::GearDown) => button::B6,
+            (Alls, Button::View) => button::B1,
+            (_, Button::Start) => button::START,
+            (_, Button::Card) => button::CARD,
+            (_, Button::Coin) => button::COIN,
+            (_, Button::Test) => button::TEST,
+            (_, Button::Service) => button::SERVICE,
         }
     }
 
     /// Player 1's line for `arcade-launcher --input-pipe`
     /// (`p1 <buttons hex> <lx> <ly> <rx> <ry> <accel> <brake>`).
     pub fn pipe_line(self, r: &Read) -> String {
-        let buttons = Button::ALL
-            .iter()
-            .filter(|b| r.buttons & b.bit() != 0)
-            .fold(0u32, |acc, &b| acc | self.bit(b));
-        let axis = |v: f32| (v.clamp(-1.0, 1.0) * 32767.0).round() as i32;
-        let pedal = |v: f32| (v.clamp(0.0, 1.0) * 32767.0).round() as i32;
-        format!(
-            "p1 {buttons:x} {} 0 0 0 {} {}",
-            axis(r.steer),
-            pedal(r.accel),
-            pedal(r.brake)
-        )
+        Stick::driving(wal::buttons(r.buttons, |b| self.bit(b)), r).line()
     }
 }
 

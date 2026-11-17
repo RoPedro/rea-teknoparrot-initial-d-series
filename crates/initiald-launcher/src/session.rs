@@ -3,16 +3,16 @@
 //! wait, and leave nothing behind.
 
 use std::fs;
-use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitStatus, Stdio};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::process::{Command, Stdio};
+use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, bail};
 use initiald_core::catalog::{Game, Route};
+use initiald_core::input::StickLayout;
 use initiald_core::launch::{self, Places, Plan};
 use initiald_core::runtime;
 use initiald_core::settings::Settings;
@@ -20,11 +20,14 @@ use rea_launcher::catalog::{Host, Support};
 use rea_launcher::gamescope::CommandLine;
 use rea_launcher::library::Entry;
 use rea_launcher::linkfarm::{self, Occupied, Op};
+use rea_launcher::wheel::Script;
 use rea_launcher::{session, wal};
+use rea_launcher_native::feeder::{self, Feeding, Scripted, Tuning};
+use rea_launcher_native::group::{Group, Tag};
+use rea_launcher_native::supervise::{self, Ended, Hold, Options, Outcome, Watcher};
 
-use crate::input::{self, Script};
+use crate::input::Wal;
 use crate::paths::Paths;
-use crate::proc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Display {
@@ -35,23 +38,45 @@ pub enum Display {
 
 pub struct Prepared {
     pub plan: Plan,
+    pub route: Route,
     pub runtime: PathBuf,
     /// [`Game::first_start_marker`] in the runtime, when the game has one.
     pub first_start: Option<PathBuf>,
 }
 
 /// What drives the game.
-#[derive(Clone)]
 pub enum Feed {
     /// The input thread (pads and wheels through SDL).
     Devices {
-        tx: Sender<input::Command>,
+        tx: Sender<feeder::Command>,
         deadzone: f32,
     },
     /// A timed script (tests).
     Script(Script),
-    /// Nothing (the native loaders read SDL themselves).
+    /// Nothing: windowsarcadeloader's input is held open until the stop
+    /// (a closed input tells it to quit at once). The native loaders read
+    /// SDL themselves.
     None,
+}
+
+impl Feed {
+    /// One start's feed of a loader that reads `layout`'s stick lines.
+    fn start(&self, layout: Option<StickLayout>) -> Box<dyn supervise::Feed> {
+        match (self, layout) {
+            (Feed::Devices { tx, deadzone }, Some(l)) => Box::new(Feeding::new(
+                tx.clone(),
+                Box::new(Wal(l)),
+                Tuning {
+                    deadzone: *deadzone,
+                    ..Tuning::default()
+                },
+            )),
+            (Feed::Script(script), Some(l)) => {
+                Box::new(Scripted::new(Box::new(Wal(l)), script.clone()))
+            }
+            _ => Box::new(Hold::default()),
+        }
+    }
 }
 
 fn check_components(game: &Game, p: &Paths) -> Result<()> {
@@ -364,6 +389,7 @@ pub fn prepare(
     let first_start = game.first_start_marker().map(|m| rt.join(m));
     Ok(Prepared {
         plan,
+        route: game.route,
         runtime: rt,
         first_start,
     })
@@ -397,32 +423,38 @@ pub fn log_path(runtime: &Path) -> PathBuf {
     runtime.join("session.log")
 }
 
-/// How one start of the game ended.
-enum Ended {
-    Exited(ExitStatus),
-    /// The first start wrote its marker: start again.
-    FirstStartDone,
-}
+/// How long a stopping game gets to save and quit.
+const GRACE: Duration = Duration::from_secs(8);
+
+/// How long after a first start's marker appears the game is started
+/// again (so the file is complete).
+const MARKER_SETTLE: Duration = Duration::from_secs(10);
 
 /// Run the game until it exits or `stop` is set; then stop everything the
 /// session started. A game on its first start (see
 /// [`Game::first_start_marker`]) is started again, once, as soon as that
-/// start has written its marker. Returns the game's exit status.
-pub fn run(paths: &Paths, p: &Prepared, feed: Feed, stop: Arc<AtomicBool>) -> Result<ExitStatus> {
-    let log_path = log_path(&p.runtime);
-    let log = Arc::new(Mutex::new(fs::File::create(&log_path)?));
-    let marker = p.first_start.as_ref().filter(|m| !m.exists());
-    if let Ended::Exited(st) = run_once(paths, p, feed.clone(), &stop, &log, marker)? {
-        return Ok(st);
+/// start has written its marker.
+pub fn run(paths: &Paths, p: &Prepared, feed: &Feed, stop: &AtomicBool) -> Result<Outcome> {
+    let log: supervise::Log = Arc::new(Mutex::new(fs::File::create(log_path(&p.runtime))?));
+    let marker = p.first_start.clone().filter(|m| !m.exists());
+    let first_start = marker.is_some();
+    let out = run_once(paths, p, feed, stop, &log, marker)?;
+    if !(first_start && matches!(out.ended, Ended::Watcher(_))) {
+        return Ok(out);
     }
-    writeln!(
-        log.lock().unwrap(),
-        "# first start done (system file written): starting again"
-    )?;
-    match run_once(paths, p, feed, &stop, &log, None)? {
-        Ended::Exited(st) => Ok(st),
-        Ended::FirstStartDone => unreachable!("no marker on the second start"),
+    writeln!(log.lock().unwrap(), "# starting again")?;
+    run_once(paths, p, feed, stop, &log, None)
+}
+
+/// How a run ended for the player: a game that closed by itself at once
+/// didn't start (Windows refuses a program whose runtime is missing
+/// without a window or a message), and the reason is in its log.
+pub fn verdict(p: &Prepared, out: &Outcome) -> Result<(), String> {
+    if out.ended != Ended::Itself {
+        return Ok(());
     }
+    let log = fs::read_to_string(log_path(&p.runtime)).unwrap_or_default();
+    session::early_end(out.ran, &out.status.to_string(), &log).map_or(Ok(()), Err)
 }
 
 /// The command the session starts: on Linux [`command_line`], on Windows
@@ -441,124 +473,107 @@ fn session_argv(plan: &Plan, libraries: &[PathBuf]) -> Vec<String> {
 fn run_once(
     paths: &Paths,
     p: &Prepared,
-    feed: Feed,
+    feed: &Feed,
     stop: &AtomicBool,
-    log: &Arc<Mutex<fs::File>>,
-    marker: Option<&PathBuf>,
-) -> Result<Ended> {
+    log: &supervise::Log,
+    marker: Option<PathBuf>,
+) -> Result<Outcome> {
     let argv = session_argv(&p.plan, &paths.config().libraries);
-    let tag = p.runtime.to_string_lossy().into_owned();
     let mut cmd = Command::new(&argv[0]);
     cmd.args(&argv[1..])
         .current_dir(&p.plan.game.cwd)
         .envs(p.plan.game.env.iter().map(|(k, v)| (k, v)))
         .stdout(Stdio::piped())
-        .stderr(Stdio::from(log.lock().unwrap().try_clone()?));
-    cmd.stdin(if p.plan.input_pipe.is_some() {
-        Stdio::piped()
-    } else {
-        Stdio::null()
-    });
-    proc::configure(&mut cmd, &tag);
-    writeln!(log.lock().unwrap(), "# {}", argv.join(" "))?;
-    let mut child = cmd
-        .spawn()
-        .with_context(|| format!("starting {}", argv[0]))?;
-    let group = proc::Group::of(&child, &tag).context("grouping the game's processes")?;
-
-    // stdout: force feedback lines to the input thread, the rest to the log
-    let out_tx = match &feed {
-        Feed::Devices { tx, .. } => Some(tx.clone()),
-        _ => None,
-    };
-    if let Some(stdout) = child.stdout.take() {
-        let log = Arc::clone(log);
-        std::thread::spawn(move || {
-            for line in BufReader::new(stdout).lines().map_while(Result::ok) {
-                if line.starts_with("out ") {
-                    if let Some(tx) = &out_tx {
-                        let _ = tx.send(input::Command::Output(line));
-                    }
-                } else {
-                    let _ = writeln!(log.lock().unwrap(), "{line}");
-                }
-            }
+        .stderr(Stdio::piped())
+        .stdin(if p.plan.input_pipe.is_some() {
+            Stdio::piped()
+        } else {
+            Stdio::null()
         });
-    }
-    // the loader's input is closed to ask it to stop (it ends the game and
-    // gives back what it set up)
-    let detach = match &feed {
-        Feed::Devices { tx, .. } => Some(tx.clone()),
-        _ => None,
+    writeln!(log.lock().unwrap(), "# {}", argv.join(" "))?;
+    let tag = Tag::new("INITIALD_SESSION", p.runtime.to_string_lossy());
+    let group = Group::spawn(&mut cmd, &tag).map_err(|e| match e.kind() {
+        // the SDK names the missing program
+        std::io::ErrorKind::NotFound => anyhow::Error::from(e),
+        _ => anyhow::Error::from(e).context(format!("starting {}", argv[0])),
+    })?;
+    let mut feed = feed.start(p.plan.input_pipe);
+    let mut watch = Watch {
+        marker,
+        marker_at: None,
+        flycast: matches!(p.route, Route::Flycast { .. }) && Host::current() == Host::Linux,
     };
-    let mut script_sink = None;
-    if let (Some(layout), Some(stdin)) = (p.plan.input_pipe, child.stdin.take()) {
-        match feed {
-            Feed::Devices { tx, deadzone } => {
-                let _ = tx.send(input::Command::Attach {
-                    sink: Box::new(stdin),
-                    layout,
-                    deadzone,
-                });
-            }
-            Feed::Script(script) => script_sink = Some((stdin, layout, script)),
-            Feed::None => drop(stdin),
-        }
-    }
-    let start = Instant::now();
-    let mut last_line = String::new();
-    // the marker seen: the moment to restart (a few seconds later, so the
-    // file is complete)
-    let mut marker_at: Option<Instant> = None;
-    let mut first_start_done = false;
-    let status = loop {
-        if let Some(st) = child.try_wait()? {
-            break st;
-        }
-        if let Some(m) = marker {
-            match marker_at {
-                None if m.exists() => marker_at = Some(Instant::now()),
-                Some(t) if t.elapsed() > Duration::from_secs(10) => first_start_done = true,
-                _ => {}
-            }
-        }
-        if stop.load(Ordering::SeqCst) || first_start_done {
-            if let Some((mut sink, _, _)) = script_sink.take() {
-                let _ = writeln!(sink, "quit");
-            }
-            if let Some(tx) = &detach {
-                let _ = tx.send(input::Command::Detach);
-            }
-            group.terminate();
-            let deadline = Instant::now() + Duration::from_secs(8);
-            while Instant::now() < deadline && child.try_wait()?.is_none() {
-                std::thread::sleep(Duration::from_millis(100));
-            }
-            group.kill();
-            break child.wait()?;
-        }
-        if let Some((sink, layout, script)) = script_sink.as_mut() {
-            let line = layout.pipe_line(&script.at(start.elapsed().as_secs_f64()));
-            if line != last_line {
-                let _ = writeln!(sink, "{line}").and_then(|_| sink.flush());
-                last_line = line;
-            }
-        }
-        std::thread::sleep(Duration::from_millis(10));
+    let opts = Options {
+        stop,
+        log: Arc::clone(log),
+        grace: GRACE,
+        sink: None,
     };
-    group.terminate();
-    std::thread::sleep(Duration::from_millis(500));
-    group.kill();
-    let left = group.leftovers();
-    writeln!(
-        log.lock().unwrap(),
-        "# exit: {status}; stopped {left} leftover process(es)"
-    )?;
-    Ok(if first_start_done && !stop.load(Ordering::SeqCst) {
-        Ended::FirstStartDone
-    } else {
-        Ended::Exited(status)
-    })
+    Ok(supervise::run(group, feed.as_mut(), &mut watch, opts)?)
+}
+
+/// What a run knows of the game: a first start's marker, and whether it
+/// is Flycast on Linux.
+struct Watch {
+    marker: Option<PathBuf>,
+    marker_at: Option<Instant>,
+    // only Linux stops Flycast on its own
+    #[cfg_attr(not(target_os = "linux"), expect(dead_code))]
+    flycast: bool,
+}
+
+impl Watcher for Watch {
+    /// Once the first start's marker has settled: stop, to start again.
+    fn check(&mut self, _group: &Group) -> Option<String> {
+        let marker = self.marker.as_ref()?;
+        match self.marker_at {
+            None if marker.exists() => self.marker_at = Some(Instant::now()),
+            Some(t) if t.elapsed() > MARKER_SETTLE => {
+                return Some("first start done (system file written)".into());
+            }
+            _ => {}
+        }
+        None
+    }
+
+    /// Linux, Flycast: Flycast alone, which saves and quits (gamescope
+    /// then ends with it); stopping gamescope with it lets gamescope's
+    /// reaper kill Flycast before it has saved. Otherwise the session.
+    fn ask_to_stop(&mut self, group: &Group) {
+        #[cfg(target_os = "linux")]
+        if self.flycast
+            && let Some(pid) = flycast(group)
+        {
+            group.terminate_one(pid);
+            return;
+        }
+        group.terminate();
+    }
+
+    /// Linux, Flycast: while Flycast runs. Otherwise until the session
+    /// ends (the caller watches it).
+    fn saving(&mut self, _group: &Group) -> bool {
+        #[cfg(target_os = "linux")]
+        if self.flycast {
+            return flycast(_group).is_some();
+        }
+        true
+    }
+}
+
+/// Flycast's process in the session.
+#[cfg(target_os = "linux")]
+fn flycast(group: &Group) -> Option<u32> {
+    group
+        .members()
+        .into_iter()
+        .find(|m| {
+            m.argv
+                .first()
+                .and_then(|a| Path::new(a).file_name())
+                .is_some_and(|n| n == "flycast")
+        })
+        .map(|m| m.pid)
 }
 
 #[cfg(test)]
@@ -657,5 +672,59 @@ mod tests {
             "{s}"
         );
         assert!(s.contains(" -- env HOME=/home/p bwrap "), "{s}");
+    }
+
+    /// A stand-in gamescope whose reaper kills its child at once on TERM,
+    /// running a stand-in Flycast that needs a second to save on TERM.
+    /// Returns whether Flycast saved when the run was stopped.
+    #[cfg(target_os = "linux")]
+    fn flycast_saves_on_stop(flycast: bool) -> bool {
+        let t = tempfile::tempdir().unwrap();
+        let saved = t.path().join("saved");
+        let script = format!(
+            "trap 'kill -KILL $child; exit 0' TERM\n\
+             bash -c 'exec -a flycast sh -c \"trap \\\"sleep 1; touch {saved}; exit 0\\\" TERM; \
+             while :; do sleep 0.05; done\"' &\n\
+             child=$!\nwait $child\n",
+            saved = saved.display()
+        );
+        let mut cmd = Command::new("sh");
+        cmd.args(["-c", &script]);
+        let group = Group::spawn(
+            &mut cmd,
+            &Tag::new("INITIALD_TEST", t.path().to_string_lossy()),
+        )
+        .unwrap();
+        let stop = AtomicBool::new(false);
+        let mut watch = Watch {
+            marker: None,
+            marker_at: None,
+            flycast,
+        };
+        std::thread::scope(|s| {
+            s.spawn(|| {
+                std::thread::sleep(Duration::from_millis(500));
+                stop.store(true, std::sync::atomic::Ordering::SeqCst);
+            });
+            let log: supervise::Log = Arc::new(Mutex::new(std::io::sink()));
+            let opts = Options {
+                stop: &stop,
+                log,
+                grace: GRACE,
+                sink: None,
+            };
+            supervise::run(group, &mut Hold::default(), &mut watch, opts).unwrap();
+        });
+        saved.exists()
+    }
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn a_stop_asks_flycast_alone_so_it_saves() {
+        assert!(flycast_saves_on_stop(true));
+        assert!(
+            !flycast_saves_on_stop(false),
+            "the control: TERM to the whole session loses the save"
+        );
     }
 }

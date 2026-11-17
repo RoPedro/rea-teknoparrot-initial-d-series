@@ -30,7 +30,7 @@ $ initiald-launcher --play id1 --headless --seconds 1
 exit 1
 -- stdout
 -- stderr
-starting gamescope: No such file or directory (os error 2)
+gamescope is not installed (or not on PATH)
 
 -- data/runtimes/id1/session.log
 # gamescope -w 853 -h 480 -W 3840 -H 2160 -r 60 -F linear --backend headless -- flycast <tmp>/lib/naomi2/initdexp.zip

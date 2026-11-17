@@ -6,7 +6,6 @@
 
 mod input;
 mod paths;
-mod proc;
 mod session;
 mod ui;
 
@@ -23,6 +22,8 @@ use rea_launcher::library::{Found, Library};
 
 use crate::paths::Paths;
 use crate::session::{Display, Feed, Setup};
+use initiald_core::input::Button;
+use rea_launcher::wheel::Script;
 
 const USAGE: &str = "\
 initiald-launcher — the Initial D arcade series
@@ -272,11 +273,11 @@ fn play(paths: &Paths, slug: &str, args: &Args) -> ExitCode {
     }
     let input =
         (!args.no_input && args.script.is_none() && matches!(game.route, Route::Wal { .. }))
-            .then(input::InputService::start);
+            .then(input::start);
     let feed = if let Some(f) = &args.script {
         match std::fs::read_to_string(f)
             .map_err(|e| e.to_string())
-            .and_then(|t| input::Script::parse(&t))
+            .and_then(|t| Script::parse::<Button>(&t))
         {
             Ok(s) => Feed::Script(s),
             Err(e) => {
@@ -292,15 +293,27 @@ fn play(paths: &Paths, slug: &str, args: &Args) -> ExitCode {
     } else {
         Feed::None
     };
-    match session::run(paths, &prepared, feed, stop) {
-        Ok(status) => {
-            eprintln!(
-                "{} ended ({status}); log: {}",
-                game.title,
-                session::log_path(&prepared.runtime).display()
-            );
-            ExitCode::SUCCESS
-        }
+    let log = session::log_path(&prepared.runtime);
+    match session::run(paths, &prepared, &feed, &stop) {
+        Ok(out) => match session::verdict(&prepared, &out) {
+            Ok(()) => {
+                eprintln!(
+                    "{} ended ({}); log: {}",
+                    game.title,
+                    out.status,
+                    log.display()
+                );
+                ExitCode::SUCCESS
+            }
+            Err(why) => {
+                eprintln!(
+                    "{} couldn't start: {why}\nlog: {}",
+                    game.title,
+                    log.display()
+                );
+                ExitCode::FAILURE
+            }
+        },
         Err(e) => {
             eprintln!("{e:#}");
             ExitCode::FAILURE

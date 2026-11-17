@@ -15,7 +15,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver, TryRecvError};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use eframe::egui::accesskit::{self, Role, Toggled};
 use eframe::egui::{
@@ -29,9 +29,9 @@ use rea_launcher::catalog::{Host, Support};
 use rea_launcher::library::{Entry, Found, HashCache, Library, Scan};
 use rea_launcher::wheel::{Action, Control, Kind};
 
-use crate::input::{Command, InputService, Snapshot};
 use crate::paths::{Config, Paths};
 use crate::session::{self, Display, Feed, Setup};
+use rea_launcher_native::feeder::{Command, InputService, Snapshot};
 
 use form::{Form, Row};
 use model::{Effect, Focus, Input, Item, Model, Page, Tab, TileState, World};
@@ -57,7 +57,7 @@ pub fn run(paths: Paths) -> anyhow::Result<()> {
         Box::new(move |cc| {
             theme::install_fonts(&cc.egui_ctx, &paths.fonts());
             theme::install_style(&cc.egui_ctx);
-            Ok(Box::new(App::new(paths, Some(InputService::start()))))
+            Ok(Box::new(App::new(paths, Some(crate::input::start()))))
         }),
     )
     .map_err(|e| anyhow::anyhow!("the window could not open: {e}"))
@@ -481,17 +481,8 @@ impl App {
                     },
                     _ => Feed::None,
                 };
-                let began = Instant::now();
-                let r = match session::run(&paths, &prepared, feed, Arc::clone(&stop_for_session)) {
-                    // ended by itself at once: it didn't start (Windows refuses a
-                    // program whose runtime is missing without a window or a message)
-                    Ok(status) if !stop_for_session.load(Ordering::SeqCst) => {
-                        let log = std::fs::read_to_string(session::log_path(&prepared.runtime))
-                            .unwrap_or_default();
-                        rea_launcher::session::early_end(began.elapsed(), &status.to_string(), &log)
-                            .map_or(Ok(()), Err)
-                    }
-                    Ok(_) => Ok(()),
+                let r = match session::run(&paths, &prepared, &feed, &stop_for_session) {
+                    Ok(out) => session::verdict(&prepared, &out),
                     Err(e) => Err(format!("{e:#}")),
                 };
                 let _ = tx.send(Progress::Ended(r));
@@ -2633,7 +2624,7 @@ mod tests {
     use rea_launcher_ui::testing::{self, Harness, Queryable};
     use std::path::Path;
 
-    use crate::input::DeviceInfo;
+    use rea_launcher_native::feeder::DeviceInfo;
 
     mod golden;
 
@@ -3362,6 +3353,7 @@ mod tests {
                 },
             ],
             driver: Some(1),
+            wheel: None,
             controls,
             feeding: true,
             error: None,
