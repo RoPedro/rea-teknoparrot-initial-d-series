@@ -259,17 +259,16 @@ impl Settings {
         }
     }
 
-    /// `existing` with `keys` set to these settings' values, every other
-    /// line as it was (no look: its line is cleared); a new file starts
-    /// from the commented template and gets every key.
+    /// `existing` (a new file: the commented template) with `keys` set to
+    /// these settings' values, every other line as it was (no look: its
+    /// line is cleared).
     pub fn save(&self, existing: &str, keys: &[&str]) -> String {
-        let fresh = existing.trim().is_empty();
-        let mut out = if fresh {
+        let mut out = if existing.trim().is_empty() {
             template()
         } else {
             existing.to_string()
         };
-        for spec in OPTIONS.iter().filter(|s| fresh || keys.contains(&s.key)) {
+        for spec in OPTIONS.iter().filter(|s| keys.contains(&s.key)) {
             out = match self.value(spec.key) {
                 v if v.is_empty() => cfg::clear_key(&out, spec.key),
                 v => cfg::spec::set_key(&out, spec, &v),
@@ -279,27 +278,37 @@ impl Settings {
     }
 
     /// The settings in `file` of a game whose cabinet is `native` in size,
-    /// and what couldn't be read in it; an unreadable file is an error. The
-    /// first time (no file yet) the recommended look for `screen` is
-    /// decided and saved, so a Play or `--play` before the settings page
-    /// ever opened uses it too.
+    /// and what couldn't be read in it; an unreadable file is an error.
+    /// While the file sets no look and no picture value (no file yet), the
+    /// recommended look for `screen` is used; it is saved only when the
+    /// screen is known (the window, Windows), so a command line on Linux
+    /// leaves the choice to the window, which knows the monitor.
     pub fn load(
         file: &Path,
         native: Size,
         screen: Option<(u32, u32)>,
     ) -> io::Result<(Settings, Vec<String>)> {
-        if let Some(text) = cfg::read_file(file)? {
-            return Ok(Settings::parse(&text));
+        let text = cfg::read_file(file)?.unwrap_or_default();
+        let (mut s, mut problems) = Settings::parse(&text);
+        let pictured = cfg::entries(&text)
+            .any(|e| LOOK_KEYS.contains(&e.key) || PICTURE_KEYS.contains(&e.key));
+        if pictured {
+            return Ok((s, problems));
         }
-        let mut s = Settings::default();
         Look::recommended(screen).apply(&mut s, native, screen);
-        let problems = match s.write(file, &[]) {
-            Ok(()) => Vec::new(),
-            Err(e) => vec![format!(
-                "couldn't save the recommended look to {}: {e}",
-                file.display()
-            )],
-        };
+        if screen.is_some() {
+            let keys = if text.trim().is_empty() {
+                every_key()
+            } else {
+                LOOK_KEYS.to_vec()
+            };
+            if let Err(e) = s.write(file, &keys) {
+                problems.push(format!(
+                    "couldn't save the recommended look to {}: {e}",
+                    file.display()
+                ));
+            }
+        }
         Ok((s, problems))
     }
 
@@ -321,6 +330,11 @@ impl Settings {
             crt: self.crt,
         }
     }
+}
+
+/// Every option's key, for a file written whole.
+pub fn every_key() -> Vec<&'static str> {
+    OPTIONS.iter().map(|o| o.key).collect()
 }
 
 /// The commented file a new settings file starts from.
@@ -396,7 +410,7 @@ mod tests {
     fn a_new_file_is_the_template_with_every_key() {
         let mut s = Settings::default();
         Look::Original.apply(&mut s, Size::new(1360, 768), None);
-        let text = s.save("", &[]);
+        let text = s.save("", &every_key());
         assert!(text.starts_with("# Settings for one game"), "{text}");
         for spec in OPTIONS {
             assert!(
@@ -457,7 +471,7 @@ mod tests {
     fn a_look_given_up_is_cleared_from_the_file() {
         let mut s = Settings::default();
         Look::Original.apply(&mut s, RINGEDGE, None);
-        let text = s.save("", &[]);
+        let text = s.save("", &every_key());
         assert!(text.contains("\nlook = original\n"), "{text}");
         s.look = None;
         s.upscaler = Upscaler::Nis;
@@ -484,6 +498,29 @@ mod tests {
                 .unwrap()
                 .0,
             s
+        );
+    }
+
+    #[test]
+    fn an_unknown_screen_gets_the_recommended_look_for_this_run_only() {
+        let t = tempfile::tempdir().unwrap();
+        let file = t.path().join("id6.cfg");
+        let (s, _) = Settings::load(&file, RINGEDGE, None).unwrap();
+        assert_eq!(
+            (s.look, s.output),
+            (Some(Look::Recommended), Size::new(1920, 1080))
+        );
+        assert!(!file.exists(), "nothing saved without the screen");
+        // a dead zone set from the command line: still no picture in the file
+        s.write(&file, &["deadzone"]).unwrap();
+        assert!(!std::fs::read_to_string(&file).unwrap().contains("\nlook ="));
+        // the window, which knows the screen, decides the look then
+        let (s, _) = Settings::load(&file, RINGEDGE, Some((1280, 800))).unwrap();
+        assert_eq!(s.look, Some(Look::SteamDeck));
+        let text = std::fs::read_to_string(&file).unwrap();
+        assert!(
+            text.contains("\nlook = steam_deck\n") && text.contains("\ndeadzone = "),
+            "{text}"
         );
     }
 }

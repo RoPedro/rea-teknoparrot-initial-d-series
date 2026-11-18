@@ -29,7 +29,7 @@ fn p(path: &Path) -> String {
 fn the_settings_template() {
     rea_launcher::snapshot!(
         "settings-template.cfg.txt",
-        Settings::default().save("", &[])
+        Settings::default().save("", &initiald_core::settings::every_key())
     );
 }
 

@@ -181,8 +181,11 @@ change it, and it is saved at once and used the next time you press
 **Play**. **Look** sets the picture at once: *Original* (the cabinet's own
 size, smooth scaling), *Recommended* (drawn at your screen's size in the
 cabinet's shape, FSR 1 for the rest) or *Steam Deck* (for its 1280×800
-screen); a game you open for the first time starts with the one for your
-screen, and changing a picture row by hand makes it *Custom*. The other
+screen); a game whose picture you never set starts with the one for your
+screen, and changing a picture row by hand (or a picture option on the
+command line) makes it *Custom*. On Linux the command line doesn't know
+your screen: `--play` then uses the look for 1920×1080 for that run only
+and leaves the choice to the window. The other
 rows: the size the game draws at and the stick dead zone; on Linux
 also the size shown on the screen, the upscaler and its sharpness, and full
 screen. On Windows the Linux-only rows are shown switched off, with the

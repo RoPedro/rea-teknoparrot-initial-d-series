@@ -384,7 +384,8 @@ fn every_settings_row_reaches_its_file() {
     let t = tempfile::tempdir().unwrap();
     let mut h = hub(t.path());
     let file = crate::paths::in_dir(t.path()).settings(GAMES[0].slug);
-    let notes = "# my notes\nfuture_key = 7\ncrt = lottes\n";
+    // a picture value set: the file is the player's, no look is decided
+    let notes = "# my notes\nfuture_key = 7\ncrt = lottes\nupscaler = fsr\n";
     std::fs::create_dir_all(file.parent().unwrap()).unwrap();
     std::fs::write(&file, notes).unwrap();
     open_tab(&mut h, Tab::Settings);
@@ -412,14 +413,14 @@ fn every_settings_row_reaches_its_file() {
         let (saved, text) = settings_of(t.path(), GAMES[0].slug);
         assert_eq!(saved, expect, "{label}\n{text}");
         assert!(
-            text.starts_with(notes),
+            text.starts_with("# my notes\nfuture_key = 7\ncrt = lottes\nupscaler = "),
             "{label}: the player's lines stay\n{text}"
         );
         assert!(says(&h, "Saved."), "{label}");
     }
     let (_, text) = settings_of(t.path(), GAMES[0].slug);
     assert!(text.ends_with(
-        "render = 1920x1080\noutput = 2560x1440\nupscaler = nis\nsharpness = 6\n\
+        "upscaler = nis\nrender = 1920x1080\noutput = 2560x1440\nsharpness = 6\n\
          fullscreen = false\ndeadzone = 0.06\n"
     ));
 }
@@ -461,6 +462,8 @@ fn settings_belong_to_the_selected_game() {
     let t = tempfile::tempdir().unwrap();
     let mut h = hub(t.path());
     let g = GAMES.last().unwrap();
+    // the window knows the monitor (the headless harness has none)
+    h.state_mut().set_screen(Some((1920, 1080)));
     select(&mut h, g.slug);
     open_tab(&mut h, Tab::Settings);
     assert!(says(&h, &format!("{} settings", g.title)));

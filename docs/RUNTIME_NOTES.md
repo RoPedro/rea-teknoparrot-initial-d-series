@@ -220,6 +220,19 @@ message window can open on the desktop), one game per route:
 | ID1 | Flycast | boots (`Game ID is [INITIAL D]`); stopped after 120 s and 60 s: Flycast alone is asked to quit and writes its `initdexp.zip.nvmem` within a second of the stop, then gamescope is ended; 0 leftovers |
 | ID5 | lindbergh-loader | boots (`GAME: Initial D5 EXP 2.0`, 3840×2160 as its settings say); stopped after 120 s; 0 leftovers |
 
+The Recommended look (`--look recommended`; on Linux the command line
+knows no screen, so the look for 1920×1080), 90 s each, then Stop:
+
+| Game | What the look gave | Result |
+|---|---|---|
+| ID1 (Flycast) | `rend.Resolution = 1080`, gamescope `-w 1920 -h 1080 -W 1920 -H 1080` | boots (`Game ID is [INITIAL D]`); 0 leftovers |
+| ID5 (lindbergh-loader) | `RESOLUTION: 1912x1080` (the cabinet's 1360×768 shape), gamescope `-w 1912 -h 1080` | boots; 0 leftovers |
+| ID6 (windowsarcadeloader) | `WAL_RINGEDGE_GL_SCALE: "1912x1080"`, gamescope `-w 1912 -h 1080` | boots (keychip, game server); 0 leftovers |
+
+(A headless run scales `linear` whatever the look: there is no screen to
+sharpen for. gamescope 3.17 crashes on its way out after a stop too, as
+noted below; nothing of the game is left.)
+
 ### Quitting and leftovers
 
 | How the game ends | Seen |

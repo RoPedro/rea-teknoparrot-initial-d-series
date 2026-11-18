@@ -11,12 +11,21 @@ All notable changes to this launcher. The format follows
 - Looks, as the other rea launchers have them: Original (the cabinet's
   own picture), Recommended (drawn at your screen's size in the cabinet's
   shape, FSR 1) and Steam Deck (1280×800), in the settings window's new
-  Look row and as `--look`. A game's first settings are the look for your
-  screen (Steam Deck on a Deck) instead of a fixed 4K output; changing a
-  picture setting by hand makes the look Custom.
+  Look row and as `--look`. Changing a picture setting by hand makes the
+  look Custom, in the window and on the command line alike (`--look
+  steam_deck --upscaler nis` too: the look's values with NIS, Custom).
+- A game whose settings set no look and no picture value gets the look for
+  your screen (Steam Deck on a Deck): the window decides it from your
+  monitor and saves it; on Windows the command line knows the screen and
+  saves it too. On Linux the command line doesn't know the screen: `--play`
+  uses the look for 1920×1080 for that run only and saves nothing, so the
+  window decides it later.
 
 ### Changed
 
+- If you never changed a game's picture settings (no settings file, or
+  one without picture values), it now plays with the recommended look for
+  your screen instead of a 3840×2160 output with the cabinet's own size.
 - Updated rea-launcher-sdk to v0.10.0: the window, the command line, the
   game's processes, the controller input and the runtime folders now come
   from the SDK's shared code for the arcade hub launchers (Initial D,
@@ -72,6 +81,17 @@ All notable changes to this launcher. The format follows
   `LOCALAPPDATA` no longer puts the data folder in the current folder.
 - Read-only files in a game folder no longer break the runtime folder's
   copies on Windows.
+- Windows: a real file in a game's runtime folder that differs from the
+  game folder's and wasn't copied there by the launcher is no longer
+  overwritten: the start is refused and the message says to move it away
+  (it may be yours or the game's).
+- A Stop during a first start's setup (the lindbergh-loader build, the
+  Visual C++ 2008 installer) is honoured: the build is ended, the launcher
+  stops waiting for the installer, and the game isn't started; a Stop
+  while Season 5's first start restarts no longer starts it again. The
+  lindbergh-loader build ends with a killed launcher.
+- Windows: `--play` of Initial D 4 or 5 says they are Linux games instead
+  of trying to build lindbergh-loader.
 - The Windows package carries Flycast's licence (GPL-2.0).
 - Building the packages: a download cut short no longer wedges every later
   build (pinned downloads through the SDK's `pins.sh`); releases wait for

@@ -5,7 +5,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -22,7 +22,8 @@ use rea_launcher::hub::{HubConfig, HubPaths};
 use rea_launcher::library::Entry;
 use rea_launcher::linkfarm::{self, Occupied, Op};
 use rea_launcher::wheel::Script;
-use rea_launcher::{session, wal};
+use rea_launcher::{fsx, session, wal};
+use rea_launcher_native::child;
 use rea_launcher_native::feeder::{self, Feeding, Scripted, Tuning};
 use rea_launcher_native::group::{Group, Tag};
 use rea_launcher_native::supervise::{self, Ended, Hold, Options, Outcome, Watcher};
@@ -175,9 +176,12 @@ pub enum Setup {
     VisualCpp2008,
 }
 
-/// What `game` needs set up before it can start, if anything.
+/// What `game` needs set up before it can start, if anything (nothing for
+/// a game that can't start here: its refusal comes first).
 pub fn setup_needed(paths: &HubPaths, game: &Game) -> Option<Setup> {
-    if needs_lindbergh_build(paths, game) {
+    if let Support::Blocked(_) = game.support_on(Host::current()) {
+        None
+    } else if needs_lindbergh_build(paths, game) {
         Some(Setup::Lindbergh)
     } else if Host::current() == Host::Windows
         && needs_vc2008(game, &windows_dir())
@@ -189,25 +193,29 @@ pub fn setup_needed(paths: &HubPaths, game: &Game) -> Option<Setup> {
     }
 }
 
-pub fn set_up(paths: &HubPaths, setup: Setup) -> Result<()> {
+/// Sets `setup` up; `stop` ends the wait (the caller checks it after).
+pub fn set_up(paths: &HubPaths, setup: Setup, stop: &AtomicBool) -> Result<()> {
     match setup {
-        Setup::Lindbergh => build_lindbergh(paths),
-        Setup::VisualCpp2008 => install_vc2008(&paths.vcredist()),
+        Setup::Lindbergh => build_lindbergh(paths, stop),
+        Setup::VisualCpp2008 => install_vc2008(&paths.vcredist(), stop),
     }
 }
 
+/// How often a setup's wait looks at the stop flag.
+const SETUP_POLL: Duration = Duration::from_millis(200);
+
 /// Runs Microsoft's installer `installer` as administrator (Windows asks
-/// the player first), with its progress window, and waits for it.
+/// the player first), with its progress window, and waits for it, or until
+/// `stop` (the installer, elevated, is left to the player).
 #[cfg(windows)]
-fn install_vc2008(installer: &Path) -> Result<()> {
+fn install_vc2008(installer: &Path, stop: &AtomicBool) -> Result<()> {
     use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Foundation::WAIT_TIMEOUT;
     use windows_sys::Win32::Foundation::{CloseHandle, ERROR_CANCELLED};
     use windows_sys::Win32::System::Com::{
         COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE, CoInitializeEx,
     };
-    use windows_sys::Win32::System::Threading::{
-        GetExitCodeProcess, INFINITE, WaitForSingleObject,
-    };
+    use windows_sys::Win32::System::Threading::{GetExitCodeProcess, WaitForSingleObject};
     use windows_sys::Win32::UI::Shell::{
         SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW, ShellExecuteExW,
     };
@@ -245,8 +253,14 @@ fn install_vc2008(installer: &Path) -> Result<()> {
         return Ok(());
     }
     let mut code = 0u32;
+    // SAFETY: the handle ShellExecuteEx gave, closed once
     unsafe {
-        WaitForSingleObject(info.hProcess, INFINITE);
+        while WaitForSingleObject(info.hProcess, SETUP_POLL.as_millis() as u32) == WAIT_TIMEOUT {
+            if stop.load(Ordering::SeqCst) {
+                CloseHandle(info.hProcess);
+                bail!("stopped while Microsoft's Visual C++ 2008 installer ran");
+            }
+        }
         GetExitCodeProcess(info.hProcess, &mut code);
         CloseHandle(info.hProcess);
     }
@@ -258,7 +272,7 @@ fn install_vc2008(installer: &Path) -> Result<()> {
 }
 
 #[cfg(not(windows))]
-fn install_vc2008(_installer: &Path) -> Result<()> {
+fn install_vc2008(_installer: &Path, _stop: &AtomicBool) -> Result<()> {
     bail!("the Visual C++ 2008 runtime is a Windows program")
 }
 
@@ -273,8 +287,9 @@ fn needs_lindbergh_build(paths: &HubPaths, game: &Game) -> bool {
 
 /// Builds lindbergh-loader into the data folder with
 /// `scripts/build-components.sh` (git and docker or podman, a few minutes);
-/// its output goes to `lindbergh-build.log` there.
-fn build_lindbergh(paths: &HubPaths) -> Result<()> {
+/// its output goes to `lindbergh-build.log` there. The script dies with the
+/// launcher and is ended on `stop`.
+fn build_lindbergh(paths: &HubPaths, stop: &AtomicBool) -> Result<()> {
     let script = paths.build_script();
     if !script.is_file() {
         bail!("the build script is missing ({})", script.display());
@@ -290,15 +305,27 @@ fn build_lindbergh(paths: &HubPaths) -> Result<()> {
     let log_path = paths.data.join("lindbergh-build.log");
     let log =
         fs::File::create(&log_path).with_context(|| format!("creating {}", log_path.display()))?;
-    let status = Command::new("sh")
-        .arg(&script)
-        .arg(&target)
-        .arg("lindbergh")
-        .stdin(Stdio::null())
-        .stdout(log.try_clone()?)
-        .stderr(log)
-        .status()
-        .context("starting the build script")?;
+    let mut build = child::spawn_tied(
+        Command::new("sh")
+            .arg(&script)
+            .arg(&target)
+            .arg("lindbergh")
+            .stdin(Stdio::null())
+            .stdout(log.try_clone()?)
+            .stderr(log),
+    )
+    .context("starting the build script")?;
+    let status = loop {
+        if let Some(status) = build.try_wait()? {
+            break status;
+        }
+        if stop.load(Ordering::SeqCst) {
+            let _ = build.kill();
+            let _ = build.wait();
+            bail!("stopped while lindbergh-loader was being built");
+        }
+        std::thread::sleep(SETUP_POLL);
+    };
     if !status.success() || !paths.lindbergh().join("lindbergh.so").is_file() {
         bail!(
             "building lindbergh-loader failed ({status}); its output is in {}",
@@ -380,10 +407,7 @@ pub fn prepare(
         Host::current(),
     );
     for (file, text) in &plan.files {
-        if let Some(d) = file.parent() {
-            fs::create_dir_all(d)?;
-        }
-        fs::write(file, text).with_context(|| format!("writing {}", file.display()))?;
+        fsx::write_atomic(file, text).with_context(|| format!("writing {}", file.display()))?;
     }
     let mut links = Vec::new();
     for (at, target) in &plan.links {
@@ -450,11 +474,51 @@ pub fn run(p: &Prepared, feed: &Feed, stop: &AtomicBool) -> Result<Outcome> {
     let marker = p.first_start.clone().filter(|m| !m.exists());
     let first_start = marker.is_some();
     let out = run_once(p, feed, stop, &log, marker)?;
-    if !(first_start && matches!(out.ended, Ended::Watcher(_))) {
+    if !starts_again(first_start, &out.ended, stop) {
         return Ok(out);
     }
     writeln!(log.lock().unwrap(), "# starting again")?;
     run_once(p, feed, stop, &log, None)
+}
+
+/// Whether a first start that ended with `ended` is started again: when
+/// its marker stopped it, and the player didn't ask to stop meanwhile.
+fn starts_again(first_start: bool, ended: &Ended, stop: &AtomicBool) -> bool {
+    first_start && matches!(ended, Ended::Watcher(_)) && !stop.load(Ordering::SeqCst)
+}
+
+/// Sets up what `game`'s first start needs (`stage` hears which), prepares
+/// it and runs it (`starting` hears when) until it ends or `stop`; `None`
+/// when stopped before the game was started.
+#[allow(clippy::too_many_arguments)]
+pub fn play(
+    paths: &HubPaths,
+    game: &Game,
+    entry: &Entry<Game>,
+    settings: &Settings,
+    config: &HubConfig,
+    display: Display,
+    feed: &Feed,
+    stop: &AtomicBool,
+    stage: impl Fn(Setup),
+    starting: impl FnOnce(),
+) -> Result<Option<(Prepared, Outcome)>> {
+    let stopped = || stop.load(Ordering::SeqCst);
+    if let Some(setup) = setup_needed(paths, game).filter(|_| !stopped()) {
+        stage(setup);
+        let done = set_up(paths, setup, stop);
+        if stopped() {
+            return Ok(None);
+        }
+        done?;
+    }
+    if stopped() {
+        return Ok(None);
+    }
+    let prepared = prepare(paths, game, entry, settings, config, display)?;
+    starting();
+    let out = run(&prepared, feed, stop)?;
+    Ok(Some((prepared, out)))
 }
 
 /// How a run ended for the player: a game that closed by itself at once
@@ -616,6 +680,60 @@ mod host_tests {
         let sp1 = "x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.30729.6161_none_50934f2ebcb7eb57";
         fs::create_dir(sxs.join(sp1)).unwrap();
         assert!(!needs_vc2008(game(GameId::Id8), windir.path()));
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn a_lindbergh_game_on_windows_is_refused_before_any_build() {
+        let t = tempfile::tempdir().unwrap();
+        let paths = crate::paths::in_dir(t.path());
+        for id in [GameId::Id4, GameId::Id5] {
+            assert_eq!(setup_needed(&paths, game(id)), None, "{id:?}");
+        }
+    }
+
+    #[test]
+    fn a_stop_during_the_first_starts_restart_starts_nothing_again() {
+        let stop = AtomicBool::new(false);
+        let marker = Ended::Watcher("first start done".into());
+        assert!(starts_again(true, &marker, &stop));
+        assert!(!starts_again(false, &marker, &stop), "no first start");
+        assert!(!starts_again(true, &Ended::Itself, &stop));
+        stop.store(true, Ordering::SeqCst);
+        assert!(!starts_again(true, &marker, &stop), "stopped meanwhile");
+    }
+
+    #[test]
+    fn a_stop_before_the_game_starts_sets_nothing_up_and_starts_nothing() {
+        let t = tempfile::tempdir().unwrap();
+        let paths = crate::paths::in_dir(t.path());
+        // Initial D 5's first start would build lindbergh-loader
+        let g = game(GameId::Id5);
+        let dir = t.path().join("lib/id5");
+        let entry = Entry {
+            file: dir.join(g.main_file),
+            dir,
+            found: rea_launcher::library::Found::Known {
+                game: g,
+                edition: &g.editions[0],
+            },
+        };
+        let stop = AtomicBool::new(true);
+        let ran = play(
+            &paths,
+            g,
+            &entry,
+            &Settings::default(),
+            &HubConfig::new(&crate::paths::FIELDS),
+            Display::Headless,
+            &Feed::None,
+            &stop,
+            |s| panic!("set up {s:?} after the stop"),
+            || panic!("started after the stop"),
+        )
+        .unwrap();
+        assert!(ran.is_none());
+        assert!(!paths.runtime(g.slug).exists());
     }
 }
 

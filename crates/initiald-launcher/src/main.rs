@@ -202,29 +202,44 @@ fn by_slug(slug: &str) -> &'static Game {
     catalog::by_slug(slug).expect("checked by the parser")
 }
 
-/// The command line's options over `s`, and the keys they set: a look
-/// first (with its picture keys), so the flags after it win; a picture
-/// flag without a look makes the look "Custom", as the window does.
-fn apply_options(inv: &Invocation, s: &mut Settings, game: &Game) -> Vec<&'static str> {
+/// The command line's options over `s` for `screen`, and the keys they
+/// set: a look first (with its picture keys), then the flags; a picture
+/// flag makes the look "Custom", as a picture row changed in the window
+/// does.
+fn apply_options(
+    inv: &Invocation,
+    s: &mut Settings,
+    game: &Game,
+    screen: Option<(u32, u32)>,
+) -> Vec<&'static str> {
     let mut keys = Vec::new();
+    let mut pictured = false;
     inv.apply_options(settings::OPTIONS, &["look"], |spec, v| match v {
         Value::Choice(key) if spec.key == "look" => {
             if let Some(look) = Look::from_key(key) {
-                look.apply(s, game.native, None);
+                look.apply(s, game.native, screen);
                 keys.extend(LOOK_KEYS);
             }
         }
         v => {
             let _ = s.apply(spec.key, v); // checked by the parser
+            pictured |= PICTURE_KEYS.contains(&spec.key);
             keys.push(spec.key);
         }
     });
-    let looked = keys.contains(&"look");
-    if !looked && keys.iter().any(|k| PICTURE_KEYS.contains(k)) {
+    if pictured {
         s.look = None;
         keys.push("look");
     }
     keys
+}
+
+/// The monitor's size in pixels, when the command line can tell (Windows).
+fn screen() -> Option<(u32, u32)> {
+    #[cfg(windows)]
+    return rea_launcher_win32::display::screen_size();
+    #[cfg(not(windows))]
+    None
 }
 
 /// The command line's options saved into the game's settings file.
@@ -234,8 +249,8 @@ fn set(paths: &HubPaths, game: &Game, inv: &Invocation) -> Result<(), String> {
     }
     let file = paths.settings(game.slug);
     let save = || -> std::io::Result<()> {
-        let (mut s, _) = Settings::load(&file, game.native, None)?;
-        let keys = apply_options(inv, &mut s, game);
+        let (mut s, _) = Settings::load(&file, game.native, screen())?;
+        let keys = apply_options(inv, &mut s, game, screen());
         s.write(&file, &keys)
     };
     save().map_err(|e| format!("Could not save the options to {}: {e}", file.display()))
@@ -345,8 +360,8 @@ fn play(
         .map(|e| (*e).clone())
         .ok_or_else(|| format!("{} is not in your library folders", game.title))?;
     let file = paths.settings(game.slug);
-    let (settings, problems) =
-        Settings::load(&file, game.native, None).map_err(|e| format!("{}: {e}", file.display()))?;
+    let (settings, problems) = Settings::load(&file, game.native, screen())
+        .map_err(|e| format!("{}: {e}", file.display()))?;
     for p in problems {
         eprintln!("warning: {p}");
     }
@@ -355,20 +370,6 @@ fn play(
     } else {
         Display::Screen
     };
-    if let Some(setup) = session::setup_needed(paths, game) {
-        eprintln!(
-            "{}",
-            match setup {
-                Setup::Lindbergh =>
-                    "building lindbergh-loader (first start of Initial D 4 or 5; a few minutes)…",
-                Setup::VisualCpp2008 =>
-                    "installing Microsoft Visual C++ 2008 (x86), which Initial D 6, 7 and 8 need…",
-            }
-        );
-        session::set_up(paths, setup).map_err(fail)?;
-    }
-    let prepared =
-        session::prepare(paths, game, &entry, &settings, config, display).map_err(fail)?;
     let stop = Arc::new(AtomicBool::new(false));
     for sig in [signal_hook::consts::SIGINT, signal_hook::consts::SIGTERM] {
         let _ = signal_hook::flag::register(sig, Arc::clone(&stop));
@@ -393,8 +394,35 @@ fn play(
     } else {
         Feed::None
     };
+    let say_setup = |setup| {
+        eprintln!(
+            "{}",
+            match setup {
+                Setup::Lindbergh =>
+                    "building lindbergh-loader (first start of Initial D 4 or 5; a few minutes)…",
+                Setup::VisualCpp2008 =>
+                    "installing Microsoft Visual C++ 2008 (x86), which Initial D 6, 7 and 8 need…",
+            }
+        )
+    };
+    let ran = session::play(
+        paths,
+        game,
+        &entry,
+        &settings,
+        config,
+        display,
+        &feed,
+        &stop,
+        say_setup,
+        || {},
+    )
+    .map_err(fail)?;
+    let Some((prepared, out)) = ran else {
+        eprintln!("{} stopped before it started", game.title);
+        return Ok(cli::OK);
+    };
     let log = session::log_path(&prepared.runtime);
-    let out = session::run(&prepared, &feed, &stop).map_err(fail)?;
     session::verdict(&prepared, &out).map_err(|why| {
         format!(
             "{} couldn't start: {why}\nlog: {}",
@@ -442,7 +470,10 @@ mod tests {
         set(&p, by_slug("id6"), &inv).unwrap();
         let text = std::fs::read_to_string(p.settings("id6")).unwrap();
         let s = Settings::parse(&text).0;
-        assert_eq!(s.look, Some(Look::SteamDeck));
+        assert_eq!(
+            s.look, None,
+            "a picture flag after the look makes it custom"
+        );
         assert_eq!(s.output, rea_launcher::gamescope::Size::new(1280, 800));
         assert_eq!(
             s.upscaler,

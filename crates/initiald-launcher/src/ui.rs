@@ -254,17 +254,24 @@ impl HubBackend for Launcher {
         };
         let (paths, config) = (self.paths.clone(), config.clone());
         Ok(Box::new(move |r: &Reporter| {
-            let fail = |e: anyhow::Error| format!("{e:#}");
-            if let Some(setup) = session::setup_needed(&paths, g) {
+            let report = |setup| {
                 let (title, body) = stage(setup);
                 r.setting_up(title, body);
-                session::set_up(&paths, setup).map_err(fail)?;
-            }
-            let prepared = session::prepare(&paths, g, &entry, &settings, &config, Display::Screen)
-                .map_err(fail)?;
-            r.playing();
-            let out = session::run(&prepared, &feed, &r.stop_flag()).map_err(fail)?;
-            session::verdict(&prepared, &out)
+            };
+            let ran = session::play(
+                &paths,
+                g,
+                &entry,
+                &settings,
+                &config,
+                Display::Screen,
+                &feed,
+                &r.stop_flag(),
+                report,
+                || r.playing(),
+            )
+            .map_err(|e| format!("{e:#}"))?;
+            ran.map_or(Ok(()), |(prepared, out)| session::verdict(&prepared, &out))
         }))
     }
 

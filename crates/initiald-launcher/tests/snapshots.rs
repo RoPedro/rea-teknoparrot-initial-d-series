@@ -214,6 +214,10 @@ fn the_library_list_and_options() {
         ],
     );
     f.show(&mut out, "settings/id6.cfg");
+    // a picture value already set: the file is the player's, so no look is
+    // decided from the screen (Windows knows it: the result would depend on
+    // the machine)
+    f.write("data/settings/id7.cfg", b"# mine\nfullscreen = on\n");
     f.run(
         &mut out,
         &[
