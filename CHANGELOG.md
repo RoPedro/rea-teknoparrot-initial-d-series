@@ -6,6 +6,8 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+## 0.2.0 - 2026-11-18
+
 ### Fixed
 
 - Settings: a value the launcher couldn't read (`fullscreen = maybe`) is
