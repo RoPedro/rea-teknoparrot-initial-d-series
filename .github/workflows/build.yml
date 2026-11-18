@@ -66,9 +66,14 @@ jobs:
         run: |
           sdl=$(echo "$PWD"/dist/sdl2/SDL2-*/x86_64-w64-mingw32/lib)
           export CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUSTFLAGS="-C link-arg=-fuse-ld=lld -L $sdl"
+          export CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER=wine
+          export WINEPREFIX="$RUNNER_TEMP/wineprefix" WINEDEBUG=-all
           export WINEPATH="Z:$(printf '%s' "$PWD/dist/sdl2" | tr / '\\')"
+          # headless: no test may open a window (GE-Proton has no wineboot,
+          # which sdk/scripts/wine-test needs, so cargo runs wine directly)
+          unset DISPLAY WAYLAND_DISPLAY
           wine --version
-          sdk/scripts/wine-test --target x86_64-pc-windows-gnu --locked --workspace
+          cargo test --workspace --locked --target x86_64-pc-windows-gnu
 
   # Both packages from one build of windowsarcadeloader (its Linux and
   # Windows launchers, the Windows payloads), on Debian bookworm (glibc
