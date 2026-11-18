@@ -6,6 +6,16 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+The first published release with everything in 0.2.0 below: 0.2.0 was
+tagged, but its release build stopped on a CI setup problem (the Windows
+tests needed a Wine tool the pinned GE-Proton doesn't ship), so it was
+never published.
+
+### Fixed
+
+- CI: the Windows tests run through the pinned GE-Proton's `wine`, as the
+  Sega launcher's do.
+
 ## 0.2.0 - 2026-11-18
 
 ### Fixed
