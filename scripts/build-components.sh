@@ -51,7 +51,8 @@ lindbergh)
   for p in "$here"/patches/lindbergh/*.patch; do git -C "$work/lindbergh-loader" apply "$p"; done
   engine=$(command -v docker || command -v podman) || { echo "lindbergh: needs docker or podman" >&2; exit 1; }
   mkdir -p "$out/lindbergh"
-  "$engine" run --rm -v "$work/lindbergh-loader:/src:ro" -v "$out/lindbergh:/out" \
+  # REA_BUILD_NAME: the container's name, so the launcher can stop it
+  "$engine" run --rm --name "${REA_BUILD_NAME:-rea-initiald-build-$$}" -v "$work/lindbergh-loader:/src:ro" -v "$out/lindbergh:/out" \
     -v "$here/scripts/lindbergh-in-container.sh:/build.sh:ro" -e OWNER="$(id -u):$(id -g)" \
     ubuntu:22.04 sh /build.sh
   cp "$work/lindbergh-loader/libs/libssl.so.0.9.7" "$work/lindbergh-loader/libs/libcrypto.so.0.9.7" \

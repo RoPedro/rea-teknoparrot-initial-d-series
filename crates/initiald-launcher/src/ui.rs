@@ -333,6 +333,7 @@ fn controls_view(snap: &feeder::Snapshot) -> ControlsView {
             })
             .collect(),
         feeding: snap.feeding,
+        lines: Vec::new(),
     }
 }
 

@@ -43,6 +43,9 @@ pub struct Prepared {
     pub route: Route,
     /// The library folders, bound read-only around the game on Linux.
     pub libraries: Vec<PathBuf>,
+    /// The launcher's data folder (runtimes, windowsarcadeloader's prefix),
+    /// bound writable after the libraries (a library may hold it).
+    pub writable: Vec<PathBuf>,
     pub runtime: PathBuf,
     /// [`Game::first_start_marker`] in the runtime, when the game has one.
     pub first_start: Option<PathBuf>,
@@ -297,19 +300,18 @@ fn build_lindbergh(paths: &HubPaths, stop: &AtomicBool) -> Result<()> {
     if which("git").is_none() {
         bail!("building lindbergh-loader needs git, which is not installed");
     }
-    if which("docker").is_none() && which("podman").is_none() {
+    // the engine the script picks: docker, else podman
+    let Some(engine) = which("docker").or_else(|| which("podman")) else {
         bail!("building lindbergh-loader needs docker or podman, and neither is installed");
-    }
+    };
+    let container = build_container();
     let target = paths.lindbergh_build_target();
     fs::create_dir_all(&target).with_context(|| format!("creating {}", target.display()))?;
     let log_path = paths.data.join("lindbergh-build.log");
     let log =
         fs::File::create(&log_path).with_context(|| format!("creating {}", log_path.display()))?;
     let mut build = child::spawn_tied(
-        Command::new("sh")
-            .arg(&script)
-            .arg(&target)
-            .arg("lindbergh")
+        build_command(&script, &target, &container)
             .stdin(Stdio::null())
             .stdout(log.try_clone()?)
             .stderr(log),
@@ -320,6 +322,11 @@ fn build_lindbergh(paths: &HubPaths, stop: &AtomicBool) -> Result<()> {
             break status;
         }
         if stop.load(Ordering::SeqCst) {
+            // the container outlives the script: stop it by its name
+            let _ = stop_container(&engine, &container)
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .status();
             let _ = build.kill();
             let _ = build.wait();
             bail!("stopped while lindbergh-loader was being built");
@@ -333,6 +340,30 @@ fn build_lindbergh(paths: &HubPaths, stop: &AtomicBool) -> Result<()> {
         );
     }
     Ok(())
+}
+
+/// The lindbergh-loader build container's name: this launcher's own, so a
+/// Stop ends that container and nothing else.
+fn build_container() -> String {
+    format!("rea-initiald-build-{}", std::process::id())
+}
+
+/// `scripts/build-components.sh <target> lindbergh`, its container named
+/// `container`.
+fn build_command(script: &Path, target: &Path, container: &str) -> Command {
+    let mut cmd = Command::new("sh");
+    cmd.arg(script)
+        .arg(target)
+        .arg("lindbergh")
+        .env("REA_BUILD_NAME", container);
+    cmd
+}
+
+/// Stops the container `container` with `engine` (docker or podman).
+fn stop_container(engine: &Path, container: &str) -> Command {
+    let mut cmd = Command::new(engine);
+    cmd.args(["stop", "--time", "2", container]);
+    cmd
 }
 
 fn which(program: &str) -> Option<PathBuf> {
@@ -386,7 +417,7 @@ pub fn prepare(
             linkfarm::remove_link(&d)?;
         }
     }
-    linkfarm::apply(&ops, Occupied::Refuse)
+    linkfarm::apply(&rt, &ops, Occupied::Refuse)
         .with_context(|| format!("building {}", rt.display()))?;
     let places = Places {
         runtime: rt.clone(),
@@ -409,34 +440,43 @@ pub fn prepare(
     for (file, text) in &plan.files {
         fsx::write_atomic(file, text).with_context(|| format!("writing {}", file.display()))?;
     }
-    let mut links = Vec::new();
-    for (at, target) in &plan.links {
-        if let Some(d) = at.parent() {
-            links.push(Op::Dir(d.to_path_buf()));
+    // the plan's links go in the runtime or in windowsarcadeloader's root
+    for root in [rt.clone(), paths.wal_root()] {
+        let mut links = Vec::new();
+        for (at, target) in plan.links.iter().filter(|(at, _)| at.starts_with(&root)) {
+            if let Some(d) = at.parent() {
+                links.push(Op::Dir(d.to_path_buf()));
+            }
+            links.push(Op::Link {
+                target: target.clone(),
+                at: at.clone(),
+            });
         }
-        links.push(Op::Link {
-            target: target.clone(),
-            at: at.clone(),
-        });
+        if !links.is_empty() {
+            linkfarm::apply(&root, &links, Occupied::Refuse)
+                .with_context(|| format!("building {}", root.display()))?;
+        }
     }
-    linkfarm::apply(&links, Occupied::Refuse)?;
     let first_start = game.first_start_marker().map(|m| rt.join(m));
     Ok(Prepared {
         plan,
         route: game.route,
         libraries: config.libraries.clone(),
+        writable: vec![paths.data.clone()],
         runtime: rt,
         first_start,
     })
 }
 
 /// The Linux command line: gamescope, then bubblewrap with every library
-/// folder read-only (no loader can write to the player's dumps), then the
-/// game. With a ReShade effect, gamescope runs with the plan's `HOME` and
-/// the game with `user_home` (see [`Plan::gamescope_home`]).
+/// folder read-only (no loader can write to the player's dumps) and the
+/// `writable` folders bound back writable, then the game. With a ReShade
+/// effect, gamescope runs with the plan's `HOME` and the game with
+/// `user_home` (see [`Plan::gamescope_home`]).
 pub fn command_line(
     plan: &Plan,
     libraries: &[PathBuf],
+    writable: &[PathBuf],
     bwrap: bool,
     user_home: &str,
 ) -> Vec<String> {
@@ -447,6 +487,7 @@ pub fn command_line(
             .clone()
             .map(|home| (home, user_home.to_string())),
         read_only: bwrap.then(|| libraries.to_vec()),
+        writable: writable.to_vec(),
         cpus: None,
     }
     .argv(&plan.game.program, &plan.game.args)
@@ -534,7 +575,8 @@ pub fn verdict(p: &Prepared, out: &Outcome) -> Result<(), String> {
 
 /// The command the session starts: on Linux [`command_line`], on Windows
 /// the game's own (no gamescope, no bubblewrap).
-fn session_argv(plan: &Plan, libraries: &[PathBuf]) -> Vec<String> {
+fn session_argv(p: &Prepared) -> Vec<String> {
+    let plan = &p.plan;
     if Host::current() == Host::Windows {
         return std::iter::once(plan.game.program.to_string_lossy().into_owned())
             .chain(plan.game.args.iter().cloned())
@@ -542,7 +584,7 @@ fn session_argv(plan: &Plan, libraries: &[PathBuf]) -> Vec<String> {
     }
     let bwrap = which("bwrap").is_some();
     let user_home = std::env::var("HOME").unwrap_or_default();
-    command_line(plan, libraries, bwrap, &user_home)
+    command_line(plan, &p.libraries, &p.writable, bwrap, &user_home)
 }
 
 fn run_once(
@@ -552,7 +594,7 @@ fn run_once(
     log: &supervise::Log,
     marker: Option<PathBuf>,
 ) -> Result<Outcome> {
-    let argv = session_argv(&p.plan, &p.libraries);
+    let argv = session_argv(p);
     let mut cmd = Command::new(&argv[0]);
     cmd.args(&argv[1..])
         .current_dir(&p.plan.game.cwd)
@@ -693,6 +735,25 @@ mod host_tests {
     }
 
     #[test]
+    fn a_stopped_build_stops_its_own_container_only() {
+        let name = build_container();
+        assert_eq!(name, format!("rea-initiald-build-{}", std::process::id()));
+        let build = build_command(
+            Path::new("/p/build-components.sh"),
+            Path::new("/d/c"),
+            &name,
+        );
+        let args: Vec<_> = build.get_args().collect();
+        assert_eq!(args, ["/p/build-components.sh", "/d/c", "lindbergh"]);
+        let env: Vec<_> = build.get_envs().collect();
+        assert_eq!(env, [("REA_BUILD_NAME".as_ref(), Some(name.as_ref()))]);
+        let stop = stop_container(Path::new("/usr/bin/docker"), &name);
+        assert_eq!(stop.get_program(), "/usr/bin/docker");
+        let args: Vec<_> = stop.get_args().collect();
+        assert_eq!(args, ["stop", "--time", "2", name.as_str()]);
+    }
+
+    #[test]
     fn a_stop_during_the_first_starts_restart_starts_nothing_again() {
         let stop = AtomicBool::new(false);
         let marker = Ended::Watcher("first start done".into());
@@ -774,11 +835,18 @@ mod tests {
             true,
             Host::Linux,
         );
-        let v = command_line(&plan, &["/lib".into(), "/naomi".into()], true, "/home/p");
+        let v = command_line(
+            &plan,
+            &["/lib".into(), "/naomi".into()],
+            &["/lib/data".into()],
+            true,
+            "/home/p",
+        );
         let s = v.join(" ");
         assert!(s.starts_with("gamescope -w 1360 -h 768 "), "{s}");
-        assert!(s.contains(" -- bwrap --dev-bind / / --ro-bind /lib /lib --ro-bind /naomi /naomi /c/wal/arcade-launcher run "), "{s}");
-        let plain = command_line(&plan, &["/lib".into()], false, "/home/p");
+        // the launcher's data inside a library is bound back writable
+        assert!(s.contains(" -- bwrap --dev-bind / / --ro-bind-try /lib /lib --ro-bind-try /naomi /naomi --bind /lib/data /lib/data /c/wal/arcade-launcher run "), "{s}");
+        let plain = command_line(&plan, &["/lib".into()], &[], false, "/home/p");
         assert!(!plain.join(" ").contains("bwrap"));
         // the CRT effect: gamescope with the runtime's HOME, the game with the player's
         let crt = Settings {
@@ -795,7 +863,7 @@ mod tests {
             true,
             Host::Linux,
         );
-        let s = command_line(&plan, &["/lib".into()], true, "/home/p").join(" ");
+        let s = command_line(&plan, &["/lib".into()], &[], true, "/home/p").join(" ");
         assert!(
             s.starts_with("env HOME=/d/rt/id6/gamescope-home gamescope "),
             "{s}"

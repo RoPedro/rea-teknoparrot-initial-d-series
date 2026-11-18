@@ -233,6 +233,12 @@ knows no screen, so the look for 1920×1080), 90 s each, then Stop:
 sharpen for. gamescope 3.17 crashes on its way out after a stop too, as
 noted below; nothing of the game is left.)
 
+Rerun on the final SDK branch (feat/hub 860e4da, 2026-11-17): ID1, ID5 and
+ID6 start and stop after 60 s with 0 leftovers. Sound, checked with
+`pactl list short sink-inputs` while each game ran: every stream of the game
+(Flycast 1, lindbergh-loader 1, windowsarcadeloader's game 2) sits on the
+run's private null sink `probe-null`; none on the desktop's server.
+
 ### Quitting and leftovers
 
 | How the game ends | Seen |
@@ -241,4 +247,4 @@ noted below; nothing of the game is left.)
 | The game itself closes (the player closes the game's window; here SIGTERM to Flycast, or to `id6_dump_.exe`) | ID1 after 77 s, ID6 after 103 s: Flycast saved (`nvmem`), windowsarcadeloader ended with its game, then gamescope 3.17 crashed on its own way out (`SIGSEGV`, also before this change; nothing of the game left); 0 leftovers, no "couldn't start" message (it ran longer than 20 s) |
 | Quit from the game's menu | none of these arcade games has one |
 | The launcher's window closed (or Alt+F4) while a game runs | the window stops the game first and closes once it has ended (headless window test `closing_the_window_stops_the_game_first`) |
-| The launcher killed | Linux: the session is tied to the launcher (its group dies with it; the SDK's sentinel ends tagged processes that left it); covered by the SDK's `group` tests |
+| The launcher killed (`kill -9` while the game runs) | ID1, ID5, ID6 (feat/hub 860e4da): every process of the session (5, 7 and 20 of them: gamescope, bwrap, Flycast / lindbergh-loader / windowsarcadeloader, Wine and its services) gone within 12 s |

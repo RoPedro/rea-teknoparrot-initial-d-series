@@ -81,6 +81,11 @@ All notable changes to this launcher. The format follows
   `LOCALAPPDATA` no longer puts the data folder in the current folder.
 - Read-only files in a game folder no longer break the runtime folder's
   copies on Windows.
+- Linux: a library folder that isn't there (an unplugged drive) no longer
+  stops the games of the other folders; a launcher data folder inside a
+  library folder stays writable for the game.
+- Stopping Initial D 4 or 5's first start while lindbergh-loader is being
+  built also stops its build container.
 - Windows: a real file in a game's runtime folder that differs from the
   game folder's and wasn't copied there by the launcher is no longer
   overwritten: the start is refused and the message says to move it away

@@ -22,7 +22,7 @@ use initiald_core::input::Button;
 use initiald_core::settings::{self, LOOK_KEYS, Look, PICTURE_KEYS, Settings};
 use rea_launcher::catalog::{Host, Support};
 use rea_launcher::cfg::Value;
-use rea_launcher::hub::cli::{self, CliSpec, Invocation, Mode};
+use rea_launcher::hub::cli::{self, CliSpec, Invocation, Mode, TestOption};
 use rea_launcher::hub::{HubConfig, HubPaths, PathKind, typed_path};
 use rea_launcher::library::{Found, Library, Scan};
 use rea_launcher::log::Log;
@@ -47,6 +47,15 @@ fn cli_spec<'a>(games: &'a [&'static str]) -> CliSpec<'a> {
         style: settings::STYLE,
         paths: &FIELDS,
         offers: None,
+        test_options: &[TestOption {
+            flag: "--input-script",
+            help: "timed inputs (windowsarcadeloader games)",
+            refuses: Some(|id| {
+                let fed =
+                    catalog::by_slug(id).is_some_and(|g| matches!(g.route, Route::Wal { .. }));
+                (!fed).then_some("its loader reads the controllers itself")
+            }),
+        }],
     }
 }
 
@@ -517,6 +526,13 @@ mod tests {
         let text = std::fs::read_to_string(p.settings("id6")).unwrap();
         assert_eq!(read().look, None, "{text}");
         assert!(!text.contains("\nlook ="), "{text}");
+    }
+
+    #[test]
+    fn an_input_script_is_for_the_games_the_launcher_feeds() {
+        assert!(parse_v(&["--play", "id6", "--input-script", "s.txt"]).is_ok());
+        let e = parse_v(&["--play", "id5", "--input-script", "s.txt"]).unwrap_err();
+        assert!(e.contains("its loader reads the controllers itself"), "{e}");
     }
 
     #[test]

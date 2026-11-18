@@ -69,9 +69,17 @@ fn dump(h: &H, t: &Path) -> String {
 fn golden(name: &str, make: impl Fn(&Path, Vec2) -> H) {
     let mut out = String::new();
     for size in [SIZE_720, SIZE_800] {
-        let t = tempfile::tempdir().unwrap();
-        let h = make(t.path(), size);
-        let _ = write!(out, "== {}x{}\n{}", size.x, size.y, dump(&h, t.path()));
+        // a folder whose path has the same width every run: a message
+        // naming it wraps the same way (a random temp name moved a button)
+        let t = std::env::temp_dir()
+            .join("rea-initiald-golden")
+            .join(format!("{name}-{}", size.y));
+        let _ = std::fs::remove_dir_all(&t);
+        std::fs::create_dir_all(&t).unwrap();
+        let h = make(&t, size);
+        let _ = write!(out, "== {}x{}\n{}", size.x, size.y, dump(&h, &t));
+        drop(h);
+        let _ = std::fs::remove_dir_all(&t);
     }
     let host = if cfg!(windows) { "windows" } else { "linux" };
     rea_launcher::snapshot!(&format!("ui/{name}.{host}.txt"), out);

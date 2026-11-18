@@ -154,7 +154,7 @@ mod tests {
             pkg.join("IniD0_AppError.log"),
         )
         .unwrap();
-        linkfarm::apply(&ops, linkfarm::Occupied::Refuse).unwrap();
+        linkfarm::apply(&rt, &ops, linkfarm::Occupied::Refuse).unwrap();
         let log = pkg.join("IniD0_AppError.log");
         assert!(!fs::symlink_metadata(&log).unwrap().file_type().is_symlink());
         assert!(
@@ -164,7 +164,7 @@ mod tests {
                 .is_symlink()
         );
         fs::write(&log, b"the game's").unwrap();
-        linkfarm::apply(&ops, linkfarm::Occupied::Refuse).unwrap();
+        linkfarm::apply(&rt, &ops, linkfarm::Occupied::Refuse).unwrap();
         assert_eq!(fs::read(&log).unwrap(), b"the game's");
         assert_eq!(fs::read(src.join("IniD0_AppError.log")).unwrap(), b"old");
     }

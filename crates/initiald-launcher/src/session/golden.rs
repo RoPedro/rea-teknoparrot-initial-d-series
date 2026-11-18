@@ -61,7 +61,7 @@ fn every_command_line() {
                 headless,
                 Host::Linux,
             );
-            let argv = command_line(&plan, &libraries, bwrap, "/home/p");
+            let argv = command_line(&plan, &libraries, &["/d".into()], bwrap, "/home/p");
             let _ = writeln!(out, "{} {name}: {}", g.slug, argv.join(" "));
         }
     }
