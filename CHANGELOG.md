@@ -6,6 +6,8 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+## 0.3.2 - 2026-11-19
+
 ### Fixed
 
 - Linux: gamescope no longer crashes a few seconds into a game on NVIDIA
