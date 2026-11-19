@@ -101,8 +101,10 @@ directx)
   f=$(fetch directx)
   command -v cabextract >/dev/null || { echo "directx: needs cabextract" >&2; exit 1; }
   rm -rf "$out/directx"; mkdir -p "$out/directx"
-  cabextract -q -d "$out/directx" -F DXSETUP.exe -F DSETUP.dll -F dsetup32.dll \
-    -F dxdllreg_x86.cab -F dxupdate.cab -F Nov2008_XAudio_x86.cab "$f"
+  # one file per call: cabextract before 1.10 (Debian bookworm's 1.9) keeps only the last -F
+  for n in DXSETUP.exe DSETUP.dll dsetup32.dll dxdllreg_x86.cab dxupdate.cab Nov2008_XAudio_x86.cab; do
+    cabextract -q -d "$out/directx" -F "$n" "$f"
+  done
   [ "$(find "$out/directx" -type f | wc -l)" -eq 6 ] || { echo "directx: unexpected contents" >&2; exit 1; }
   ;;
 runner)

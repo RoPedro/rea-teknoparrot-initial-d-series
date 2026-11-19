@@ -6,6 +6,15 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+The first published release with everything in 0.3.0 below: 0.3.0 was
+tagged, but its Windows package build stopped (CI's cabextract 1.9 kept
+only the last file of the DirectX setup), so it was never published.
+
+### Fixed
+
+- CI: the Windows package takes the DirectX setup's files out one at a
+  time, which every cabextract version does.
+
 ## 0.3.0 - 2026-11-19
 
 ### Changed
