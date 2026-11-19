@@ -12,6 +12,13 @@ All notable changes to this launcher. The format follows
 
 ### Fixed
 
+- A PXN wheel (the VD6 and other models with PXN's own USB ID) was
+  listed as "Other" and nothing drove the car ("No controller"); it is a
+  wheel now (#2).
+- Controls: pressing the pad's buttons to try them on the Controls page
+  switched pages (LB/RB) or left it (B). The pad's presses now only light
+  up the live check there; press Back and Start together to move through
+  the menu with the pad, and "Test the pad" to try the buttons again.
 - Windows: Initial D 6, 7 and 8 closed a few seconds after starting
   (0xc0000005) on a PC without Microsoft's DirectX End-User Runtime (June
   2010), which Windows 10 and 11 don't include: their sound engine,
@@ -22,6 +29,14 @@ All notable changes to this launcher. The format follows
   say what's missing and where Microsoft publishes it (#1).
 - The weekly check for new GE-Proton and Flycast releases compared the
   wrong file and reported an update every week.
+
+### Added
+
+- Controls: change a button. Choose a row of the pad layout (Gas,
+  Brake, a cabinet button), then press the pad button or trigger it
+  should use; Reset goes back to the launcher's layout. The layout is
+  saved in the data folder's `controls.cfg` and used by the window and
+  `--play`.
 
 ## 0.2.1 - 2026-11-18
 

@@ -9,15 +9,16 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use initiald_core::catalog::{GAMES, Game, Route};
-use initiald_core::input::{Button, default_pad_map};
+use initiald_core::input::Button;
 use initiald_core::settings::{self, Settings};
 use rea_launcher::catalog::{Host, Support};
 use rea_launcher::cfg::OptionSpec;
+use rea_launcher::hub::bindings::Bindings;
 use rea_launcher::hub::{HubConfig, HubPaths, Input};
 use rea_launcher::library::{self, HashCache, Library, Scan};
 use rea_launcher::log::Log;
 use rea_launcher::pad::PadNav;
-use rea_launcher::wheel::{Action, Control};
+use rea_launcher::wheel::{Control, PadInput};
 use rea_launcher_native::feeder::{self, InputService};
 use rea_launcher_ui::egui::Color32;
 use rea_launcher_ui::hub::{
@@ -71,7 +72,10 @@ pub fn spec(paths: HubPaths) -> HubSpec {
 
 /// Opens the hub and runs it until it is closed.
 pub fn run(paths: HubPaths) -> Result<(), String> {
-    let launcher = Launcher::new(paths.clone(), Some(crate::input::start()));
+    let log = Log::new(paths.log());
+    let bindings = crate::input::bindings(&paths, |w| log.warn(w));
+    let mut launcher = Launcher::new(paths.clone(), Some(crate::input::start(&bindings)));
+    launcher.bindings = bindings;
     hub::run(spec(paths), launcher)
 }
 
@@ -102,6 +106,8 @@ pub struct Launcher {
     input: Option<InputService>,
     /// The pad's menu buttons, held between frames.
     pad: PadNav,
+    /// The player's pad layout (`controls.cfg`).
+    bindings: Bindings<Button>,
     /// The controllers the tests show instead of the input thread's.
     #[cfg(test)]
     snapshot: feeder::Snapshot,
@@ -123,10 +129,26 @@ impl Launcher {
             cache: HashCache::default(),
             input,
             pad: PadNav::with_repeat(Duration::from_millis(400), Duration::from_millis(120)),
+            bindings: Bindings::new(initiald_core::input::default_pad_map()),
             #[cfg(test)]
             snapshot: feeder::Snapshot::default(),
             #[cfg(test)]
             next: None,
+        }
+    }
+
+    /// Hands the changed pad layout to the input thread; what the
+    /// Controls page says (a save that failed also goes to `launcher.log`).
+    fn bindings_changed(&self, done: Result<String, String>) -> Note {
+        if let Some(i) = &self.input {
+            i.set_pad_map(self.bindings.map().clone());
+        }
+        match done {
+            Ok(said) => Note::ok(said),
+            Err(e) => {
+                self.log.error(&e);
+                Note::error(e)
+            }
         }
     }
 
@@ -292,27 +314,40 @@ impl HubBackend for Launcher {
     }
 
     fn controls(&self) -> ControlsView {
-        controls_view(&self.snapshot())
+        controls_view(&self.snapshot(), &self.bindings)
     }
 
     fn pad(&mut self) -> Vec<Input> {
         let bits = self.snapshot().nav;
         Input::from_pad(&mut self.pad, bits)
     }
+
+    fn pad_now(&self) -> Option<(u16, Option<PadInput>)> {
+        let snap = self.snapshot();
+        Some((snap.nav, snap.held))
+    }
+
+    fn rebindable(&self) -> Vec<usize> {
+        self.bindings.rebindable()
+    }
+
+    fn rebind(&mut self, row: usize, input: PadInput) -> Note {
+        let file = self.paths.controls_file();
+        let done = self.bindings.rebind_saved(row, input, &file);
+        self.bindings_changed(done)
+    }
+
+    fn reset_bindings(&mut self) -> Note {
+        let file = self.paths.controls_file();
+        let done = self.bindings.reset_saved(&file);
+        self.bindings_changed(done)
+    }
 }
 
-/// The Controls page and the top bar from the input thread's snapshot.
-fn controls_view(snap: &feeder::Snapshot) -> ControlsView {
-    let map = default_pad_map();
-    let mut layout = vec![
-        ("Steer".to_string(), "Left stick".to_string()),
-        ("Gas".into(), map.describe(Action::Accelerate)),
-        ("Brake".into(), map.describe(Action::Brake)),
-    ];
-    layout.extend(Button::ALL.iter().filter_map(|b| {
-        let keys = map.describe(Action::Press(*b));
-        (keys != "-").then(|| (b.label().to_string(), keys))
-    }));
+/// The Controls page and the top bar from the input thread's snapshot and
+/// the player's pad layout.
+fn controls_view(snap: &feeder::Snapshot, bindings: &Bindings<Button>) -> ControlsView {
+    let layout = bindings.layout();
     let c = &snap.controls;
     ControlsView {
         error: snap.error.clone(),

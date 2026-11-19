@@ -5,11 +5,30 @@
 //! SDL themselves.
 
 use initiald_core::input::{Button, StickLayout, default_pad_map};
+use rea_launcher::hub::HubPaths;
+use rea_launcher::hub::bindings::Bindings;
 use rea_launcher_native::feeder::{Frame, InputService, Wire};
 
-/// Starts the input thread.
-pub fn start() -> InputService {
-    InputService::start(default_pad_map(), Some((Button::GearUp, Button::GearDown)))
+/// The player's pad layout: the cabinet's, with the changes saved in the
+/// data folder's `controls.cfg`. A file that can't be read leaves the
+/// cabinet's layout, and `warn` hears why.
+pub fn bindings(paths: &HubPaths, warn: impl FnOnce(&str)) -> Bindings<Button> {
+    let file = paths.controls_file();
+    Bindings::load(&file, default_pad_map()).unwrap_or_else(|e| {
+        warn(&format!(
+            "{}: {e}; the default pad layout is used",
+            file.display()
+        ));
+        Bindings::new(default_pad_map())
+    })
+}
+
+/// Starts the input thread with the player's pad layout `bindings`.
+pub fn start(bindings: &Bindings<Button>) -> InputService {
+    InputService::start(
+        bindings.map().clone(),
+        Some((Button::GearUp, Button::GearDown)),
+    )
 }
 
 /// windowsarcadeloader's stick line for one system profile family.

@@ -377,6 +377,47 @@ fn the_pad_moves_between_tiles_and_y_opens_the_settings() {
     assert_eq!(h.state().model().page, Page::Hub);
 }
 
+#[test]
+fn the_controls_page_tests_the_pad_and_saves_a_changed_button() {
+    use rea_launcher::pad;
+    let t = tempfile::tempdir().unwrap();
+    let mut h = hub(t.path());
+    let press = |h: &mut H, bits: u16| {
+        h.state_mut().backend_mut().snapshot.nav = bits;
+        h.run_steps(2);
+        h.state_mut().backend_mut().snapshot.nav = 0;
+        h.run_steps(2);
+    };
+    open_tab(&mut h, Tab::Controls);
+    // the pad's buttons light the live check and leave the page alone
+    press(&mut h, pad::RIGHT_SHOULDER);
+    press(&mut h, pad::B);
+    assert_eq!(h.state().model().page, Page::Controls);
+    assert!(says(&h, "only light up here"));
+    // a button moved to another pad button is saved for the next start
+    click_button(&mut h, "Gas: RT. Change");
+    h.state_mut().backend_mut().snapshot.held = Some(PadInput::A);
+    h.run_steps(2);
+    h.state_mut().backend_mut().snapshot.held = None;
+    h.run_steps(2);
+    // A was also the cabinet's Start, which keeps the pad's START
+    assert!(says(&h, "Gas: A. Saved."));
+    assert!(
+        says(&h, "Start: START. Change"),
+        "{}",
+        hub_testing::dump(&h)
+    );
+    let paths = crate::paths::in_dir(t.path());
+    let text = std::fs::read_to_string(paths.controls_file()).unwrap();
+    assert!(text.contains("pad_accel = a"), "{text}");
+    let next = crate::input::bindings(&paths, |w| panic!("{w}"));
+    assert_eq!(next.layout()[1], ("Gas".to_string(), "A".to_string()));
+    // Back and Start together give the pad to the menu again
+    press(&mut h, pad::BACK | pad::START);
+    press(&mut h, pad::RIGHT_SHOULDER);
+    assert_eq!(h.state().model().page, Page::Settings);
+}
+
 // ------------------------------------------------------------ settings
 
 /// What each row's arrow does to the settings.
