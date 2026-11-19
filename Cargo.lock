@@ -1018,7 +1018,7 @@ dependencies = [
 
 [[package]]
 name = "initiald-core"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "rea-launcher",
  "tempfile",
@@ -1026,7 +1026,7 @@ dependencies = [
 
 [[package]]
 name = "initiald-launcher"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "initiald-core",

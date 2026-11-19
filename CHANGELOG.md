@@ -6,6 +6,8 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+## 0.4.0 - 2026-11-19
+
 ### Added
 
 - Unified card and progress saves under `<data>/saves/<game>/` for all 11
