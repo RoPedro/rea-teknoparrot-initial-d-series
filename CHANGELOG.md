@@ -6,6 +6,8 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+## 0.3.1 - 2026-11-19
+
 The first published release with everything in 0.3.0 below: 0.3.0 was
 tagged, but its Windows package build stopped (CI's cabextract 1.9 kept
 only the last file of the DirectX setup), so it was never published.
