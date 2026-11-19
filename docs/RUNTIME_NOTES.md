@@ -279,3 +279,14 @@ run's private null sink `probe-null`; none on the desktop's server.
 | Quit from the game's menu | none of these arcade games has one |
 | The launcher's window closed (or Alt+F4) while a game runs | the window stops the game first and closes once it has ended (headless window test `closing_the_window_stops_the_game_first`) |
 | The launcher killed (`kill -9` while the game runs) | ID1, ID5, ID6 (feat/hub 860e4da): every process of the session (5, 7 and 20 of them: gamescope, bwrap, Flycast / lindbergh-loader / windowsarcadeloader, Wine and its services) gone within 12 s |
+
+## Display fixes and D-pad menu navigation (2026-11-19)
+
+Headless 4K (`--render 3840x2160 --output 3840x2160 --headless`) with
+`null-audio.sh` and `gamescopectl screenshot`:
+
+| Check | Result |
+|---|---|
+| ID8 (RingEdge, `WAL_RINGEDGE_GL_SCALE` left at profile's `1360x768`, gamescope `-w 1360 -h 768 -W 3840 -H 2160`) | **verified fullscreen** at 3840×2160: card-stocker prompt centered, cabinet status icons flush in the top-right corner; `glscale: drawn at 1360x768, scaled to the window`, `glscale: window enlarged to 1360x768`; 0 leftovers |
+| THE ARCADE Season 5 (`args: [..., -ResX=3840, -ResY=2160, ...]`, gamescope `-w 3840 -h 2160 -W 3840 -H 2160`) | **verified fullscreen native 4K**: boot warning and SEGA / "PRESS START BUTTON" / "FREE PLAY" / "VIEW Ranking" attract laid out edge-to-edge with no clipping; 0 leftovers |
+| Gamepad D-pad / wheel hat menu navigation (Zero, ID6–8, S3/S5 via `Frame::dpad` → `wal::dpad`; ID4/5 via `Up`/`Down`/`Left`/`Right` in `controls.ini`) | unit-tested end-to-end (`Frame` → `p1` stick hex bits); **pending** live check with a physical gamepad in Zero / ID8 / S5 / ID4–5 |

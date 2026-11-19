@@ -12,6 +12,7 @@ file data/components/lindbergh/lindbergh
 file data/components/lindbergh/lindbergh.so
 dir  data/runtimes
 dir  data/runtimes/id5
+file data/runtimes/id5/.saves-state
 link data/runtimes/id5/Setting.ini -> <tmp>/games/id5/Setting.ini
 file data/runtimes/id5/controls.ini
 # Written by the launcher before every start.
@@ -21,6 +22,10 @@ P1_Coin = KEY_5, GC0_BUTTON_BACK
 P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
 P1_Service = KEY_S
 [Driving]
+Up = GC0_BUTTON_DPAD_UP
+Down = GC0_BUTTON_DPAD_DOWN
+Left = GC0_BUTTON_DPAD_LEFT
+Right = GC0_BUTTON_DPAD_RIGHT
 P1_Steer_Left = KEY_Left
 P1_Steer_Right = KEY_Right
 P1_Gas_Digital = KEY_Up
@@ -68,6 +73,7 @@ FPS_TARGET = 60.0
 [Network]
 NIC_NAME = <nic>
 dir  data/runtimes/id6
+file data/runtimes/id6/.saves-state
 file data/runtimes/id6/Setting.ini
 [game]
 link data/runtimes/id6/data -> <tmp>/games/id6/data
@@ -75,6 +81,7 @@ link data/runtimes/id6/id6_dump_.exe -> <tmp>/games/id6/id6_dump_.exe
 file data/runtimes/id6/initial-d-arcade-stage-6.windowsloader
 id6_dump_.exe
 dir  data/runtimes/ta5
+file data/runtimes/ta5/.saves-state
 link data/runtimes/ta5/App -> <tmp>/games/ta5/App
 file data/runtimes/ta5/Setting.ini
 [game]
@@ -82,6 +89,7 @@ link data/runtimes/ta5/data -> <tmp>/games/ta5/data
 file data/runtimes/ta5/initial-d-the-arcade-season-5.windowsloader
 App/DAC/WindowsNoEditor/GameProject/Binaries/Win64/GameProject-Win64-Shipping.exe
 dir  data/runtimes/zero
+file data/runtimes/zero/.saves-state
 file data/runtimes/zero/initial-d-arcade-stage-zero-ver-2.windowsloader
 package\InitialD0_DX11_Nu.exe
 dir  data/runtimes/zero/package
@@ -101,8 +109,6 @@ reshade: false
 gamescope:
   enabled: false
 port: <free>
-env:
-  WAL_RINGEDGE_GL_SCALE: "1360x768"
 file data/wal/layer-ta5.yaml
 # Written by the launcher before every start.
 runner: runner
@@ -112,6 +118,7 @@ reshade: false
 gamescope:
   enabled: false
 port: <free>
+args: [launch=Cabinet, -Master, -culture=en, -ResX=1920, -ResY=1080, -NotInstalled]
 file data/wal/layer-zero.yaml
 # Written by the launcher before every start.
 runner: runner

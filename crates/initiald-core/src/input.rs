@@ -115,7 +115,15 @@ impl StickLayout {
     /// Player 1's line for `arcade-launcher --input-pipe`
     /// (`p1 <buttons hex> <lx> <ly> <rx> <ry> <accel> <brake>`).
     pub fn pipe_line(self, r: &Read) -> String {
-        Stick::driving(wal::buttons(r.buttons, |b| self.bit(b)), r).line()
+        self.pipe_line_with_dpad(r, 0)
+    }
+
+    /// [`Self::pipe_line`] with the pad's d-pad or wheel hat in XInput bits
+    /// (`rea_launcher::pad::DPAD_*`) mapped to the virtual stick's directions
+    /// (the cabinets' menu buttons).
+    pub fn pipe_line_with_dpad(self, r: &Read, dpad: u16) -> String {
+        let buttons = wal::buttons(r.buttons, |b| self.bit(b)) | wal::dpad(dpad);
+        Stick::driving(buttons, r).line()
     }
 }
 
@@ -167,5 +175,21 @@ mod tests {
         let read = read_pad(&settings, &pad, None);
         let line = StickLayout::RingEdge.pipe_line(&read);
         assert_eq!(line, "p1 1000 -32767 0 0 0 32767 0");
+    }
+
+    #[test]
+    fn dpad_directions_reach_both_layouts() {
+        use rea_launcher::pad;
+        let r = Read::default();
+        for layout in [StickLayout::RingEdge, StickLayout::Alls] {
+            assert_eq!(
+                layout.pipe_line_with_dpad(&r, pad::DPAD_UP | pad::DPAD_LEFT),
+                "p1 5 0 0 0 0 0 0"
+            );
+            assert_eq!(
+                layout.pipe_line_with_dpad(&r, pad::DPAD_DOWN | pad::DPAD_RIGHT),
+                "p1 a 0 0 0 0 0 0"
+            );
+        }
     }
 }

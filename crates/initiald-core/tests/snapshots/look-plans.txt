@@ -55,27 +55,21 @@ gamescope -w 1280 -h 722 -W 1280 -H 800 -r 60 -F linear -f
 == id6 original on Some((3840, 2160))
 size 1360x768
 gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F linear -f
-/d/wal/layer-id6.yaml: WAL_RINGEDGE_GL_SCALE: "1360x768"
 == id6 original on None
 size 1360x768
 gamescope -w 1360 -h 768 -W 1920 -H 1080 -r 60 -F linear -f
-/d/wal/layer-id6.yaml: WAL_RINGEDGE_GL_SCALE: "1360x768"
 == id6 recommended on Some((3840, 2160))
-size 3825x2160
-gamescope -w 3825 -h 2160 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
-/d/wal/layer-id6.yaml: WAL_RINGEDGE_GL_SCALE: "3825x2160"
+size 1360x768
+gamescope -w 1360 -h 768 -W 3840 -H 2160 -r 60 -F fsr --sharpness 5 -f
 == id6 recommended on None
-size 1912x1080
-gamescope -w 1912 -h 1080 -W 1920 -H 1080 -r 60 -F fsr --sharpness 5 -f
-/d/wal/layer-id6.yaml: WAL_RINGEDGE_GL_SCALE: "1912x1080"
+size 1360x768
+gamescope -w 1360 -h 768 -W 1920 -H 1080 -r 60 -F fsr --sharpness 5 -f
 == id6 steam_deck on Some((3840, 2160))
-size 1280x722
-gamescope -w 1280 -h 722 -W 1280 -H 800 -r 60 -F linear -f
-/d/wal/layer-id6.yaml: WAL_RINGEDGE_GL_SCALE: "1280x722"
+size 1360x768
+gamescope -w 1360 -h 768 -W 1280 -H 800 -r 60 -F linear -f
 == id6 steam_deck on None
-size 1280x722
-gamescope -w 1280 -h 722 -W 1280 -H 800 -r 60 -F linear -f
-/d/wal/layer-id6.yaml: WAL_RINGEDGE_GL_SCALE: "1280x722"
+size 1360x768
+gamescope -w 1360 -h 768 -W 1280 -H 800 -r 60 -F linear -f
 == ta5 original on Some((3840, 2160))
 size 1920x1080
 gamescope -w 1920 -h 1080 -W 3840 -H 2160 -r 60 -F linear -f

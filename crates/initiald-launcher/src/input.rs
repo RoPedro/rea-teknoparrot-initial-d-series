@@ -36,7 +36,7 @@ pub struct Wal(pub StickLayout);
 
 impl Wire for Wal {
     fn encode(&mut self, f: &Frame) -> String {
-        self.0.pipe_line(&f.controls) + "\n"
+        self.0.pipe_line_with_dpad(&f.controls, f.dpad) + "\n"
     }
 
     fn quit(&self) -> Option<&'static str> {
@@ -57,11 +57,16 @@ mod tests {
                 accel: 1.0,
                 ..Controls::default()
             },
+            dpad: rea_launcher::pad::DPAD_UP | rea_launcher::pad::DPAD_RIGHT,
             ..Frame::default()
         };
         assert_eq!(
             Wal(StickLayout::RingEdge).encode(&frame),
-            "p1 40 0 0 0 0 32767 0\n"
+            "p1 49 0 0 0 0 32767 0\n"
+        );
+        assert_eq!(
+            Wal(StickLayout::Alls).encode(&frame),
+            "p1 19 0 0 0 0 32767 0\n"
         );
         assert_eq!(Wal(StickLayout::Alls).quit(), Some("quit"));
     }

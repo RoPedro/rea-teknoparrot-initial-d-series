@@ -76,14 +76,22 @@ ran into setting these games up, especially on Linux (details in
 - **One hub for the whole series**, with an original illustration per game,
   driven by pad, keyboard or mouse.
 - **Wheel and pad support for every game.** Pads and wheels are read once
-  with SDL: analog steering and pedals, a stick dead zone, sequential
-  shifting on the shoulder buttons or a wheel's paddles, wheels recognised
-  from the SDK's table. The Windows-built games get them through
-  windowsarcadeloader's virtual stick, and their force feedback is played
-  back on your wheel. The Controls page shows live steering, pedals and
-  buttons.
-- **Up to 4K.** Each game's own render size (native, 1920×1080, 2560×1440,
-  3840×2160), set through the loaders' resolution options.
+  with SDL: analog steering and pedals, a stick dead zone, D-pad and wheel
+  hat menu navigation, sequential shifting on the shoulder buttons or a
+  wheel's paddles, wheels recognised from the SDK's table. The Windows-built
+  games get them through windowsarcadeloader's virtual stick, and their
+  force feedback is played back on your wheel. The Controls page shows live
+  steering, pedals and buttons.
+- **Cards and saves in one place.** Every game in the series saves progress
+  through its emulated card reader or local Aime server (magnetic cards for
+  Ver. 1–5, RFID license cards for 6–8, local Aime profiles for Zero and
+  THE ARCADE Season 3 & 5). The launcher mirrors each game's card and backup
+  files into `<data>/saves/<game>/` before launch and after exit, so backing
+  up one `saves/` folder keeps your progress across all 11 games.
+- **Up to 4K.** Native high-resolution rendering where the game supports it
+  (Ver. 1–3 in Flycast, 4–5 in lindbergh-loader, THE ARCADE Season 3 and 5
+  in Unreal Engine 4), and clean gamescope upscaling from the cabinet's
+  1360×768 frame for 6, 7 and 8.
 - **Screen options on Linux** through gamescope: output size, FSR 1, NVIDIA
   Image Scaling, sharp or smooth scaling, full screen (checked on a 4K
   screen).
@@ -204,18 +212,21 @@ runs, the pad belongs to the game.
 | Pad | Cabinet |
 |---|---|
 | Left stick | Steering |
+| D-pad (or wheel hat) | Menu navigation |
 | RT / LT | Gas / brake |
 | RB / LB | Shift up / down |
 | Y | View change |
 | Start or A | Start |
-| X | Card |
+| X | Insert / touch card |
 | Back | Coin |
 
 The first boot of a RingEdge or Nu game asks you to centre the wheel and
 press Start; a "Card Stocker Cleaning" notice on later boots is closed
-with View change. The NAOMI 2 games (Flycast) read pads with Flycast's own
-mapping; on the keyboard: 5 coin, Enter start, arrows steer and shift, Z
-gas, X brake, A view change, F1 test, F2 service.
+with View change. Zero and THE ARCADE touch your Aime card automatically
+when prompted (press X to touch it manually). The NAOMI 2 games (Flycast)
+read pads with Flycast's own mapping; on the keyboard: 5 coin, Enter start,
+arrows steer and shift, Z gas, X brake, A view change, F1 test, F2 service,
+F7 insert card.
 
 ## Options
 
@@ -235,8 +246,19 @@ initiald-launcher --set id5 --render 3840x2160 --output 3840x2160 --upscaler fsr
 | What | Linux | Windows |
 |---|---|---|
 | Settings, logs | `~/.local/share/rea-initiald/` | `%LOCALAPPDATA%\rea-initiald\` |
-| Each game's private folder, saves included | `…/runtimes/<game>/` | same |
+| Cards and progress saves (all 11 games) | `…/saves/<game>/` | same |
+| Each game's private runtime folder | `…/runtimes/<game>/` | same |
 | lindbergh-loader, once built | `…/components/lindbergh/` | — |
+
+Back up `saves/` to keep every card, Aime profile and cabinet backup file across all 11 games:
+
+- **Ver. 1, 2, 3 (NAOMI 2 / Flycast)**: magnetic card (`*.card`), NVRAM and EEPROM (`F7` inserts the card on keyboard; Flycast's `Insert Card` binding on a pad).
+- **Stage 4, 5 (Lindbergh)**: magnetic cards (`InidCrd*.crd`, `InidCard*.crd`), SRAM and EEPROM (`X` on pad / `F7` on keyboard, autoload on).
+- **Stage 6, 7, 8 (RingEdge)**: RFID license card (`card.ic`), SRAM and EEPROM (`X` on pad or Start at the card prompt).
+- **Zero Ver. 2 (Nu)**: local Aime profiles and teams (`idz2/*.json`, auto-card on).
+- **THE ARCADE Season 3, 5 (ALLS)**: local Aime profiles, garage and ghosts (`idac/*.json`, `SDGT/appfile.dat`, `SDGT/GHOST/`, auto-card on).
+
+The launcher mirrors `saves/<game>/` before each start and after each exit (a backup you restore into `saves/<game>/` always wins, even with an older timestamp; existing runtime saves migrate into `saves/<game>/` on the next launch).
 
 Each run writes `runtimes/<game>/session.log`; windowsarcadeloader's own
 log is in its run folder (`wal-<system>.log`). A game that couldn't start
@@ -277,7 +299,7 @@ is also noted in `launcher.log`, and the hub shows why.
 
 ## Uninstall
 
-Delete the launcher's folder and its data folder (back up `runtimes/`
+Delete the launcher's folder and its data folder (back up `saves/`
 first: your saves are there).
 
 ## For developers

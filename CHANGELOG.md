@@ -6,6 +6,36 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+### Added
+
+- Unified card and progress saves under `<data>/saves/<game>/` for all 11
+  Initial D games (Flycast `.card`/`.nvmem`/`.eeprom`, Lindbergh
+  `InidCrd*.crd`/`InidCard*.crd`/`sram.bin`/`eeprom.bin`, RingEdge
+  `sv/card.ic`/`SRAM.bin`/`E2PROM.bin`, Zero `AppData/idz2/`, and
+  THE ARCADE `AppData/idac/` + `SDGT/appfile.dat` + ghosts), mirrored before
+  launch and after exit with `rea_launcher::saves::Mirror` so backups stay in
+  one folder and restored backups always win.
+- Flycast keyboard mapping now binds `F7` to `insert_card` for Initial D
+  Ver. 1–3 magnetic card prompts.
+
+### Fixed
+
+- Initial D 6, 7 and 8 (RingEdge): no longer draw in the bottom-left corner
+  at 4K or other non-native render sizes. `WAL_RINGEDGE_GL_SCALE` is left at
+  the profile's `1360x768` (the game's own framebuffer size) and gamescope
+  scales `1360x768` to the output size.
+- Initial D THE ARCADE Season 3 and Season 5 (ALLS): no longer clip to the
+  top-left corner when the render size is above 1080p. The launcher now
+  passes `-ResX` and `-ResY` matching the render size to Unreal Engine 4.
+- Gamepad D-pad and wheel hat directions now reach menu navigation in
+  Initial D 4 and 5 (Lindbergh `controls.ini`) and Initial D 6, 7, 8, Zero,
+  Season 3 and Season 5 (windowsarcadeloader `UP`/`DOWN`/`LEFT`/`RIGHT`
+  stick bits via `rea_launcher_native::feeder::Frame::dpad`).
+
+### Changed
+
+- Updated rea-launcher-sdk to v0.12.0.
+
 ## 0.3.2 - 2026-11-19
 
 ### Fixed

@@ -45,15 +45,19 @@ fn code(name: &str) -> bool {
 /// runtime.
 fn loader_owned(route: Route, name: &str) -> bool {
     match route {
-        Route::Lindbergh => matches!(
-            name,
-            "lindbergh.ini"
-                | "controls.ini"
-                | "sram.bin"
-                | "eeprom.bin"
-                | "Card_01.crd"
-                | "Card_02.crd"
-        ),
+        Route::Lindbergh => {
+            let lower = name.to_ascii_lowercase();
+            matches!(
+                name,
+                "lindbergh.ini"
+                    | "controls.ini"
+                    | "sram.bin"
+                    | "eeprom.bin"
+                    | "Card_01.crd"
+                    | "Card_02.crd"
+            ) || (lower.ends_with(".crd")
+                && (lower.starts_with("inidcrd") || lower.starts_with("inidcard")))
+        }
         // windowsarcadeloader's dump marker and the cabinet drives it creates
         Route::Wal { .. } => {
             name.ends_with(".windowsloader")

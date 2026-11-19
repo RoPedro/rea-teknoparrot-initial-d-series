@@ -15,6 +15,7 @@ use initiald_core::catalog::{Game, Route};
 use initiald_core::input::StickLayout;
 use initiald_core::launch::{self, Places, Plan};
 use initiald_core::runtime;
+use initiald_core::saves;
 use initiald_core::settings::Settings;
 use rea_launcher::catalog::{Host, Support};
 use rea_launcher::gamescope::CommandLine;
@@ -39,6 +40,7 @@ pub enum Display {
 }
 
 pub struct Prepared {
+    pub game: Game,
     pub plan: Plan,
     pub route: Route,
     /// The library folders, bound read-only around the game on Linux.
@@ -47,6 +49,8 @@ pub struct Prepared {
     /// bound writable after the libraries (a library may hold it).
     pub writable: Vec<PathBuf>,
     pub runtime: PathBuf,
+    /// Per-game card and progress saves folder (`<data>/saves/<slug>`).
+    pub saves_dir: PathBuf,
     /// [`Game::first_start_marker`] in the runtime, when the game has one.
     pub first_start: Option<PathBuf>,
 }
@@ -483,6 +487,9 @@ pub fn prepare(
     }
     linkfarm::apply(&rt, &ops, Occupied::Refuse)
         .with_context(|| format!("building {}", rt.display()))?;
+    let saves_dir = paths.saves(game.slug);
+    saves::sync_before(game, &rt, &saves_dir, Host::current())
+        .with_context(|| format!("syncing saves from {}", saves_dir.display()))?;
     let places = Places {
         runtime: rt.clone(),
         wal_root: paths.wal_root(),
@@ -523,11 +530,13 @@ pub fn prepare(
     }
     let first_start = game.first_start_marker().map(|m| rt.join(m));
     Ok(Prepared {
+        game: *game,
         plan,
         route: game.route,
         libraries: config.libraries.clone(),
         writable: vec![paths.data.clone()],
         runtime: rt,
+        saves_dir,
         first_start,
     })
 }
@@ -578,12 +587,32 @@ pub fn run(p: &Prepared, feed: &Feed, stop: &AtomicBool) -> Result<Outcome> {
     let log: supervise::Log = Arc::new(Mutex::new(fs::File::create(log_path(&p.runtime))?));
     let marker = p.first_start.clone().filter(|m| !m.exists());
     let first_start = marker.is_some();
-    let out = run_once(p, feed, stop, &log, marker)?;
-    if !starts_again(first_start, &out.ended, stop) {
-        return Ok(out);
+    let res = run_once(p, feed, stop, &log, marker).and_then(|out| {
+        if !starts_again(first_start, &out.ended, stop) {
+            return Ok(out);
+        }
+        writeln!(log.lock().unwrap(), "# starting again")?;
+        run_once(p, feed, stop, &log, None)
+    });
+    match saves::sync_after(&p.game, &p.runtime, &p.saves_dir, Host::current()) {
+        Ok(written) if !written.is_empty() => {
+            let _ = writeln!(
+                log.lock().unwrap(),
+                "# saves written to {}: {}",
+                p.saves_dir.display(),
+                written.join(", ")
+            );
+        }
+        Ok(_) => {}
+        Err(e) => {
+            let _ = writeln!(
+                log.lock().unwrap(),
+                "# warning: saving to {} failed: {e}",
+                p.saves_dir.display()
+            );
+        }
     }
-    writeln!(log.lock().unwrap(), "# starting again")?;
-    run_once(p, feed, stop, &log, None)
+    res
 }
 
 /// Whether a first start that ended with `ended` is started again: when

@@ -49,6 +49,8 @@ pub static FIELDS: [PathField; 1] = [NAOMI2_BIOS];
 
 /// Initial D's folders besides the hub's.
 pub trait Folders {
+    /// Per-game card and progress saves (`<data>/saves/<slug>`).
+    fn saves(&self, slug: &str) -> PathBuf;
     /// windowsarcadeloader's root (shared by every Windows game).
     fn wal_root(&self) -> PathBuf;
     /// Where lindbergh-loader is: the components' `lindbergh/` when it is
@@ -70,6 +72,10 @@ pub trait Folders {
 }
 
 impl Folders for HubPaths {
+    fn saves(&self, slug: &str) -> PathBuf {
+        self.data.join("saves").join(slug)
+    }
+
     fn wal_root(&self) -> PathBuf {
         self.data.join("wal")
     }

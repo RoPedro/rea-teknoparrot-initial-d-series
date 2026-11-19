@@ -89,6 +89,11 @@ pub fn game_size(game: &Game, s: &Settings) -> Size {
             let h = s.render.map_or(game.native.h, |r| r.h);
             Size::new(h * 16 / 9, h)
         }
+        // RingEdge (ID6–ID8) only draws at its 1360×768 cabinet size;
+        // gamescope scales it to the output size (on Windows, glscale does).
+        Route::Wal {
+            system: "ringedge", ..
+        } => game.native,
         _ => s.render.unwrap_or(game.native),
     }
 }
@@ -120,6 +125,10 @@ P1_Coin = KEY_5, GC0_BUTTON_BACK
 P1_Start = KEY_1, GC0_BUTTON_START, GC0_BUTTON_A
 P1_Service = KEY_S
 [Driving]
+Up = GC0_BUTTON_DPAD_UP
+Down = GC0_BUTTON_DPAD_DOWN
+Left = GC0_BUTTON_DPAD_LEFT
+Right = GC0_BUTTON_DPAD_RIGHT
 P1_Steer_Left = KEY_Left
 P1_Steer_Right = KEY_Right
 P1_Gas_Digital = KEY_Up
@@ -143,7 +152,8 @@ pub fn flycast_cfg(render_h: u32) -> String {
 
 /// Flycast's keyboard for the NAOMI 2 games (key codes are USB HID
 /// usages): 5 coin, Enter start, arrows steer and shift, Z gas, X brake,
-/// A view change, F1 test, F2 service. Pads use Flycast's own mapping.
+/// A view change, F1 test, F2 service, F7 insert card. Pads use Flycast's
+/// own mapping.
 /// Written under both names Flycast reads (`_arcade` for NAOMI games).
 pub const FLYCAST_KEYBOARD: &str = "# Written by the launcher before every start.\n\
 [emulator]\ndead_zone = 10\nmapping_name = Keyboard\nversion = 3\n\n\
@@ -152,31 +162,27 @@ bind0 = 34:btn_d\nbind1 = 40:btn_start\nbind2 = 58:btn_z\nbind3 = 59:btn_c\n\
 bind4 = 82:btn_dpad1_up\nbind5 = 81:btn_dpad1_down\n\
 bind6 = 80:btn_analog_left\nbind7 = 79:btn_analog_right\n\
 bind8 = 29:btn_trigger_right\nbind9 = 27:btn_trigger_left\n\
-bind10 = 4:btn_a\nbind11 = 22:btn_b\n";
+bind10 = 4:btn_a\nbind11 = 22:btn_b\nbind12 = 64:insert_card\n";
 
 /// The profile layer the launcher gives windowsarcadeloader for one game:
 /// the runner, a prefix with native XACT (the RingEdge games' sound thread
 /// crashes on Wine's own), no ReShade or gamescope of its own (the launcher
-/// wraps the game), the render size and its ports (from `port`).
+/// wraps the game), its ports (from `port`), and for THE ARCADE (UE4) the
+/// render size so `-ResX`/`-ResY` matches the window. RingEdge's
+/// `WAL_RINGEDGE_GL_SCALE` is left at the profile's `1360x768` (the game's
+/// own framebuffer size that `glscale` copies from the lower-left corner).
 pub fn wal_layer(game: &Game, size: Size, port: u16) -> String {
-    let mut env = Vec::new();
-    if let Route::Wal {
-        system: "ringedge", ..
-    } = game.route
-    {
-        env.push(("WAL_RINGEDGE_GL_SCALE", format!("{}x{}", size.w, size.h)));
-    }
     let mut out = String::from(
         "# Written by the launcher before every start.\n\
          runner: runner\nprefix: wine-prefix/initiald\nprefix_tricks: [xact]\nreshade: false\n\
          gamescope:\n  enabled: false\n",
     );
     out.push_str(&format!("port: {port}\n"));
-    if !env.is_empty() {
-        out.push_str("env:\n");
-        for (k, v) in env {
-            out.push_str(&format!("  {k}: \"{v}\"\n"));
-        }
+    if let Route::Wal { system: "alls", .. } = game.route {
+        out.push_str(&format!(
+            "args: [launch=Cabinet, -Master, -culture=en, -ResX={}, -ResY={}, -NotInstalled]\n",
+            size.w, size.h
+        ));
     }
     out
 }
@@ -387,7 +393,7 @@ mod tests {
     }
 
     #[test]
-    fn ringedge_render_size_reaches_the_payload_and_gamescope() {
+    fn ringedge_keeps_its_native_size_and_lets_gamescope_scale() {
         let g = game(GameId::Id6);
         let s = Settings {
             render: Some(Size::new(3840, 2160)),
@@ -410,12 +416,14 @@ mod tests {
             .unwrap()
             .1;
         assert!(
-            layer.contains("WAL_RINGEDGE_GL_SCALE: \"3840x2160\""),
-            "{layer}"
+            !layer.contains("WAL_RINGEDGE_GL_SCALE"),
+            "leave the profile's 1360x768 glscale size alone: {layer}"
         );
         assert!(layer.contains("prefix_tricks: [xact]"));
         assert!(layer.contains("\nport: 34100\n"), "{layer}");
-        assert_eq!(arg_after(&p.gamescope, "-w").as_deref(), Some("3840"));
+        assert_eq!(p.game_size, Size::new(1360, 768));
+        assert_eq!(arg_after(&p.gamescope, "-w").as_deref(), Some("1360"));
+        assert_eq!(arg_after(&p.gamescope, "-h").as_deref(), Some("768"));
         assert_eq!(p.input_pipe, Some(StickLayout::RingEdge));
         assert!(p.game.args.contains(&"--input-pipe".to_string()));
         let marker = &p
@@ -428,18 +436,34 @@ mod tests {
     }
 
     #[test]
-    fn the_seasons_use_the_alls_stick_layout() {
+    fn the_seasons_pass_their_render_size_to_ue4_and_use_the_alls_stick_layout() {
+        let s = Settings {
+            render: Some(Size::new(3840, 2160)),
+            ..Settings::default()
+        };
         let p = plan(
             game(GameId::TheArcade5),
             Path::new("/lib/s5"),
             &places("ta5"),
             &comps(),
-            &Settings::default(),
+            &s,
             "eth0",
             false,
             Host::Linux,
         );
         assert_eq!(p.input_pipe, Some(StickLayout::Alls));
+        let layer = &p
+            .files
+            .iter()
+            .find(|(f, _)| f.ends_with("layer-ta5.yaml"))
+            .unwrap()
+            .1;
+        assert!(
+            layer.contains("-ResX=3840, -ResY=2160"),
+            "UE4 matches gamescope's size: {layer}"
+        );
+        assert_eq!(arg_after(&p.gamescope, "-w").as_deref(), Some("3840"));
+        assert_eq!(arg_after(&p.gamescope, "-h").as_deref(), Some("2160"));
         // windowsarcadeloader looks for winetricks beside its runner
         let runners = PathBuf::from("/d/wal/wine-runners");
         assert!(
@@ -472,6 +496,11 @@ mod tests {
         assert!(ini.contains("WIDTH = 2560\nHEIGHT = 1440"));
         assert!(ini.contains("NIC_NAME = \"enp5s0\""));
         assert!(ini.contains("GPU_VENDOR = 0"));
+        let controls = &p.files[1].1;
+        assert!(controls.contains("Up = GC0_BUTTON_DPAD_UP"));
+        assert!(controls.contains("Down = GC0_BUTTON_DPAD_DOWN"));
+        assert!(controls.contains("Left = GC0_BUTTON_DPAD_LEFT"));
+        assert!(controls.contains("Right = GC0_BUTTON_DPAD_RIGHT"));
         assert_eq!(p.game.cwd, PathBuf::from("/c/lindbergh"));
         let rt = places("id5").runtime.to_string_lossy().into_owned();
         assert_eq!(arg_after(&p.game.args, "-g"), Some(rt));
