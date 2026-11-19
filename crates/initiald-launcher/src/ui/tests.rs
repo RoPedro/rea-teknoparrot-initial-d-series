@@ -181,6 +181,7 @@ fn two_devices() -> Snapshot {
         feeding: true,
         error: None,
         nav: 0,
+        held: None,
     }
 }
 
