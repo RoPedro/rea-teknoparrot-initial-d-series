@@ -962,7 +962,7 @@ mod tests {
         let s = v.join(" ");
         assert!(s.starts_with("gamescope -w 1360 -h 768 "), "{s}");
         // the launcher's data inside a library is bound back writable
-        assert!(s.contains(" -- bwrap --dev-bind / / --ro-bind-try /lib /lib --ro-bind-try /naomi /naomi --bind /lib/data /lib/data /c/wal/arcade-launcher run "), "{s}");
+        assert!(s.contains(" -- env ENABLE_GAMESCOPE_WSI=0 DISABLE_GAMESCOPE_WSI=1 bwrap --dev-bind / / --ro-bind-try /lib /lib --ro-bind-try /naomi /naomi --bind /lib/data /lib/data /c/wal/arcade-launcher run "), "{s}");
         let plain = command_line(&plan, &["/lib".into()], &[], false, "/home/p");
         assert!(!plain.join(" ").contains("bwrap"));
         // the CRT effect: gamescope with the runtime's HOME, the game with the player's
@@ -985,7 +985,12 @@ mod tests {
             s.starts_with("env HOME=/d/rt/id6/gamescope-home gamescope "),
             "{s}"
         );
-        assert!(s.contains(" -- env HOME=/home/p bwrap "), "{s}");
+        assert!(
+            s.contains(
+                " -- env HOME=/home/p ENABLE_GAMESCOPE_WSI=0 DISABLE_GAMESCOPE_WSI=1 bwrap "
+            ),
+            "{s}"
+        );
     }
 
     /// A stand-in gamescope whose reaper kills its child at once on TERM,

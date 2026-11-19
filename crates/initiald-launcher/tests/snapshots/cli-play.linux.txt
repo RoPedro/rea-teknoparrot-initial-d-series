@@ -41,4 +41,4 @@ Initial D Launcher: gamescope is not installed (or not on PATH)
 Report a problem: https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new/choose
 
 -- data/runtimes/id1/session.log
-# gamescope -w 1920 -h 1080 -W 1920 -H 1080 -r 60 -F linear --backend headless -- flycast <tmp>/lib/naomi2/initdexp.zip
+# gamescope -w 1920 -h 1080 -W 1920 -H 1080 -r 60 -F linear --backend headless -- env ENABLE_GAMESCOPE_WSI=0 DISABLE_GAMESCOPE_WSI=1 flycast <tmp>/lib/naomi2/initdexp.zip

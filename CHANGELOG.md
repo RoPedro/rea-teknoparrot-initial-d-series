@@ -6,6 +6,17 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- Linux: gamescope no longer crashes a few seconds into a game on NVIDIA
+  cards under Wayland (gamescope 3.17). The game now presents through
+  gamescope's Xwayland instead of gamescope's Vulkan layer, which crashed
+  with Initial D 6, 7 and 8's 32-bit DXVK.
+
+### Changed
+
+- Updated rea-launcher-sdk to v0.11.2.
+
 ## 0.3.1 - 2026-11-19
 
 The first published release with everything in 0.3.0 below: 0.3.0 was

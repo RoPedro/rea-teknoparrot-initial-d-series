@@ -15,6 +15,6 @@ permissions:
 jobs:
   watch:
     permissions: {contents: read, issues: write}
-    uses: akitaonrails/rea-launcher-sdk/.github/workflows/upstream-watch.yml@v0.11.1
+    uses: akitaonrails/rea-launcher-sdk/.github/workflows/upstream-watch.yml@v0.11.2
     with:
       pins: packaging/components.pins
