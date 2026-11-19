@@ -13,11 +13,14 @@
 #   vcredist/   Microsoft's Visual C++ 2008 SP1 Redistributable (x86), Microsoft's own download
 #               (signed by Microsoft): Initial D 6, 7 and 8 on Windows need it, the launcher
 #               installs it on their first start
+#   directx/    Microsoft's DirectX setup with only the cabinet of XAudio2 2.3 (Nov2008_XAudio_x86),
+#               cut from Microsoft's DirectX End-User Runtime (June 2010), unmodified files (needs
+#               cabextract): the RingEdge games' sound, which Windows 10 and 11 don't include
 #   shaders/    the launcher's own CRT effect
 #   art/        the window's original illustrations
 # The downloads are pinned in packaging/components.pins and fetched through the SDK's
 # sdk/packaging/pins.sh (checked by SHA-256; a download cut short is never used).
-# usage: scripts/build-components.sh <components dir> [lindbergh|wal|runner|winetricks|flycast|vcredist|shaders|assets ...]
+# usage: scripts/build-components.sh <components dir> [lindbergh|wal|runner|winetricks|flycast|vcredist|directx|shaders|assets ...]
 # LAUNCHER_FEATURES: passed to windowsarcadeloader's build (packages: sdl3/build-from-source-static)
 set -eu
 here=$(cd "$(dirname "$0")/.." && pwd)
@@ -92,6 +95,15 @@ flycast)
 vcredist)
   f=$(fetch vcredist)
   mkdir -p "$out/vcredist"; cp "$f" "$out/vcredist/vcredist_x86.exe"
+  ;;
+directx)
+  # DirectX's own way to ship a part of it: DXSETUP installs the cabinets beside it
+  f=$(fetch directx)
+  command -v cabextract >/dev/null || { echo "directx: needs cabextract" >&2; exit 1; }
+  rm -rf "$out/directx"; mkdir -p "$out/directx"
+  cabextract -q -d "$out/directx" -F DXSETUP.exe -F DSETUP.dll -F dsetup32.dll \
+    -F dxdllreg_x86.cab -F dxupdate.cab -F Nov2008_XAudio_x86.cab "$f"
+  [ "$(find "$out/directx" -type f | wc -l)" -eq 6 ] || { echo "directx: unexpected contents" >&2; exit 1; }
   ;;
 runner)
   f=$(fetch runner)

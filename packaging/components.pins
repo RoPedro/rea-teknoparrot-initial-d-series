@@ -8,3 +8,6 @@ flycast-win https://github.com/flyinghead/flycast/releases/download/v2.7/flycast
 flycast-license https://raw.githubusercontent.com/flyinghead/flycast/v2.7/LICENSE 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643
 # Microsoft's Visual C++ 2008 SP1 Redistributable (x86), Microsoft's own download
 vcredist https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe 8742bcbf24ef328a72d2a27b693cc7071e38d3bb4b9b44dec42aa3d2c8d61d92
+# Microsoft's DirectX End-User Runtime (June 2010), Microsoft's own download; the
+# package keeps only its setup and XAudio2 2.3's cabinet (scripts/build-components.sh)
+directx https://download.microsoft.com/download/8/4/A/84A35BF1-DAFE-4AE8-82AF-AD2AE20B6B14/directx_Jun2010_redist.exe 053f76dcbb28802e23341b6a787e3b0791c0fa5c8d4d011b1044172dbf89c73b

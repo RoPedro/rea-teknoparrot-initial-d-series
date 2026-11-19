@@ -88,10 +88,10 @@ jobs:
       - name: System packages
         run: |
           apt-get update
-          # SDL2 (the launcher); mingw (the payloads); mono (a payload's C# bridge, built by
+          # SDL2 (the launcher); mingw (the payloads); cabextract (DirectX's XAudio part); mono (a payload's C# bridge, built by
           # windowsarcadeloader's build.sh); cmake and SDL3's headers (its static build)
           apt-get install -y --no-install-recommends build-essential pkg-config cmake git curl \
-            ca-certificates xz-utils zip unzip lld libsdl2-dev gcc-mingw-w64 mono-mcs mono-devel \
+            ca-certificates xz-utils zip unzip cabextract lld libsdl2-dev gcc-mingw-w64 mono-mcs mono-devel \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
             libxtst-dev libxkbcommon-dev libdrm-dev libgbm-dev libgl-dev libegl-dev libgles-dev \
             libdbus-1-dev libibus-1.0-dev libudev-dev libwayland-dev wayland-protocols libdecor-0-dev \

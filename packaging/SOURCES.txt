@@ -19,6 +19,12 @@ components/vcredist (Microsoft's own installer, unmodified, not open source;
 installed by the launcher on the first start of Initial D 6, 7 or 8)
   https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist
 
+Microsoft DirectX End-User Runtime (June 2010), Windows package only:
+components/directx (Microsoft's DXSETUP and the cabinet of XAudio2 2.3,
+unmodified files from Microsoft's package, not open source; run by the
+launcher on the first start of Initial D 6, 7 or 8)
+  https://download.microsoft.com/download/8/4/A/84A35BF1-DAFE-4AE8-82AF-AD2AE20B6B14/directx_Jun2010_redist.exe
+
 GE-Proton (Wine and its components; LGPL-2.1 and others), Linux package only:
 components/runner
   https://github.com/GloriousEggroll/proton-ge-custom/tree/GE-Proton11-12

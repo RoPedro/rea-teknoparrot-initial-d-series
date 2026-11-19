@@ -154,6 +154,12 @@ fn stage(setup: Setup) -> (&'static str, &'static str) {
             "Initial D 6, 7 and 8 need this Microsoft runtime, installed once. \
              Windows asks for your permission first.",
         ),
+        Setup::DirectX => (
+            "Installing Microsoft DirectX audio…",
+            "Initial D 6, 7 and 8 play their sound through DirectX's XAudio2 2.3, \
+             installed once from Microsoft's DirectX setup. Windows asks for your \
+             permission first.",
+        ),
     }
 }
 

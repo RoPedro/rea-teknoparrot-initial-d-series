@@ -309,6 +309,9 @@ fn the_first_starts_setup_stages_are_shown_and_stop_ends_the_session() {
     h.run_steps(5);
     assert!(says(&h, "Installing Microsoft Visual C++ 2008"));
     assert!(says(&h, "Windows asks for your permission first"));
+    tx.send(Step::SettingUp(Setup::DirectX)).unwrap();
+    h.run_steps(5);
+    assert!(says(&h, "Installing Microsoft DirectX audio"));
     tx.send(Step::Playing).unwrap();
     h.run_steps(5);
     assert!(says(&h, &format!("{} is running", g.title)));

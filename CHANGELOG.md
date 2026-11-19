@@ -10,6 +10,19 @@ All notable changes to this launcher. The format follows
 
 - Updated rea-launcher-sdk to v0.11.1.
 
+### Fixed
+
+- Windows: Initial D 6, 7 and 8 closed a few seconds after starting
+  (0xc0000005) on a PC without Microsoft's DirectX End-User Runtime (June
+  2010), which Windows 10 and 11 don't include: their sound engine,
+  XAudio2 2.3, comes only from it. The package now carries Microsoft's
+  DirectX setup with just that part (about 2.5 MB), and the first start
+  of one of these games installs it (Windows asks for your permission
+  once), as it does Visual C++ 2008. Without it, `--check` and the start
+  say what's missing and where Microsoft publishes it (#1).
+- The weekly check for new GE-Proton and Flycast releases compared the
+  wrong file and reported an update every week.
+
 ## 0.2.1 - 2026-11-18
 
 The first published release with everything in 0.2.0 below: 0.2.0 was

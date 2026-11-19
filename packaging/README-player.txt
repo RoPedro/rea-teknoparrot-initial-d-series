@@ -35,8 +35,9 @@ What it needs on Windows
 - For Initial D 6, 7 and 8, Microsoft's Visual C++ 2008 runtime (x86),
   which Windows doesn't include: the launcher installs it from
   components\vcredist the first time you play one of them (Windows asks
-  for your permission), and Microsoft's DirectX End-User Runtime (June
-  2010) for their sound.
+  for your permission), and the sound part of Microsoft's DirectX
+  End-User Runtime (June 2010), XAudio2 2.3, which the launcher installs
+  from components\directx the same way.
 - Zero and THE ARCADE map the cabinet's E: and Y: drives while they run;
   a drive letter your PC already uses is hidden for that time and given
   back when the game ends.

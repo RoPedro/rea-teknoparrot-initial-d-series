@@ -130,12 +130,24 @@ fn check_components(game: &Game, p: &HubPaths) -> Result<()> {
             game.title
         );
     }
+    if windows && needs_xaudio23(game, &windows_dir()) {
+        bail!(
+            "{} needs Microsoft's DirectX End-User Runtime (June 2010) for its sound \
+             (XAudio2 2.3), which this PC doesn't have yet. Install it, then try again: \
+             {DIRECTX_JUN2010_URL}",
+            game.title
+        );
+    }
     Ok(())
 }
 
 /// Microsoft's Visual C++ 2008 SP1 Redistributable (x86), where Microsoft
 /// publishes it.
 const VC2008_X86_URL: &str = "https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe";
+
+/// Microsoft's DirectX End-User Runtime (June 2010), where Microsoft
+/// publishes it.
+const DIRECTX_JUN2010_URL: &str = "https://download.microsoft.com/download/8/4/A/84A35BF1-DAFE-4AE8-82AF-AD2AE20B6B14/directx_Jun2010_redist.exe";
 
 /// The Windows folder (`%SystemRoot%`).
 fn windows_dir() -> PathBuf {
@@ -150,14 +162,7 @@ fn windows_dir() -> PathBuf {
 /// message. Any 9.0.30729 build in the side-by-side store does: Windows
 /// redirects the games' 9.0.30729.4148 to the newest one installed.
 fn needs_vc2008(game: &Game, windir: &Path) -> bool {
-    let ringedge = matches!(
-        game.route,
-        Route::Wal {
-            system: "ringedge",
-            ..
-        }
-    );
-    ringedge
+    ringedge(game)
         && !fs::read_dir(windir.join("WinSxS")).is_ok_and(|dir| {
             dir.flatten().any(|e| {
                 e.file_name()
@@ -166,6 +171,28 @@ fn needs_vc2008(game: &Game, windir: &Path) -> bool {
                     .starts_with("x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.")
             })
         })
+}
+
+/// Whether `game` runs on the RingEdge payload (Initial D 6, 7, 8).
+fn ringedge(game: &Game) -> bool {
+    matches!(
+        game.route,
+        Route::Wal {
+            system: "ringedge",
+            ..
+        }
+    )
+}
+
+/// Whether `game` needs XAudio2 2.3 and the Windows folder `windir` lacks
+/// it. The RingEdge games create their sound engine through COM (XAudio2
+/// 2.3's class, from the DirectX SDK of November 2008); Windows 10 and 11
+/// don't include it, only Microsoft's DirectX End-User Runtime (June 2010)
+/// installs it. Without it the game reads a null pointer a few seconds after
+/// its start and closes (0xc0000005). The games are 32-bit: the DLL lives in
+/// `SysWOW64` on the 64-bit Windows the package is for.
+fn needs_xaudio23(game: &Game, windir: &Path) -> bool {
+    ringedge(game) && !windir.join("SysWOW64").join("xaudio2_3.dll").is_file()
 }
 
 /// What a game's first start sets up on this computer before the game runs.
@@ -177,41 +204,76 @@ pub enum Setup {
     /// Microsoft's Visual C++ 2008 runtime, installed from the package's
     /// `components/vcredist/` (Initial D 6, 7 and 8 on Windows).
     VisualCpp2008,
+    /// XAudio2 2.3, installed by Microsoft's DirectX setup from the package's
+    /// `components/directx/` (Initial D 6, 7 and 8 on Windows).
+    DirectX,
 }
 
-/// What `game` needs set up before it can start, if anything (nothing for
-/// a game that can't start here: its refusal comes first).
-pub fn setup_needed(paths: &HubPaths, game: &Game) -> Option<Setup> {
+/// What `game` needs set up before it can start, in order (nothing for a
+/// game that can't start here: its refusal comes first).
+pub fn setup_needed(paths: &HubPaths, game: &Game) -> Vec<Setup> {
     if let Support::Blocked(_) = game.support_on(Host::current()) {
-        None
-    } else if needs_lindbergh_build(paths, game) {
-        Some(Setup::Lindbergh)
-    } else if Host::current() == Host::Windows
-        && needs_vc2008(game, &windows_dir())
-        && paths.vcredist().is_file()
-    {
-        Some(Setup::VisualCpp2008)
-    } else {
-        None
+        return Vec::new();
     }
+    if needs_lindbergh_build(paths, game) {
+        return vec![Setup::Lindbergh];
+    }
+    if Host::current() == Host::Windows {
+        windows_setup_needed(paths, game, &windows_dir())
+    } else {
+        Vec::new()
+    }
+}
+
+/// The Microsoft runtimes `game` needs on Windows (folder `windir`) whose
+/// installers the package carries.
+fn windows_setup_needed(paths: &HubPaths, game: &Game, windir: &Path) -> Vec<Setup> {
+    let mut setups = Vec::new();
+    if needs_vc2008(game, windir) && paths.vcredist().is_file() {
+        setups.push(Setup::VisualCpp2008);
+    }
+    if needs_xaudio23(game, windir) && paths.directx_setup().is_file() {
+        setups.push(Setup::DirectX);
+    }
+    setups
 }
 
 /// Sets `setup` up; `stop` ends the wait (the caller checks it after).
 pub fn set_up(paths: &HubPaths, setup: Setup, stop: &AtomicBool) -> Result<()> {
     match setup {
         Setup::Lindbergh => build_lindbergh(paths, stop),
-        Setup::VisualCpp2008 => install_vc2008(&paths.vcredist(), stop),
+        Setup::VisualCpp2008 => {
+            let code = install_elevated(&paths.vcredist(), "/qb", "Visual C++ 2008", stop)?;
+            if code != 0 {
+                bail!("Microsoft's Visual C++ 2008 installer ended with code {code}");
+            }
+            Ok(())
+        }
+        Setup::DirectX => {
+            // DXSETUP: 0 done; anything else failed (it logs to
+            // %windir%\Logs\DirectX.log)
+            let code = install_elevated(&paths.directx_setup(), "/silent", "DirectX", stop)?;
+            if code != 0 {
+                bail!(
+                    "Microsoft's DirectX setup ended with code {code} \
+                     (its log: %windir%\\Logs\\DirectX.log)"
+                );
+            }
+            Ok(())
+        }
     }
 }
 
 /// How often a setup's wait looks at the stop flag.
 const SETUP_POLL: Duration = Duration::from_millis(200);
 
-/// Runs Microsoft's installer `installer` as administrator (Windows asks
-/// the player first), with its progress window, and waits for it, or until
-/// `stop` (the installer, elevated, is left to the player).
+/// Runs Microsoft's installer `installer` with `params` as administrator
+/// (Windows asks the player first) and waits for it, or until `stop` (the
+/// installer, elevated, is left to the player). `what` names the runtime in
+/// errors. Its exit code; Visual C++'s codes 0 and 3010 (installed, a
+/// restart asked for, which the games don't need) are both success.
 #[cfg(windows)]
-fn install_vc2008(installer: &Path, stop: &AtomicBool) -> Result<()> {
+fn install_elevated(installer: &Path, params: &str, what: &str, stop: &AtomicBool) -> Result<u32> {
     use std::os::windows::ffi::OsStrExt;
     use windows_sys::Win32::Foundation::WAIT_TIMEOUT;
     use windows_sys::Win32::Foundation::{CloseHandle, ERROR_CANCELLED};
@@ -226,7 +288,7 @@ fn install_vc2008(installer: &Path, stop: &AtomicBool) -> Result<()> {
     let (verb, file, params) = (
         wide("runas".as_ref()),
         wide(installer.as_os_str()),
-        wide("/qb".as_ref()),
+        wide(params.as_ref()),
     );
     // COM on this thread, as ShellExecuteEx asks (the hub calls from its
     // session thread); already set up is fine too
@@ -247,13 +309,13 @@ fn install_vc2008(installer: &Path, stop: &AtomicBool) -> Result<()> {
     if unsafe { ShellExecuteExW(&mut info) } == 0 {
         let e = std::io::Error::last_os_error();
         if e.raw_os_error() == Some(ERROR_CANCELLED as i32) {
-            bail!("the Visual C++ 2008 runtime wasn't installed: Windows' permission was refused");
+            bail!("the {what} runtime wasn't installed: Windows' permission was refused");
         }
         return Err(e).with_context(|| format!("starting {}", installer.display()));
     }
     if info.hProcess.is_null() {
         // started without a handle to wait on: the check that follows decides
-        return Ok(());
+        return Ok(0);
     }
     let mut code = 0u32;
     // SAFETY: the handle ShellExecuteEx gave, closed once
@@ -261,22 +323,24 @@ fn install_vc2008(installer: &Path, stop: &AtomicBool) -> Result<()> {
         while WaitForSingleObject(info.hProcess, SETUP_POLL.as_millis() as u32) == WAIT_TIMEOUT {
             if stop.load(Ordering::SeqCst) {
                 CloseHandle(info.hProcess);
-                bail!("stopped while Microsoft's Visual C++ 2008 installer ran");
+                bail!("stopped while Microsoft's {what} installer ran");
             }
         }
         GetExitCodeProcess(info.hProcess, &mut code);
         CloseHandle(info.hProcess);
     }
     // 3010: installed, a restart is asked for (the games don't need one)
-    if code != 0 && code != 3010 {
-        bail!("Microsoft's Visual C++ 2008 installer ended with code {code}");
-    }
-    Ok(())
+    if code == 3010 { Ok(0) } else { Ok(code) }
 }
 
 #[cfg(not(windows))]
-fn install_vc2008(_installer: &Path, _stop: &AtomicBool) -> Result<()> {
-    bail!("the Visual C++ 2008 runtime is a Windows program")
+fn install_elevated(
+    _installer: &Path,
+    _params: &str,
+    what: &str,
+    _stop: &AtomicBool,
+) -> Result<u32> {
+    bail!("Microsoft's {what} installer is a Windows program")
 }
 
 /// windowsarcadeloader's own port.
@@ -545,7 +609,10 @@ pub fn play(
     starting: impl FnOnce(),
 ) -> Result<Option<(Prepared, Outcome)>> {
     let stopped = || stop.load(Ordering::SeqCst);
-    if let Some(setup) = setup_needed(paths, game).filter(|_| !stopped()) {
+    for setup in setup_needed(paths, game) {
+        if stopped() {
+            return Ok(None);
+        }
         stage(setup);
         let done = set_up(paths, setup, stop);
         if stopped() {
@@ -725,12 +792,62 @@ mod host_tests {
     }
 
     #[test]
+    fn the_ringedge_games_need_xaudio2_2_3_on_windows() {
+        let windir = tempfile::tempdir().unwrap();
+        let wow = windir.path().join("SysWOW64");
+        fs::create_dir(&wow).unwrap();
+        for id in [GameId::Id6, GameId::Id7, GameId::Id8] {
+            assert!(needs_xaudio23(game(id), windir.path()), "{id:?}");
+        }
+        // Zero creates XAudio2 2.7 only in its server box, which isn't run
+        for id in [GameId::Id1, GameId::Zero, GameId::TheArcade5] {
+            assert!(!needs_xaudio23(game(id), windir.path()), "{id:?}");
+        }
+        // Windows' own XAudio2 2.9 is a different DLL
+        fs::write(wow.join("xaudio2_9.dll"), b"").unwrap();
+        assert!(needs_xaudio23(game(GameId::Id8), windir.path()));
+        fs::write(wow.join("xaudio2_3.dll"), b"").unwrap();
+        assert!(!needs_xaudio23(game(GameId::Id8), windir.path()));
+    }
+
+    #[test]
+    fn a_ringedge_first_start_on_windows_installs_both_runtimes_in_order() {
+        let t = tempfile::tempdir().unwrap();
+        let paths = crate::paths::in_dir(t.path());
+        let windir = t.path().join("Windows");
+        fs::create_dir_all(windir.join("WinSxS")).unwrap();
+        fs::create_dir_all(windir.join("SysWOW64")).unwrap();
+        let id8 = game(GameId::Id8);
+        // a development build without the installers: nothing to run, the
+        // start's check names what is missing instead
+        assert_eq!(windows_setup_needed(&paths, id8, &windir), []);
+        for f in [paths.vcredist(), paths.directx_setup()] {
+            fs::create_dir_all(f.parent().unwrap()).unwrap();
+            fs::write(f, b"").unwrap();
+        }
+        assert_eq!(
+            windows_setup_needed(&paths, id8, &windir),
+            [Setup::VisualCpp2008, Setup::DirectX]
+        );
+        // a PC with Visual C++ 2008 but no DirectX runtime (issue #1)
+        let sp1 = "x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.6161_none_50934f2ebcb7eb57";
+        fs::create_dir(windir.join("WinSxS").join(sp1)).unwrap();
+        assert_eq!(windows_setup_needed(&paths, id8, &windir), [Setup::DirectX]);
+        fs::write(windir.join("SysWOW64/xaudio2_3.dll"), b"").unwrap();
+        assert_eq!(windows_setup_needed(&paths, id8, &windir), []);
+        assert_eq!(
+            windows_setup_needed(&paths, game(GameId::Zero), &windir),
+            []
+        );
+    }
+
+    #[test]
     #[cfg(windows)]
     fn a_lindbergh_game_on_windows_is_refused_before_any_build() {
         let t = tempfile::tempdir().unwrap();
         let paths = crate::paths::in_dir(t.path());
         for id in [GameId::Id4, GameId::Id5] {
-            assert_eq!(setup_needed(&paths, game(id)), None, "{id:?}");
+            assert_eq!(setup_needed(&paths, game(id)), [], "{id:?}");
         }
     }
 

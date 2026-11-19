@@ -63,7 +63,7 @@ else
 	exe=${CARGO_TARGET_DIR:-$root/target}/x86_64-pc-windows-gnu/release/initiald-launcher.exe
 	[ -f "$exe" ] || die "missing $exe - run sdk/packaging/build-launcher.sh windows initiald-launcher"
 	[ -f "$root/dist/sdl2/SDL2.dll" ] || die "missing dist/sdl2/SDL2.dll"
-	"$root/scripts/build-components.sh" "$comps" wal flycast vcredist shaders assets
+	"$root/scripts/build-components.sh" "$comps" wal flycast vcredist directx shaders assets
 	cp "$exe" "$root/dist/sdl2/SDL2.dll" "$out/"
 	for l in "$root"/dist/sdl2/SDL2-*/LICENSE.txt; do cp "$l" "$out/licenses/SDL2-LICENSE.txt"; done
 	copy_wal arcade-launcher.exe
@@ -72,6 +72,7 @@ else
 	cp "$comps/flycast/LICENSE" "$out/licenses/Flycast-LICENSE.txt"
 	# installed by the launcher on the first start of Initial D 6, 7 or 8
 	cp -r "$comps/vcredist" "$out/components/vcredist"
+	cp -r "$comps/directx" "$out/components/directx"
 fi
 
 cp "$root/packaging/README-player.txt" "$out/README.txt"

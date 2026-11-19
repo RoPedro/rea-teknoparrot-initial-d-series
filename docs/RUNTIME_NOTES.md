@@ -205,6 +205,37 @@ nothing, no window, no message.
   (`port:`). Checked under Wine (Windows build) and on Linux with 33700
   held: port 33900, ID8 to its attract screen.
 
+### Issue #1, still crashing on 0.1.1 (2026-11-19)
+
+The reporter already had Visual C++ 2008; the game still ended with
+`0xc0000005` right after windowsarcadeloader queued its payload.
+
+- ID6, ID7 and both ID8 executables create **XAudio2 2.3** through COM
+  (its class id `4c5e637a-16c7-4de3-9c46-5ed22181962d` is in each file;
+  Zero's server box uses 2.7, its game none). That class is registered
+  only by Microsoft's DirectX End-User Runtime (`Nov2008_XAudio_x86.cab`,
+  `xaudio2_3.dll`); Windows 10 and 11 ship only XAudio2 2.8/2.9.
+- Reproduced under Wine by disabling the DLL (`dll_overrides:
+  {xaudio2_3: ""}` in a layer, `.work/issue1/`): ID8 reads address 0 at
+  `InitialD8_GLW_RE_SBZZ_redumped_.exe+0x9173d1` 9 s after its start and
+  exits with status 5 (0xc0000005 cut to 8 bits). The same run with the
+  DLL: still running at the 120 s timeout.
+- Fix: the Windows package carries `components/directx/`: `DXSETUP.exe`,
+  `DSETUP.dll`, `dsetup32.dll`, `dxdllreg_x86.cab`, `dxupdate.cab` and
+  `Nov2008_XAudio_x86.cab`, cut at build time from Microsoft's
+  `directx_Jun2010_redist.exe` (pinned; Microsoft re-signed it, so its
+  hash differs from winetricks' 2021 mirror, the files inside are
+  identical). The launcher checks `%SystemRoot%\SysWOW64\xaudio2_3.dll`
+  before a RingEdge game and runs `DXSETUP.exe /silent` elevated when it
+  is missing.
+- Checked under Wine: in a fresh GE-Proton 11-12 prefix, `DXSETUP.exe
+  /silent` with only these files exits 0, puts Microsoft's
+  `XAudio2_3.dll` (sha256 `04dec9d7…7dcc`, the cabinet's) in `syswow64`
+  and registers its 32-bit class. The Windows launcher with the file
+  removed: `--check id8` names the DirectX runtime and Microsoft's link;
+  `--play id8` ran the setup (Wine's `runas`), then ID8 for 147 s,
+  stopped with 0 leftovers. On a real Windows PC: not yet.
+
 ## On the SDK's hub pieces (rea-launcher-sdk v0.10.0, 2026-11-17)
 
 The launcher moved onto the SDK's shared hub code (window, command line,

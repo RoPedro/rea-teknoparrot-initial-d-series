@@ -7,8 +7,8 @@
 //!   included), `wal/` (windowsarcadeloader's root: its Wine prefix and
 //!   profile layers), `launcher.log`;
 //! - components (`$INITIALD_COMPONENTS`, else `components/` beside the
-//!   program): `wal/`, `runner/`, `shaders/`, `art/`, on Windows `flycast/`
-//!   and `vcredist/`, and `lindbergh/` from a developer's build; the
+//!   program): `wal/`, `runner/`, `shaders/`, `art/`, on Windows `flycast/`,
+//!   `vcredist/` and `directx/`, and `lindbergh/` from a developer's build; the
 //!   player's lindbergh-loader is built on first use into the data
 //!   folder's `components/lindbergh/` (CC BY-NC-SA: never inside a
 //!   package).
@@ -62,6 +62,10 @@ pub trait Folders {
     /// Microsoft's Visual C++ 2008 SP1 Redistributable (x86) in a Windows
     /// package (see [`crate::session::Setup::VisualCpp2008`]).
     fn vcredist(&self) -> PathBuf;
+    /// Microsoft's DirectX setup (`DXSETUP.exe` and the cabinets of
+    /// XAudio2 2.3) in a Windows package (see
+    /// [`crate::session::Setup::DirectX`]).
+    fn directx_setup(&self) -> PathBuf;
     fn components(&self) -> Components;
 }
 
@@ -95,6 +99,10 @@ impl Folders for HubPaths {
 
     fn vcredist(&self) -> PathBuf {
         self.components.join("vcredist").join("vcredist_x86.exe")
+    }
+
+    fn directx_setup(&self) -> PathBuf {
+        self.components.join("directx").join("DXSETUP.exe")
     }
 
     fn components(&self) -> Components {

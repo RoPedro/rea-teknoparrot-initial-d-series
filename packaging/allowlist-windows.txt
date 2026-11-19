@@ -14,5 +14,11 @@ components/wal/payloads/*
 components/wal/systemprofiles/*
 components/flycast/flycast.exe
 components/vcredist/vcredist_x86.exe
+components/directx/DXSETUP.exe
+components/directx/DSETUP.dll
+components/directx/dsetup32.dll
+components/directx/dxdllreg_x86.cab
+components/directx/dxupdate.cab
+components/directx/Nov2008_XAudio_x86.cab
 components/shaders/crt-lottes.fx
 components/art/*.jpg

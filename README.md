@@ -112,9 +112,12 @@ games' Windows sound with it, once); for Initial D 4 and 5, git and docker
 or podman (the first Play of either builds lindbergh-loader on your
 computer, a few minutes, once).
 
-**Windows:** Windows 10 or 11 (64-bit), and Microsoft's DirectX End-User
-Runtime (June 2010) for the sound of Initial D 6, 7 and 8. Initial D 4
-and 5 are Linux-only.
+**Windows:** Windows 10 or 11 (64-bit). Initial D 6, 7 and 8 need two
+Microsoft runtimes Windows doesn't include, Visual C++ 2008 (x86) and the
+sound part of the DirectX End-User Runtime (June 2010), XAudio2 2.3: the
+launcher installs both from its package on the first start of one of
+them (Windows asks for your permission). Initial D 4 and 5 are
+Linux-only.
 
 **Your games:** your own dumps of the builds below (the launcher brings no
 game files). The NAOMI 2 games also need the NAOMI 2 BIOS (`naomi2.zip`)
@@ -252,7 +255,8 @@ is also noted in `launcher.log`, and the hub shows why.
   it.
 - **A game closes right after starting** (Windows): the message lists the
   error lines from its log; Initial D 6, 7 and 8 need Visual C++ 2008 and
-  the DirectX June 2010 runtime.
+  the DirectX June 2010 runtime (`initiald-launcher --check id8` says
+  which one is missing).
 - **Something else**: the
   [bug report form](https://github.com/akitaonrails/rea-teknoparrot-initial-d-series/issues/new?template=bug-report.yml)
   asks for what we need.

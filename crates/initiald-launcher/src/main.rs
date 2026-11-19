@@ -411,6 +411,8 @@ fn play(
                     "building lindbergh-loader (first start of Initial D 4 or 5; a few minutes)…",
                 Setup::VisualCpp2008 =>
                     "installing Microsoft Visual C++ 2008 (x86), which Initial D 6, 7 and 8 need…",
+                Setup::DirectX =>
+                    "installing Microsoft DirectX's XAudio2 2.3, which Initial D 6, 7 and 8 need for their sound…",
             }
         )
     };
