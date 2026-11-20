@@ -122,3 +122,9 @@ Questions that were put to the owner (2026-11-13):
    `roms_rare/naomi2`? Drop the duplicate GD-ROM `initdexp-chd`?
 5. **Licence of this repository** (GPL-3.0 to match windowsarcadeloader
    and the Wangan launcher) and **art** (original illustrations).
+
+## 6. Fixes of our own
+
+| Problem | Where | Decision |
+|---|---|---|
+| Initial D 8 crashed on Windows (not Wine) before its entry point: windowsarcadeloader's `readonly_sections` makes `.rdata` read-only, the dump's import thunks are there and it declares no IAT directory (issue #1, `docs/RUNTIME_NOTES.md`) | windowsarcadeloader `crates/launcher/src/rundir.rs` | **Our own** patch, `patches/wal/0004`; upstream draft C1 in `docs/CONTRIBUTIONS.md` |

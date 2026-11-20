@@ -30,6 +30,7 @@ read-only.
 | `--input-pipe` for windowsarcadeloader's launcher (the hub feeds the virtual stick and receives force feedback) | `patches/wal/0001-launcher-input-pipe.patch` | GPL-3.0 (as upstream) |
 | windowsarcadeloader's Windows host build (`crates/winhost`: its run on Windows itself, the cabinet's drives with `DefineDosDevice`, junctions instead of symlinks) | `patches/wal/0003-windows-host.patch` | GPL-3.0 (as upstream) |
 | Initial D Zero's Start button let through before its game server answers, card reads held back instead (its first boot's steering adjustment waited forever) | `patches/wal/0002-idz-hold-cards-not-start.patch` | GPL-3.0 (as upstream) |
+| windowsarcadeloader's `readonly_sections` declares the import address table of a dump that has none when the thunks are in a section it makes read-only (Windows' loader crashed Initial D 8 filling them, #1) | `patches/wal/0004-windows-iat-for-readonly-sections.patch` | GPL-3.0 (as upstream) |
 | Initial D 4 Export Rev. D: the emulated card reader's object allocated at the size it writes to (it overwrote the next object: crash at game start) | `patches/lindbergh/0001-id4-export-rev-d-file-card-size.patch` | CC BY-NC-SA 4.0 (as upstream; applied on the player's machine) |
 | CRT effect (scanlines, aperture grille, curvature, vignette), written for this launcher after the approach of Timothy Lottes' public-domain CRT shader | `assets/shaders/crt-lottes.fx` | GPL-3.0-or-later |
 

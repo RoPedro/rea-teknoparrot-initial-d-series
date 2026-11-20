@@ -236,6 +236,47 @@ The reporter already had Visual C++ 2008; the game still ended with
   `--play id8` ran the setup (Wine's `runas`), then ID8 for 147 s,
   stopped with 0 leftovers. On a real Windows PC: not yet.
 
+### Issue #1, still crashing on 0.4.1 (2026-11-20)
+
+Investigated on the reporter's Windows 11 Pro PC (build 26300, 0.4.1 zip,
+the dump's `InitialD8_GLW_RE_SBZZ_redumped_.exe` sha256 `ce8e3c35…7fec`,
+the one in RESEARCH.md). Visual C++ 2008 and XAudio2 2.3 were installed
+and registered: neither was the cause any more.
+
+- Every start ended 3 s in with `0xc0000005` in `ntdll.dll+0x4db0c`
+  (Windows' Application log, the same offset each time). Windows Error
+  Reporting's module list held the game's static imports and **not**
+  `wal_ringedge.dll`, and no `wal-ringedge.log` was written: the process
+  died while Windows loaded it, before the entry point wal-loader patches.
+- The dump's imports were rebuilt in a section of their own (`.mackt`,
+  the import directory at `0x1873000`), but the 23 thunk arrays are still
+  at the start of `.rdata` (`0xb29000`–`0xb29e28`) and the IAT data
+  directory is empty. windowsarcadeloader's ID8 profile clears `.rdata`'s
+  write flag (`readonly_sections`, else R6002). Windows' loader makes only
+  the IAT directory's pages writable while it fills the thunks, so it
+  wrote into read-only memory. Wine's loader unprotects each thunk array
+  itself, which is why every run under Wine was fine.
+- Without windowsarcadeloader, the read-only copy started directly crashed
+  at the same `ntdll+0x4db0c`; the same copy with an IAT directory
+  (`0xb29000`, `0xe28` bytes) got past the loader. With that directory
+  added to the runtime copy, the 0.4.1 `arcade-launcher.exe run` started
+  ID8: the payload connected, `picodaemon.exe` ran, the game sat in its
+  startup checks (the PCP `mxgcatcher` requests answered) after 46 s.
+- Not the cause: the dump's `winmm.dll` (an English text patch that also
+  stands in for `dinput8`, `d3d9`, `opengl32`, `xinput1_3`); Windows loads
+  it from the game folder, but without it the crash was the same.
+- Fix: `patches/wal/0004` makes `readonly_sections` fill the IAT directory
+  with the span of the thunk arrays in the sections it makes read-only,
+  when the image declares none. Run on the real dump, its output is byte
+  for byte (sha256 `2146e67c…7cd5`) the exe that started above. Tests:
+  three synthetic PE32 images (the dump's layout, an IAT directory already
+  declared, imports outside the read-only section); the first failed
+  before the fix.
+- Not checked yet: an `arcade-launcher.exe` built with 0004 (no Windows
+  cross toolchain on the PC used), a race on Windows, and ID6 / ID7 /
+  Transformers, whose profiles make `.rdata` read-only too (their dumps
+  were not on that PC).
+
 ## On the SDK's hub pieces (rea-launcher-sdk v0.10.0, 2026-11-17)
 
 The launcher moved onto the SDK's shared hub code (window, command line,

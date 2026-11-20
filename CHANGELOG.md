@@ -6,6 +6,15 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- Windows: Initial D 8 no longer crashes with `0xc0000005` in `ntdll.dll`
+  a few seconds after Play (#1). windowsarcadeloader makes the dump's
+  `.rdata` read-only, and the dump declares no import address table, so
+  Windows' loader could not fill the game's imports there. `patches/wal/0004`
+  declares that table when it makes such a section read-only; Wine was
+  never affected.
+
 ## 0.4.1 - 2026-11-20
 
 ### Fixed
