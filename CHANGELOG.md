@@ -6,6 +6,8 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+## 0.4.2 - 2026-11-20
+
 ### Fixed
 
 - Windows: Initial D 8 no longer crashes with `0xc0000005` in `ntdll.dll`
