@@ -13,8 +13,9 @@ No game files are included or downloaded. Your game folders are only
 read, never changed: every game runs from a private folder that links to
 your dump.
 
-> The Windows version was tested under Wine only so far, not on a Windows
-> PC; a real wheel and its force feedback are not checked yet.
+> The Windows version was tested mostly under Wine so far (on a Windows PC,
+> only Initial D 8 has been started); a real wheel and its force feedback
+> are not checked yet.
 
 ## Problems this launcher solves
 
@@ -61,6 +62,10 @@ ran into setting these games up, especially on Linux (details in
   of a first boot. `patches/wal/0002` lets Start through and makes the card
   reader wait instead. The runtime gives Zero the cabinet's `package\`
   layout (no more Error 4104).
+- **Initial D 8 fixed on Windows.** windowsarcadeloader makes the dump's
+  `.rdata` read-only, where its import tables are, and the dump doesn't
+  declare them: Windows (unlike Wine) then crashed while loading the game.
+  `patches/wal/0004` declares them.
 - **Season 5's first boot**: the launcher sees the cabinet's system file
   appear and starts the game again by itself.
 - **Sound that doesn't crash**: the Wine prefix gets Microsoft's XAudio2
@@ -142,7 +147,7 @@ and each game's `<set>.zip` next to its `<set>/` CHD folder.
 | Arcade Stage 5 (Export 2.0) | Lindbergh | lindbergh-loader, natively | **plays** | no (Linux game) |
 | Arcade Stage 6 AA (Japan) | RingEdge | windowsarcadeloader | **plays** | **plays** (under Wine) |
 | Arcade Stage 7 AAX (Japan) | RingEdge | windowsarcadeloader | **plays** | not yet run |
-| Arcade Stage 8 Infinity (Japan) | RingEdge | windowsarcadeloader | **plays** | not yet run |
+| Arcade Stage 8 Infinity (Japan) | RingEdge | windowsarcadeloader | **plays** | starts (on a Windows 11 PC, see below) |
 | Arcade Stage Zero Ver. 2 (2.30.00) | Nu | windowsarcadeloader (patched) | **plays** | **plays** (under Wine, see below) |
 | THE ARCADE Season 3 (2.31.00 Rev. 1) | ALLS UX | windowsarcadeloader | **plays** | not yet run |
 | THE ARCADE Season 5 (3.10.00 Rev. 1) | ALLS UX | windowsarcadeloader | **plays** | **plays** (under Wine, see below) |
@@ -150,7 +155,8 @@ and each game's `<set>.zip` next to its `<set>/` CHD folder.
 "Plays" means a race was driven in the real game through the launcher,
 with its own input path; each run is recorded in
 [docs/RUNTIME_NOTES.md](docs/RUNTIME_NOTES.md). The Windows version was
-tested only under Wine so far, not on a Windows PC; under Wine the
+tested mostly under Wine so far; on a Windows 11 PC only Initial D 8 was
+started, up to its startup checks (issue #1). Under Wine the
 cabinet drive letters of Zero and Season 5 had to be stood in for (Wine
 does not apply `DefineDosDevice` to its files). Only the exact builds
 listed in the hub are started (each is identified by the SHA-256 of its
@@ -287,7 +293,8 @@ is also noted in `launcher.log`, and the hub shows why.
 
 ## Known limitations
 
-- The Windows version was tested under Wine only. Zero and the two
+- The Windows version was tested mostly under Wine (on a Windows PC, only
+  Initial D 8 has been started). Zero and the two
   THE ARCADE seasons map the cabinet's E: and Y: drives for the time of
   the game with `DefineDosDevice` (as `subst` does): a drive letter your PC
   already uses is shadowed meanwhile.
@@ -318,7 +325,8 @@ builds, library scan, runtime folders, settings, launch plans for each
 OS) with host tests; `crates/initiald-launcher` holds the window, the CLI,
 SDL input and the session. The Windows build's tests run under Wine in
 CI. Research and decisions: [docs/RESEARCH.md](docs/RESEARCH.md); what was
-run and seen: [docs/RUNTIME_NOTES.md](docs/RUNTIME_NOTES.md).
+run and seen: [docs/RUNTIME_NOTES.md](docs/RUNTIME_NOTES.md); fixes drafted
+for upstream projects: [docs/CONTRIBUTIONS.md](docs/CONTRIBUTIONS.md).
 
 ## How it works
 
