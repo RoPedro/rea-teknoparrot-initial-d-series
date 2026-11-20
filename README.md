@@ -109,8 +109,10 @@ ran into setting these games up, especially on Linux (details in
 | Arcade Stage Ver. 1 (NAOMI 2, Flycast) | Arcade Stage 4: crashed at every game start before this launcher's fix |
 | ![Initial D Arcade Stage 8 Infinity, tuning](docs/images/id8-tuning.jpg) | ![Initial D Arcade Stage Zero Ver. 2, the first race](docs/images/zero-race.jpg) |
 | Arcade Stage 8 Infinity | Arcade Stage Zero Ver. 2: stayed on its steering calibration screen before the fix |
-| ![THE ARCADE Season 5](docs/images/ta5-race.jpg) | ![The hub on Windows](docs/images/hub-windows.jpg) |
-| THE ARCADE Season 5 | The Windows version (Initial D 4 and 5 are Linux-only) |
+| ![THE ARCADE Season 5](docs/images/ta5-race.jpg) | ![THE ARCADE Season 5 license card](docs/images/ta5-card.jpg) |
+| THE ARCADE Season 5 | THE ARCADE Season 5: local Aime card registered and saved under `saves/ta5/` |
+| ![The hub on Windows](docs/images/hub-windows.jpg) | |
+| The Windows version (Initial D 4 and 5 are Linux-only) | |
 
 ## What you need
 
