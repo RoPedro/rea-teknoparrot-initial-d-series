@@ -6,6 +6,21 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+## 0.4.1 - 2026-11-20
+
+### Fixed
+
+- Windows: removed the two unused WAL profile files with colons in their
+  names (`SegaRally2Resolution-4:3.cfg`, `SegaRally2Resolution-16:9.cfg`)
+  from the Windows zip so extraction succeeds cleanly (#4).
+- Windows: updated `rea-launcher-sdk` to v0.12.2 and WAL's `winhost` patch
+  so dumps on mapped network drives and UNC shares link cleanly (or mirror
+  with a notice) instead of failing with `ERROR_INVALID_REPARSE_DATA` or
+  `Access is denied` (rea-launcher-sdk#2).
+- Windows: `winhost` now propagates non-zero game exit codes (such as
+  `0xc0000005`) and surfaces `crash:` lines from `wal-<system>.log` instead
+  of masking crashes as `exit code: 0` (#6).
+
 ## 0.4.0 - 2026-11-19
 
 ### Added
