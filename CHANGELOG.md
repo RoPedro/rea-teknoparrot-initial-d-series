@@ -6,6 +6,16 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+## 0.6.3 - 2026-11-21
+
+### Fixed
+
+- Upgraded to `rea-launcher-sdk v0.12.6`: `InputService` now uses
+  `wheel::pick_wheel()` (preferring the haptic HID collection on
+  multi-collection wheels like the Fanatec CSL DD), inspects the live post-pump
+  axis state when SDL's initial sample arrives all-zero, and prefers a saved
+  `wheel.ini` profile in the data folder when present.
+
 ## 0.6.0 - 2026-11-21
 
 ### Added
