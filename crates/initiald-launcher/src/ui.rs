@@ -74,7 +74,7 @@ pub fn spec(paths: HubPaths) -> HubSpec {
 pub fn run(paths: HubPaths) -> Result<(), String> {
     let log = Log::new(paths.log());
     let bindings = crate::input::bindings(&paths, |w| log.warn(w));
-    let mut launcher = Launcher::new(paths.clone(), Some(crate::input::start(&bindings)));
+    let mut launcher = Launcher::new(paths.clone(), Some(crate::input::start(&paths, &bindings)));
     launcher.bindings = bindings;
     hub::run(spec(paths), launcher)
 }

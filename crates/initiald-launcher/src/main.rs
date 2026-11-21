@@ -399,8 +399,12 @@ fn play(
         });
     }
     let wal = matches!(game.route, Route::Wal { .. });
-    let input = (!inv.test.no_input && inv.test.script.is_none() && wal)
-        .then(|| input::start(&input::bindings(paths, |w| Log::new(paths.log()).warn(w))));
+    let input = (!inv.test.no_input && inv.test.script.is_none() && wal).then(|| {
+        input::start(
+            paths,
+            &input::bindings(paths, |w| Log::new(paths.log()).warn(w)),
+        )
+    });
     let feed = if let Some(f) = &inv.test.script {
         let text = std::fs::read_to_string(f).map_err(|e| format!("{}: {e}", f.display()))?;
         Feed::Script(Script::parse::<Button>(&text).map_err(|e| format!("{}: {e}", f.display()))?)

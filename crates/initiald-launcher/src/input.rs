@@ -23,11 +23,13 @@ pub fn bindings(paths: &HubPaths, warn: impl FnOnce(&str)) -> Bindings<Button> {
     })
 }
 
-/// Starts the input thread with the player's pad layout `bindings`.
-pub fn start(bindings: &Bindings<Button>) -> InputService {
-    InputService::start(
+/// Starts the input thread with the player's pad layout `bindings`,
+/// preferring a saved `wheel.ini` in the data folder when present.
+pub fn start(paths: &HubPaths, bindings: &Bindings<Button>) -> InputService {
+    InputService::start_with_wheel_file(
         bindings.map().clone(),
         Some((Button::GearUp, Button::GearDown)),
+        Some(paths.wheel_file()),
     )
 }
 
