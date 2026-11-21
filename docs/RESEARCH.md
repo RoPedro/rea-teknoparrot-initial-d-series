@@ -128,3 +128,4 @@ Questions that were put to the owner (2026-11-13):
 | Problem | Where | Decision |
 |---|---|---|
 | Initial D 8 crashed on Windows (not Wine) before its entry point: windowsarcadeloader's `readonly_sections` makes `.rdata` read-only, the dump's import thunks are there and it declares no IAT directory (issue #1, `docs/RUNTIME_NOTES.md`) | windowsarcadeloader `crates/launcher/src/rundir.rs` | **Our own** patch, `patches/wal/0004`; upstream draft C1 in `docs/CONTRIBUTIONS.md` |
+| Initial D 8 failed to start now and then on Windows (not Wine): the RingEdge payload's `RtlAllocateHeap` hot patch (`WAL_RINGEDGE_ZERO_HEAP`) went live before its original was stored, and a Windows loader thread called it in between (`docs/RUNTIME_NOTES.md`, "warmup") | windowsarcadeloader `crates/payload-ringedge/src/cg.rs`, `lib.rs` | **Our own** patch, `patches/wal/0006`; upstream draft C2 in `docs/CONTRIBUTIONS.md` |

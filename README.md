@@ -65,7 +65,10 @@ ran into setting these games up, especially on Linux (details in
 - **Initial D 8 fixed on Windows.** windowsarcadeloader makes the dump's
   `.rdata` read-only, where its import tables are, and the dump doesn't
   declare them: Windows (unlike Wine) then crashed while loading the game.
-  `patches/wal/0004` declares them.
+  `patches/wal/0004` declares them. It also failed to open now and then
+  (the next try worked): the payload's heap hook went live a moment before
+  it knew where the real function was, and Windows' loader threads could
+  land in that gap. `patches/wal/0006` closes it.
 - **Season 5's first boot**: the launcher sees the cabinet's system file
   appear and starts the game again by itself.
 - **Sound that doesn't crash**: the Wine prefix gets Microsoft's XAudio2

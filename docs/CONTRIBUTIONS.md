@@ -7,7 +7,8 @@ status says so.
 
 | Id | Target | What | Evidence | Status |
 |---|---|---|---|---|
-| C1 | [aderumier/windowsarcadeloader](https://github.com/aderumier/windowsarcadeloader): an issue with the patch (or a PR) | `readonly_sections` breaks Initial D 8 on Windows itself: the dump's import thunks are in `.rdata` and it declares no IAT directory | `docs/RUNTIME_NOTES.md`, "Issue #1, still crashing on 0.4.1"; `patches/wal/0004` | draft, for the owner. Verified on a Windows 11 PC with the header changed by hand; a build with the patch not yet run there. Not in upstream as of 2026-11-20 (`main` at `9c927a0`) |
+| C1 | [aderumier/windowsarcadeloader](https://github.com/aderumier/windowsarcadeloader): an issue with the patch (or a PR) | `readonly_sections` breaks Initial D 8 on Windows itself: the dump's import thunks are in `.rdata` and it declares no IAT directory | `docs/RUNTIME_NOTES.md`, "Issue #1, still crashing on 0.4.1"; `patches/wal/0004` | draft, for the owner. Verified on a Windows 11 PC with the header changed by hand; a build with the patch not yet run there. Not in upstream as of 2026-11-20 (`master` at `9c927a0`) |
+| C2 | [aderumier/windowsarcadeloader](https://github.com/aderumier/windowsarcadeloader): an issue with the patch (or a PR) | the RingEdge payload's hot patches go live before their original is stored: Initial D 8 (`WAL_RINGEDGE_ZERO_HEAP`) crashes at start now and then on Windows | `docs/RUNTIME_NOTES.md`, "warmup"; `patches/wal/0006` | draft, for the owner; **needs verification** (a build with the patch over many starts on Windows). Not in upstream as of 2026-11-21 (`master` at `9c927a0`, where `hotpatch` moved to `wal_payload_common::cg`: the patch needs adapting there) |
 
 ## C1: windowsarcadeloader, `readonly_sections` and Windows' loader
 
@@ -45,3 +46,38 @@ Title: `readonly_sections`: Initial D 8 crashes in ntdll on Windows (dump withou
 > (attach `patches/wal/0004-windows-iat-for-readonly-sections.patch`,
 > made on top of this repository's other patches; the hunk applies to
 > `crates/launcher/src/rundir.rs`)
+
+## C2: windowsarcadeloader, a hot patch live before its original
+
+Title: RingEdge payload: `RtlAllocateHeap` hook live before its original is stored (Initial D 8 crashes at start now and then on Windows)
+
+> On Windows itself (not Wine), Initial D Arcade Stage 8 Infinity sometimes
+> exits with `0xc0000005` right after start; the next start usually works.
+> The payload's log of a failed start (Windows 11, build 26300), in the
+> same millisecond as `ringedge: heap blocks zeroed`:
+>
+> ```
+> crash: [tid 6824] access violation
+> crash: access violation (reading 0x0) at 0x0
+> crash: eip=00000000 eax=000c0008 ... (stack: heap handle, flags 0x000c0008, size 0x14, a return into wal_ringedge.dll)
+> ```
+>
+> `zero_heap` (`WAL_RINGEDGE_ZERO_HEAP=1`, the ID8 profile) hot patches
+> `ntdll!RtlAllocateHeap`: `hotpatch` writes the entry's short jump, which
+> makes `allocate_heap` live for every thread, and returns; only then does
+> `zero_heap` store the original in `ORIG_ALLOCATE_HEAP`. A thread
+> allocating in between calls the original through a null pointer. Windows
+> 10/11 run loader worker threads in each new process, and they allocate
+> while the payload starts; Wine has none, so Linux never shows it. The
+> `wglSwapBuffers` and `kernelbase` `CreateFileW` / `GetFileAttributesExW`
+> hot patches store their original the same way.
+>
+> The original is known before patching (the function past its 2 byte
+> prologue, `f + 2`). The patch below makes `hotpatch` take the static that
+> holds it and store it, with a release fence, before the entry's 2 byte
+> jump; the write order is in a small std-only module with two tests (the
+> first fails with the old order). It is made against `4f42c6d`; on
+> `master` `hotpatch` lives in `payload-common/src/cg.rs`, and the same
+> change applies there.
+>
+> (attach `patches/wal/0006-ringedge-hotpatch-original-before-live.patch`)
