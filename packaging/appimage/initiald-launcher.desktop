@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Initial D Arcade Stage
+Comment=One launcher for the Initial D arcade series
+Exec=initiald-launcher
+Icon=initiald-launcher
+Terminal=false
+Categories=Game;ArcadeGame;

@@ -119,6 +119,14 @@ fn main() -> ExitCode {
         }
         // only reads: works while the window is open
         Mode::List => return finish(list(&paths), &out),
+        Mode::Check(ref game)
+            if inv.libraries.is_empty() && inv.paths.iter().all(Option::is_none) =>
+        {
+            return finish(
+                config(&paths).and_then(|c| check(&paths, &c, game.as_deref())),
+                &out,
+            );
+        }
         _ => {}
     }
     let _instance = match single_instance(inv.is_action()) {
@@ -144,7 +152,7 @@ fn finish(result: Result<u8, String>, out: &Out) -> ExitCode {
     }
 }
 
-const ALREADY_OPEN: &str = "The Initial D Launcher is already open (or its game is running). Close it first, then try again.";
+const ALREADY_OPEN: &str = "The Initial D Launcher is already open (or its game is running). Close it first (or end it from Task Manager if it isn't responding), then try again.";
 
 /// The instance for this run, or what to say and the exit code when
 /// another launcher holds it (Windows: its window comes forward instead

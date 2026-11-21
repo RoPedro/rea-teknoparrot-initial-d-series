@@ -49,6 +49,8 @@ if [ "$os" = linux ]; then
 	[ -f "$bin/lib/libSDL2-2.0.so.0" ] || die "missing $bin/lib/libSDL2-2.0.so.0"
 	"$root/scripts/build-components.sh" "$comps" wal runner winetricks shaders assets
 	install -m 755 "$bin/initiald-launcher" "$out/initiald-launcher"
+	cp "$root/packaging/appimage/initiald-launcher.png" "$out/initiald-launcher.png"
+	cp "$root/packaging/appimage/initiald-launcher.desktop" "$out/initiald-launcher.desktop"
 	mkdir -p "$out/lib"
 	cp "$bin"/lib/* "$out/lib/"
 	[ -f "$bin/SDL2-copyright.txt" ] && cp "$bin/SDL2-copyright.txt" "$out/licenses/"

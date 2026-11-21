@@ -1,5 +1,7 @@
 # Every file the Linux package may hold (sdk/packaging/smoke-package.sh).
 initiald-launcher x
+initiald-launcher.png
+initiald-launcher.desktop
 lib/libSDL2-2.0.so.0
 README.txt
 licenses/LICENSE-GPL-3.0.txt

@@ -6,6 +6,18 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+### Added
+
+- Desktop shortcut icon: custom high-contrast 256×256 Initial D AE86 touge
+  icon embedded in `initiald-launcher.exe` via `rea-launcher-build` and
+  bundled with `initiald-launcher.desktop` in the Linux package.
+
+### Fixed
+
+- Read-only `--check` now runs alongside an open launcher without blocking on
+  the single-instance lock, and the already-open error message mentions ending
+  an unresponsive instance from Task Manager.
+
 ## 0.5.1 - 2026-11-21
 
 ### Fixed
