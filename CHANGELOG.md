@@ -6,6 +6,12 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- Packaging: regenerated `patches/wal/0005-windows-alls-hkcu-registry.patch`
+  so it only touches `daemon.rs` and `registry.rs` and applies cleanly on top
+  of `0001..0004`.
+
 ## 0.5.0 - 2026-11-21
 
 ### Added
