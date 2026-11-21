@@ -6,6 +6,8 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+## 0.5.1 - 2026-11-21
+
 ### Fixed
 
 - Packaging: regenerated `patches/wal/0005-windows-alls-hkcu-registry.patch`
