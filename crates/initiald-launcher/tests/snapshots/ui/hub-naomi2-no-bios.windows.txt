@@ -1,6 +1,7 @@
 == 1280x720
 Label value="Initial D Arcade Stage"
 Label value="Sega NAOMI 2 · 2002 · Export, Rev. A (GDS-0025A)"
+Label value="Sega Rosso's original touge racer on NAOMI 2 — four mountain passes (Myogi, Usui, Akagi, Akina), magnetic tuning cards and Eurobeat."
 Label value="Ready"
 Label value="Folder: <tmp>/games/id1"
 Label value="Needs the NAOMI 2 BIOS: add it in Settings."
@@ -25,6 +26,7 @@ Label value="Controller: No controller"
 == 1280x800
 Label value="Initial D Arcade Stage"
 Label value="Sega NAOMI 2 · 2002 · Export, Rev. A (GDS-0025A)"
+Label value="Sega Rosso's original touge racer on NAOMI 2 — four mountain passes (Myogi, Usui, Akagi, Akina), magnetic tuning cards and Eurobeat."
 Label value="Ready"
 Label value="Folder: <tmp>/games/id1"
 Label value="Needs the NAOMI 2 BIOS: add it in Settings."

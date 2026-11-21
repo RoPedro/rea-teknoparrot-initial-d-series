@@ -1,6 +1,7 @@
 == 1280x720
 Label value="Initial D Arcade Stage 6 AA"
 Label value="Sega RingEdge · 2011 · Japan (SBUU)"
+Label value="First RingEdge entry — brought back fan-favourite courses, added double-ace tag battles and a smoother, more forgiving drift feel."
 Label value="Ready"
 Label value="Folder: <tmp>/games/id6"
 Button label="Play" disabled @56,454 170x50
@@ -26,6 +27,7 @@ Label value="Initial D 4 and 5 run in lindbergh-loader, built once on your compu
 == 1280x800
 Label value="Initial D Arcade Stage 6 AA"
 Label value="Sega RingEdge · 2011 · Japan (SBUU)"
+Label value="First RingEdge entry — brought back fan-favourite courses, added double-ace tag battles and a smoother, more forgiving drift feel."
 Label value="Ready"
 Label value="Folder: <tmp>/games/id6"
 Button label="Play" disabled @62,504 189x56

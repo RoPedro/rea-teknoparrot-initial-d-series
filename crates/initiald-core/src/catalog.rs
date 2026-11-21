@@ -49,6 +49,8 @@ pub struct Game {
     pub short: &'static str,
     pub year: u16,
     pub board: &'static str,
+    /// Short trivia/context shown over the top-right quarter of the hero art.
+    pub blurb: &'static str,
     pub route: Route,
     /// The file that identifies the edition, relative to the game folder
     /// (for NAOMI 2: relative to the folder holding `<set>.zip`).
@@ -128,6 +130,7 @@ pub const GAMES: &[Game] = &[
         short: "ID",
         year: 2002,
         board: "Sega NAOMI 2",
+        blurb: "Sega Rosso's original touge racer on NAOMI 2 — four mountain passes (Myogi, Usui, Akagi, Akina), magnetic tuning cards and Eurobeat.",
         route: Route::Flycast { set: "initdexp" },
         main_file: "initdexp/gds-0025a.chd",
         editions: &[Edition::chd_sha1(
@@ -144,6 +147,7 @@ pub const GAMES: &[Game] = &[
         short: "ID2",
         year: 2003,
         board: "Sega NAOMI 2",
+        blurb: "Expanded Ver. 1 with Irohazaka, Happogahara and Shomaru, rain weather, new rivals from Second Stage and refined drift physics.",
         route: Route::Flycast { set: "initdv2e" },
         main_file: "initdv2e/gds-0027.chd",
         editions: &[Edition::chd_sha1(
@@ -160,6 +164,7 @@ pub const GAMES: &[Game] = &[
         short: "ID3",
         year: 2004,
         board: "Sega NAOMI 2",
+        blurb: "The pinnacle of the NAOMI 2 trilogy — adds Akina Snow, Tsuchisaka and Bunta Challenge alongside refined gutter-hook physics.",
         route: Route::Flycast { set: "initdv3e" },
         main_file: "initdv3e/gds-0033.chd",
         editions: &[Edition::chd_sha1(
@@ -176,6 +181,7 @@ pub const GAMES: &[Game] = &[
         short: "ID4",
         year: 2008,
         board: "Sega Lindbergh",
+        blurb: "Moved the series to HD widescreen on Sega Lindbergh hardware with Lake Akina, Tsukuba, IC cards and an all-new drift model.",
         route: Route::Lindbergh,
         main_file: "id4.elf",
         editions: &[Edition::sha256(
@@ -192,6 +198,7 @@ pub const GAMES: &[Game] = &[
         short: "ID5",
         year: 2009,
         board: "Sega Lindbergh",
+        blurb: "Introduced tyre wear, Nagao Pass and Project D's Kanagawa rivals while sharpening Arcade Stage 4's Lindbergh handling.",
         route: Route::Lindbergh,
         main_file: "id5.elf",
         editions: &[Edition::sha256(
@@ -208,6 +215,7 @@ pub const GAMES: &[Game] = &[
         short: "ID6",
         year: 2011,
         board: "Sega RingEdge",
+        blurb: "First RingEdge entry — brought back fan-favourite courses, added double-ace tag battles and a smoother, more forgiving drift feel.",
         route: Route::Wal {
             system: "ringedge",
             profile: "initial-d-arcade-stage-6",
@@ -227,6 +235,7 @@ pub const GAMES: &[Game] = &[
         short: "ID7",
         year: 2012,
         board: "Sega RingEdge",
+        blurb: "Added Tsubaki Line, Kanto's fastest teams and Cross Battles on RingEdge, refining 6 AA's accessible touge physics.",
         route: Route::Wal {
             system: "ringedge",
             profile: "initial-d-arcade-stage-7",
@@ -246,6 +255,7 @@ pub const GAMES: &[Game] = &[
         short: "ID8",
         year: 2014,
         board: "Sega RingEdge",
+        blurb: "The culmination of the RingEdge era — 15 mountain courses, D Coin tuning, Legend of the Streets and the largest classic roster.",
         route: Route::Wal {
             system: "ringedge",
             profile: "initial-d-arcade-stage-8",
@@ -265,6 +275,7 @@ pub const GAMES: &[Game] = &[
         short: "Zero",
         year: 2017,
         board: "Sega Nu",
+        blurb: "Rebuilt in 1080p on Sega Nu with a 6-speed H-pattern shifter, New Initial D the Movie visuals and a clean slate of realistic handling.",
         route: Route::Wal {
             system: "seganu",
             profile: "initial-d-arcade-stage-zero-ver-2",
@@ -284,6 +295,7 @@ pub const GAMES: &[Game] = &[
         short: "S3",
         year: 2024,
         board: "Sega ALLS UX",
+        blurb: "Unreal Engine 4 reboot on ALLS UX with 4-player online battles, MF Ghost crossovers and Season 3's expanded car and course lineup.",
         route: Route::Wal {
             system: "alls",
             profile: "initial-d-the-arcade-season-3",
@@ -303,6 +315,7 @@ pub const GAMES: &[Game] = &[
         short: "S5",
         year: 2025,
         board: "Sega ALLS UX",
+        blurb: "Season 5 of Initial D THE ARCADE on ALLS UX — new touge courses, MF Ghost rivals, updated balance and Unreal Engine 4 visuals.",
         route: Route::Wal {
             system: "alls",
             profile: "initial-d-the-arcade-season-5",

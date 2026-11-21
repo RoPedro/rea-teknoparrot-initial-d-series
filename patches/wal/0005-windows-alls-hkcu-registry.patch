@@ -1,0 +1,330 @@
+diff --git a/crates/payload-alls/src/aime.rs b/crates/payload-alls/src/aime.rs
+index 8f33c69..59f0edc 100644
+--- a/crates/payload-alls/src/aime.rs
++++ b/crates/payload-alls/src/aime.rs
+@@ -32,7 +32,11 @@ pub(crate) fn init() {
+         loop {
+             let card = wal_payload_common::input(0).pressed(button::CARD);
+             if card && !held {
+-                sgreader::insert(&code, Duration::from_secs(3));
++                if crate::idz::cards_wait() {
++                    log!("aime: card not read yet (Initial D Zero has no configuration from its game server)");
++                } else {
++                    sgreader::insert(&code, Duration::from_secs(3));
++                }
+             }
+             held = card;
+             std::thread::sleep(Duration::from_millis(50));
+diff --git a/crates/payload-alls/src/daemon.rs b/crates/payload-alls/src/daemon.rs
+index 9b362d0..5b3d2c4 100644
+--- a/crates/payload-alls/src/daemon.rs
++++ b/crates/payload-alls/src/daemon.rs
+@@ -392,6 +392,7 @@ unsafe extern "system" fn query_dos_device_w(name: *const u16, target: *mut u16,
+ pub(crate) fn init() {
+     let cabinet = registry::Cabinet::from_env();
+     registry::write(&cabinet, &module_path());
++    registry::install_hooks();
+     if let Some(kind) = std::env::var("WAL_ALLS_BILLING_TYPE").ok().and_then(|v| v.trim().parse::<u32>().ok()) {
+         KEYCHIP_STATE.lock().unwrap().nearfull = (kind << 16) + 512;
+     }
+diff --git a/crates/payload-alls/src/idz.rs b/crates/payload-alls/src/idz.rs
+index f1c5a75..3b95dd7 100644
+--- a/crates/payload-alls/src/idz.rs
++++ b/crates/payload-alls/src/idz.rs
+@@ -41,7 +41,7 @@ fn base_port() -> u16 {
+ 
+ /// The userdb's local port (the game's connections to the router's port 10000).
+ /// The named event set once the game's configuration is answered (loadConfigB, 1.30's
+-/// loadConfig2): amdaemon's JVS board keeps the start button off until then ([`hold_start`]).
++/// loadConfig2): amdaemon's card reader waits for it ([`cards_wait`]).
+ const READY_EVENT: &str = "WAL_IDZ_SERVER_READY";
+ 
+ /// The game has its game server's configuration: cards can be read.
+@@ -69,26 +69,22 @@ pub(crate) fn is_ready() -> bool {
+     true
+ }
+ 
+-/// In amdaemon: the start button held off until the game has its game server's configuration.
+-/// It asks for it in steps 30 s apart from its attract (about 90 s after it shows), pauses them
+-/// once a player is in its entry screens, and a card read before it fails (error 6503,
+-/// "[accessStep] FAILED" in the game's log, the player plays without data).
+-pub(crate) fn hold_start() {
+-    fn hold(players: &mut [wal_payload_common::jvs_board::Switches]) {
+-        static READY: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+-        if READY.load(std::sync::atomic::Ordering::Relaxed) {
+-            return;
+-        }
+-        if is_ready() {
+-            READY.store(true, std::sync::atomic::Ordering::Relaxed);
+-            log!("idz: start button on (the game's configuration loaded)");
+-            return;
+-        }
+-        for p in players.iter_mut() {
+-            p.0 &= !0x80;
+-        }
++/// In amdaemon: the card held off until the game has its game server's configuration.
++/// It asks for it in steps 30 s apart from its attract (about 90 s after it shows), and a card
++/// read before fails (error 6503, "[accessStep] FAILED" in the game's log). The start button is
++/// not held: the game's first boot asks for the steering adjustment (centre, Start) before its
++/// attract, so it would never come.
++pub(crate) fn cards_wait() -> bool {
++    static READY: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
++    if !std::env::var("WAL_ALLS_BOARD").is_ok_and(|v| v.trim() == "idz") || READY.load(std::sync::atomic::Ordering::Relaxed) {
++        return false;
+     }
+-    wal_payload_common::jvs_board::set_switches_hook(hold);
++    if is_ready() {
++        READY.store(true, std::sync::atomic::Ordering::Relaxed);
++        log!("idz: cards accepted (the game's configuration loaded)");
++        return false;
++    }
++    true
+ }
+ 
+ pub(crate) fn port() -> u16 {
+diff --git a/crates/payload-alls/src/lib.rs b/crates/payload-alls/src/lib.rs
+index c784fdb..3ee789c 100644
+--- a/crates/payload-alls/src/lib.rs
++++ b/crates/payload-alls/src/lib.rs
+@@ -147,10 +147,6 @@ fn start() {
+             if std::env::var("WAL_ALLS_BILLING").is_ok_and(|v| v.trim() == "1") {
+                 allnet::serve_billing();
+             }
+-            // Initial D ARCADE STAGE Zero: its start button waits for the game's configuration
+-            if std::env::var("WAL_ALLS_BOARD").is_ok_and(|v| v.trim() == "idz") {
+-                idz::hold_start();
+-            }
+         } else if child::is_child() {
+             // a program the game started (Initial D ARCADE STAGE Zero's store server): the
+             // cabinet's network only, its windows hidden
+diff --git a/crates/payload-alls/src/registry.rs b/crates/payload-alls/src/registry.rs
+index 232dfb1..d70ca7d 100644
+--- a/crates/payload-alls/src/registry.rs
++++ b/crates/payload-alls/src/registry.rs
+@@ -3,11 +3,22 @@
+ //! Written in the 64-bit view at each start, from the payload options. Values per segatools'
+ //! `platform/` (nusec, misc, amvideo, vfs; public domain).
+ 
++use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
++
++use wal_payload_common::{iat, log};
+ use windows_sys::Win32::System::Registry::{
+-    HKEY, HKEY_LOCAL_MACHINE, KEY_WOW64_64KEY, KEY_WRITE, REG_BINARY, REG_DWORD, REG_OPTION_NON_VOLATILE, REG_SZ, RegCloseKey, RegCreateKeyExW, RegSetValueExW,
++    HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_WOW64_64KEY, KEY_WRITE, REG_BINARY, REG_DWORD,
++    REG_OPTION_NON_VOLATILE, REG_SZ, RegCloseKey, RegCreateKeyExW, RegSetValueExW,
+ };
+ 
+-use wal_payload_common::log;
++const SYSTEM_PREFIX: &str = "SYSTEM\\SEGA\\SystemProperty";
++const HKCU_PREFIX: &str = "Software\\WAL\\ALLS\\";
++
++static USE_HKCU: AtomicBool = AtomicBool::new(false);
++static REG_OPEN_KEY_EX_W: AtomicUsize = AtomicUsize::new(0);
++static REG_OPEN_KEY_EX_A: AtomicUsize = AtomicUsize::new(0);
++static REG_CREATE_KEY_EX_W: AtomicUsize = AtomicUsize::new(0);
++static REG_CREATE_KEY_EX_A: AtomicUsize = AtomicUsize::new(0);
+ 
+ pub(crate) enum Value<'a> {
+     Dword(u32),
+@@ -20,10 +31,44 @@ fn wide(s: &str) -> Vec<u16> {
+ }
+ 
+ pub(crate) fn set(key: &str, values: &[(&str, Value)]) {
+-    let path = wide(&format!("SYSTEM\\SEGA\\SystemProperty{}{key}", if key.is_empty() { "" } else { "\\" }));
++    let rel = format!("{SYSTEM_PREFIX}{}{key}", if key.is_empty() { "" } else { "\\" });
+     let mut h: HKEY = std::ptr::null_mut();
+-    let rc = unsafe {
+-        RegCreateKeyExW(HKEY_LOCAL_MACHINE, path.as_ptr(), 0, std::ptr::null(), REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_WOW64_64KEY, std::ptr::null(), &mut h, std::ptr::null_mut())
++    let rc = if USE_HKCU.load(Ordering::Relaxed) {
++        5 // ERROR_ACCESS_DENIED: already fell back to HKCU
++    } else {
++        let path = wide(&rel);
++        unsafe {
++            RegCreateKeyExW(
++                HKEY_LOCAL_MACHINE,
++                path.as_ptr(),
++                0,
++                std::ptr::null(),
++                REG_OPTION_NON_VOLATILE,
++                KEY_WRITE | KEY_WOW64_64KEY,
++                std::ptr::null(),
++                &mut h,
++                std::ptr::null_mut(),
++            )
++        }
++    };
++    let rc = if rc != 0 {
++        USE_HKCU.store(true, Ordering::Relaxed);
++        let hkcu_path = wide(&format!("{HKCU_PREFIX}{rel}"));
++        unsafe {
++            RegCreateKeyExW(
++                HKEY_CURRENT_USER,
++                hkcu_path.as_ptr(),
++                0,
++                std::ptr::null(),
++                REG_OPTION_NON_VOLATILE,
++                KEY_WRITE | KEY_WOW64_64KEY,
++                std::ptr::null(),
++                &mut h,
++                std::ptr::null_mut(),
++            )
++        }
++    } else {
++        0
+     };
+     if rc != 0 {
+         log!("alls: registry key {key}: error {rc}");
+@@ -41,6 +86,153 @@ pub(crate) fn set(key: &str, values: &[(&str, Value)]) {
+     unsafe { RegCloseKey(h) };
+ }
+ 
++fn is_sega_property(subkey: &str) -> bool {
++    let trimmed = subkey.trim_start_matches('\\');
++    trimmed.len() >= SYSTEM_PREFIX.len()
++        && trimmed[..SYSTEM_PREFIX.len()].eq_ignore_ascii_case(SYSTEM_PREFIX)
++        && trimmed
++            .as_bytes()
++            .get(SYSTEM_PREFIX.len())
++            .is_none_or(|&b| b == b'\\')
++}
++
++unsafe extern "system" fn reg_open_key_ex_w(
++    hkey: HKEY,
++    subkey: *const u16,
++    options: u32,
++    sam: u32,
++    result: *mut HKEY,
++) -> i32 {
++    let orig: unsafe extern "system" fn(HKEY, *const u16, u32, u32, *mut HKEY) -> i32 =
++        unsafe { std::mem::transmute(REG_OPEN_KEY_EX_W.load(Ordering::Relaxed)) };
++    if hkey == HKEY_LOCAL_MACHINE && !subkey.is_null() {
++        let len = (0..).take_while(|&i| unsafe { *subkey.add(i) } != 0).count();
++        let s = String::from_utf16_lossy(unsafe { std::slice::from_raw_parts(subkey, len) });
++        if is_sega_property(&s) {
++            let redirected = wide(&format!("{HKCU_PREFIX}{}", s.trim_start_matches('\\')));
++            return unsafe { orig(HKEY_CURRENT_USER, redirected.as_ptr(), options, sam, result) };
++        }
++    }
++    unsafe { orig(hkey, subkey, options, sam, result) }
++}
++
++unsafe extern "system" fn reg_open_key_ex_a(
++    hkey: HKEY,
++    subkey: *const u8,
++    options: u32,
++    sam: u32,
++    result: *mut HKEY,
++) -> i32 {
++    let orig: unsafe extern "system" fn(HKEY, *const u8, u32, u32, *mut HKEY) -> i32 =
++        unsafe { std::mem::transmute(REG_OPEN_KEY_EX_A.load(Ordering::Relaxed)) };
++    if hkey == HKEY_LOCAL_MACHINE && !subkey.is_null() {
++        let len = (0..).take_while(|&i| unsafe { *subkey.add(i) } != 0).count();
++        let s = String::from_utf8_lossy(unsafe { std::slice::from_raw_parts(subkey, len) });
++        if is_sega_property(&s) {
++            let mut redirected = format!("{HKCU_PREFIX}{}", s.trim_start_matches('\\')).into_bytes();
++            redirected.push(0);
++            return unsafe { orig(HKEY_CURRENT_USER, redirected.as_ptr(), options, sam, result) };
++        }
++    }
++    unsafe { orig(hkey, subkey, options, sam, result) }
++}
++
++unsafe extern "system" fn reg_create_key_ex_w(
++    hkey: HKEY,
++    subkey: *const u16,
++    reserved: u32,
++    class: *const u16,
++    options: u32,
++    sam: u32,
++    sa: *const core::ffi::c_void,
++    result: *mut HKEY,
++    disp: *mut u32,
++) -> i32 {
++    let orig: unsafe extern "system" fn(
++        HKEY,
++        *const u16,
++        u32,
++        *const u16,
++        u32,
++        u32,
++        *const core::ffi::c_void,
++        *mut HKEY,
++        *mut u32,
++    ) -> i32 = unsafe { std::mem::transmute(REG_CREATE_KEY_EX_W.load(Ordering::Relaxed)) };
++    if hkey == HKEY_LOCAL_MACHINE && !subkey.is_null() {
++        let len = (0..).take_while(|&i| unsafe { *subkey.add(i) } != 0).count();
++        let s = String::from_utf16_lossy(unsafe { std::slice::from_raw_parts(subkey, len) });
++        if is_sega_property(&s) {
++            let redirected = wide(&format!("{HKCU_PREFIX}{}", s.trim_start_matches('\\')));
++            return unsafe {
++                orig(HKEY_CURRENT_USER, redirected.as_ptr(), reserved, class, options, sam, sa, result, disp)
++            };
++        }
++    }
++    unsafe { orig(hkey, subkey, reserved, class, options, sam, sa, result, disp) }
++}
++
++unsafe extern "system" fn reg_create_key_ex_a(
++    hkey: HKEY,
++    subkey: *const u8,
++    reserved: u32,
++    class: *const u8,
++    options: u32,
++    sam: u32,
++    sa: *const core::ffi::c_void,
++    result: *mut HKEY,
++    disp: *mut u32,
++) -> i32 {
++    let orig: unsafe extern "system" fn(
++        HKEY,
++        *const u8,
++        u32,
++        *const u8,
++        u32,
++        u32,
++        *const core::ffi::c_void,
++        *mut HKEY,
++        *mut u32,
++    ) -> i32 = unsafe { std::mem::transmute(REG_CREATE_KEY_EX_A.load(Ordering::Relaxed)) };
++    if hkey == HKEY_LOCAL_MACHINE && !subkey.is_null() {
++        let len = (0..).take_while(|&i| unsafe { *subkey.add(i) } != 0).count();
++        let s = String::from_utf8_lossy(unsafe { std::slice::from_raw_parts(subkey, len) });
++        if is_sega_property(&s) {
++            let mut redirected = format!("{HKCU_PREFIX}{}", s.trim_start_matches('\\')).into_bytes();
++            redirected.push(0);
++            return unsafe {
++                orig(HKEY_CURRENT_USER, redirected.as_ptr(), reserved, class, options, sam, sa, result, disp)
++            };
++        }
++    }
++    unsafe { orig(hkey, subkey, reserved, class, options, sam, sa, result, disp) }
++}
++
++/// Redirects `HKLM\SYSTEM\SEGA\SystemProperty` opens/creates to HKCU when
++/// unelevated Windows denied writing to HKLM.
++pub(crate) fn install_hooks() {
++    if !USE_HKCU.load(Ordering::Relaxed) {
++        return;
++    }
++    unsafe {
++        for dll in ["advapi32.dll", "api-ms-win-core-registry-l1-1-0.dll"] {
++            if let Some(orig) = iat::hook(dll, "RegOpenKeyExW", reg_open_key_ex_w as *const () as usize) {
++                REG_OPEN_KEY_EX_W.store(orig, Ordering::Relaxed);
++            }
++            if let Some(orig) = iat::hook(dll, "RegOpenKeyExA", reg_open_key_ex_a as *const () as usize) {
++                REG_OPEN_KEY_EX_A.store(orig, Ordering::Relaxed);
++            }
++            if let Some(orig) = iat::hook(dll, "RegCreateKeyExW", reg_create_key_ex_w as *const () as usize) {
++                REG_CREATE_KEY_EX_W.store(orig, Ordering::Relaxed);
++            }
++            if let Some(orig) = iat::hook(dll, "RegCreateKeyExA", reg_create_key_ex_a as *const () as usize) {
++                REG_CREATE_KEY_EX_A.store(orig, Ordering::Relaxed);
++            }
++        }
++    }
++    log!("alls: redirecting HKLM\\{SYSTEM_PREFIX} to HKCU\\{HKCU_PREFIX}{SYSTEM_PREFIX}");
++}
++
+ /// The keychip and cabinet values.
+ pub(crate) struct Cabinet {
+     pub game_id: String,

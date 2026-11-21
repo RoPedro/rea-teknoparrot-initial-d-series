@@ -1,6 +1,7 @@
 == 1280x720
 Label value="Initial D Arcade Stage 5"
 Label value="Sega Lindbergh · 2009 · Export 2.0"
+Label value="Introduced tyre wear, Nagao Pass and Project D's Kanagawa rivals while sharpening Arcade Stage 4's Lindbergh handling."
 Label value="Not supported yet"
 Label value="A Sega Lindbergh game: its Linux build runs in the Linux version of the launcher."
 Label value="Folder: <tmp>/games/id5"
@@ -25,6 +26,7 @@ Label value="Controller: No controller"
 == 1280x800
 Label value="Initial D Arcade Stage 5"
 Label value="Sega Lindbergh · 2009 · Export 2.0"
+Label value="Introduced tyre wear, Nagao Pass and Project D's Kanagawa rivals while sharpening Arcade Stage 4's Lindbergh handling."
 Label value="Not supported yet"
 Label value="A Sega Lindbergh game: its Linux build runs in the Linux version of the launcher."
 Label value="Folder: <tmp>/games/id5"

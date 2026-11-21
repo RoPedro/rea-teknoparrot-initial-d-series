@@ -6,6 +6,22 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+### Added
+
+- Games page: short trivia card over the top-right quarter of each game's
+  hero art (`HubBackend::blurb`).
+
+### Fixed
+
+- Windows: ALLS titles (`ta3`, `ta5`) no longer hang at "initializing" when
+  launched unelevated (#8). `patches/wal/0005-windows-alls-hkcu-registry.patch`
+  falls back to `HKCU\Software\WAL\ALLS\SYSTEM\SEGA\SystemProperty` and
+  redirects `amdaemon.exe`'s registry reads there when `HKLM` returns
+  `ERROR_ACCESS_DENIED`.
+- Updated `rea-launcher-sdk` to v0.12.4 so wheel buttons (Start, Coin,
+  face buttons) map automatically from `PadMap` and pedals re-guess on live
+  axis state (rea-launcher-sdk#3).
+
 ## 0.4.2 - 2026-11-20
 
 ### Fixed
