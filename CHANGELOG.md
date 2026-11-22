@@ -6,13 +6,19 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+## 0.6.4 - 2026-11-22
+
 ### Fixed
 
 - Windows: Initial D 8 no longer fails to open now and then (`0xc0000005`
   right after Play, the next try working). windowsarcadeloader's payload
   made its heap hook live before storing the original `RtlAllocateHeap`,
   and one of Windows' loader threads could call it in between.
-  `patches/wal/0006` stores the original first; Wine was never affected.
+  `patches/wal/0006` stores the original first; Wine was never affected (#9, #10).
+- Upgraded to `rea-launcher-sdk v0.12.7`: automatically falls back to the
+  shared `wheel.ini` profile (`%LOCALAPPDATA%\rea\wheel.ini` on Windows,
+  `~/.local/share/rea/wheel.ini` on Linux) when no per-launcher `wheel.ini`
+  exists.
 
 ## 0.6.3 - 2026-11-21
 
