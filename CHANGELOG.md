@@ -6,6 +6,14 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- Windows: Initial D 8 no longer fails to open now and then (`0xc0000005`
+  right after Play, the next try working). windowsarcadeloader's payload
+  made its heap hook live before storing the original `RtlAllocateHeap`,
+  and one of Windows' loader threads could call it in between.
+  `patches/wal/0006` stores the original first; Wine was never affected.
+
 ## 0.6.3 - 2026-11-21
 
 ### Fixed

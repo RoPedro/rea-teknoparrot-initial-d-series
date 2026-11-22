@@ -277,6 +277,46 @@ and registered: neither was the cause any more.
   Transformers, whose profiles make `.rdata` read-only too (their dumps
   were not on that PC).
 
+### Initial D 8 failing to start now and then on Windows: "warmup" (2026-11-21)
+
+On the same Windows 11 PC with 0.6.3: now and then ID8 didn't open, and
+the next try did. `launcher.log` recorded `0xc0000005` 0 s after starting
+(other failures 13–14 s in, during `seqInitWheel`: not explained yet, see
+the last point). The game's own logs (`Y:\<date>.log`) of those 0 s starts
+end at `Create seqInitialize`.
+
+- Each start overwrites `wal-ringedge.log`, so a failed start's log was
+  gone after the retry. A watcher (`.work/warmup/watch-hub.ps1`) copied
+  each start's logs when the game ended: one failure in two hub starts,
+  the second booted.
+- The failed start's payload log: in the same millisecond as
+  `ringedge: heap blocks zeroed`, another thread (`[tid 6824]`) reads
+  address 0 at `eip=00000000`, called from ntdll, with a heap handle,
+  flags `0x000c0008` (`HEAP_ZERO_MEMORY`), size `0x14` and a return into
+  `wal_ringedge.dll` on its stack.
+- Cause: the ID8 profile's `WAL_RINGEDGE_ZERO_HEAP=1` hot patches
+  `ntdll!RtlAllocateHeap`. `cg::hotpatch` made the hook live, and only then
+  did `zero_heap` store the original's address in `ORIG_ALLOCATE_HEAP`. A
+  thread allocating between the two stores reached the hook with an
+  original of 0. Windows 10/11 start loader worker threads in every new
+  process, and they allocate while the payload starts; Wine has none, so
+  Linux never showed it. The same order was in the `wglSwapBuffers` and
+  `kernelbase` `CreateFileW` / `GetFileAttributesExW` hot patches.
+- Fix: `patches/wal/0006`. `cg::hotpatch` takes the static that holds the
+  original and stores it (`f + 2`, known before patching) before the
+  entry's 2 byte jump makes the hook live (`hotpatch.rs`). Tests: the
+  order of the writes (the original seen when the entry's jump is
+  written: 0 with the old order, the test failed), and a hook below the
+  function. The payload type-checks for x86-64 Windows with the patch (no
+  i686 target on that PC: its 32-bit tests don't build there).
+- RTSS crashed in a loop on that PC all day (1,804 times in
+  `OverlayEditor.dll`), but its crashes don't line up with the failed
+  starts; seven starts without the hub (`arcade-launcher run`, no input
+  pipe) all booted, RTSS running.
+- Not checked yet: a build with 0006 on Windows (it can only show over
+  many starts: the race was about one in two to one in ten), and the
+  failures in `seqInitWheel`.
+
 ## On the SDK's hub pieces (rea-launcher-sdk v0.10.0, 2026-11-17)
 
 The launcher moved onto the SDK's shared hub code (window, command line,

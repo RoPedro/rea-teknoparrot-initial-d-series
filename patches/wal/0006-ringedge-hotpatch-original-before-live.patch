@@ -1,0 +1,158 @@
+diff --git a/crates/payload-ringedge/src/cg.rs b/crates/payload-ringedge/src/cg.rs
+index 0216e78..c618ea4 100644
+--- a/crates/payload-ringedge/src/cg.rs
++++ b/crates/payload-ringedge/src/cg.rs
+@@ -63,9 +63,8 @@ fn gl_shots() {
+         return;
+     }
+     let _ = unsafe { windows_sys::Win32::System::LibraryLoader::LoadLibraryA(c"opengl32.dll".as_ptr().cast()) };
+-    match unsafe { hotpatch(c"opengl32.dll", c"wglSwapBuffers", swap_buffers as *const () as usize) } {
+-        Some(o) => ORIG_SWAP.store(o, Ordering::Relaxed),
+-        None => log!("cg: opengl32.dll!wglSwapBuffers not hot patchable"),
++    if !unsafe { hotpatch(c"opengl32.dll", c"wglSwapBuffers", swap_buffers as *const () as usize, &ORIG_SWAP) } {
++        log!("cg: opengl32.dll!wglSwapBuffers not hot patchable");
+     }
+     let Some(secs) = shots else { return };
+     SHOT_MS.store((secs * 1000.0).max(1.0) as usize, Ordering::Relaxed);
+@@ -382,9 +381,8 @@ pub(crate) fn init() {
+             (c"CreateFileW", create_file_w as *const () as usize, &ORIG_CREATE_W),
+             (c"GetFileAttributesExW", get_file_attributes_ex_w as *const () as usize, &ORIG_ATTRIBUTES),
+         ] {
+-            match unsafe { hotpatch(c"kernelbase.dll", name, hook) } {
+-                Some(o) => orig.store(o, Ordering::Relaxed),
+-                None => log!("cg: kernelbase.dll!{} not hot patchable", name.to_string_lossy()),
++            if !unsafe { hotpatch(c"kernelbase.dll", name, hook, orig) } {
++                log!("cg: kernelbase.dll!{} not hot patchable", name.to_string_lossy());
+             }
+         }
+     }
+@@ -423,25 +421,27 @@ unsafe fn nv40_profiles() {
+ 
+ /// Hot patch of `module!name` (`mov edi,edi` or a 2 byte nop after 5 padding bytes, as Wine
+ /// builds its exports): a jump to `hook` in the padding, a short jump to it at the entry.
+-/// Returns the function past its 2 byte prologue (the original).
+-pub(crate) unsafe fn hotpatch(module: &CStr, name: &CStr, hook: usize) -> Option<usize> {
++/// `orig` receives the function past its 2 byte prologue (the original) before the hook is
++/// live ([`crate::hotpatch::install`]). False when the function is not hot patchable.
++pub(crate) unsafe fn hotpatch(module: &CStr, name: &CStr, hook: usize, orig: &AtomicUsize) -> bool {
+     use windows_sys::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
+     use windows_sys::Win32::System::Memory::{PAGE_EXECUTE_READWRITE, VirtualProtect};
+-    let f = unsafe { GetProcAddress(GetModuleHandleA(module.as_ptr().cast()), name.as_ptr().cast()) }? as usize;
++    let Some(f) = (unsafe { GetProcAddress(GetModuleHandleA(module.as_ptr().cast()), name.as_ptr().cast()) }) else { return false };
++    let f = f as usize;
+     let code = unsafe { std::slice::from_raw_parts((f - 5) as *const u8, 7) };
+     if !code[..5].iter().all(|&b| b == 0xCC || b == 0x90) || !(code[5..] == [0x8B, 0xFF] || code[5..] == [0x66, 0x90]) {
+-        return None;
++        return false;
+     }
+     let mut old = 0;
+     unsafe {
+         VirtualProtect((f - 5) as *const _, 7, PAGE_EXECUTE_READWRITE, &mut old);
+-        *((f - 5) as *mut u8) = 0xE9;
+-        std::ptr::write_unaligned((f - 4) as *mut i32, hook.wrapping_sub(f) as i32);
+-        // jmp $-5, written last: one 2 byte store
+-        std::ptr::write_unaligned(f as *mut u16, 0xF9EB);
++        crate::hotpatch::install(f, hook, orig, &mut |at, bytes| match *bytes {
++            [a, b] => std::ptr::write_unaligned(at as *mut u16, u16::from_le_bytes([a, b])),
++            _ => std::ptr::copy_nonoverlapping(bytes.as_ptr(), at as *mut u8, bytes.len()),
++        });
+         VirtualProtect((f - 5) as *const _, 7, old, &mut old);
+     }
+-    Some(f + 2)
++    true
+ }
+ 
+ fn cg_proc(name: &CStr) -> Option<unsafe extern "system" fn() -> isize> {
+diff --git a/crates/payload-ringedge/src/hotpatch.rs b/crates/payload-ringedge/src/hotpatch.rs
+new file mode 100644
+index 0000000..1858157
+--- /dev/null
++++ b/crates/payload-ringedge/src/hotpatch.rs
+@@ -0,0 +1,51 @@
++//! The order of a hot patch's writes ([`crate::cg::hotpatch`]): a jump to the hook in the 5
++//! padding bytes before the function, the original published, then the short jump at its entry
++//! that makes the hook live.
++//!
++//! The original is published before the hook goes live: other threads may call the function
++//! at once. Windows' loader threads allocate heap while the payload starts; a hook installed
++//! first and given its original afterwards sent one of them to address 0 through
++//! `RtlAllocateHeap` (`WAL_RINGEDGE_ZERO_HEAP`, Initial D 8: a crash at start, now and then,
++//! Windows only).
++
++use std::sync::atomic::{AtomicUsize, Ordering, fence};
++
++/// Hot patches the function at `f` (5 padding bytes before it, a 2 byte prologue) to jump to
++/// `hook`; `orig` receives the original (the function past its prologue) before the hook is
++/// live. `write` stores the bytes at an address (a 2 byte write in one store).
++pub(crate) fn install(f: usize, hook: usize, orig: &AtomicUsize, write: &mut dyn FnMut(usize, &[u8])) {
++    let mut jump = [0xE9, 0, 0, 0, 0];
++    jump[1..].copy_from_slice(&(hook.wrapping_sub(f) as i32).to_le_bytes());
++    write(f - 5, &jump);
++    orig.store(f + 2, Ordering::Release);
++    // the original visible before the entry's jump
++    fence(Ordering::Release);
++    // jmp $-5, written last: one 2 byte store
++    write(f, &[0xEB, 0xF9]);
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn the_original_is_set_before_the_hook_goes_live() {
++        let orig = AtomicUsize::new(0);
++        let mut writes = Vec::new();
++        install(0x1000, 0x5000, &orig, &mut |at, bytes| writes.push((at, bytes.to_vec(), orig.load(Ordering::Acquire))));
++        // the jump to the hook in the padding (0x5000 - 0x1000), then the entry's short jump
++        assert_eq!(writes[0], (0xFFB, vec![0xE9, 0x00, 0x40, 0x00, 0x00], 0));
++        // when the entry's jump is written, any thread may call the hook: it reads the original
++        assert_eq!(writes[1], (0x1000, vec![0xEB, 0xF9], 0x1002));
++        assert_eq!(writes.len(), 2);
++        assert_eq!(orig.load(Ordering::Acquire), 0x1002);
++    }
++
++    #[test]
++    fn a_hook_below_the_function_jumps_back() {
++        let orig = AtomicUsize::new(0);
++        let mut padding = Vec::new();
++        install(0x7000_0000, 0x1000_0000, &orig, &mut |at, bytes| if at != 0x7000_0000 { padding = bytes.to_vec() });
++        assert_eq!(padding, [0xE9, 0x00, 0x00, 0x00, 0xA0]);
++    }
++}
+diff --git a/crates/payload-ringedge/src/lib.rs b/crates/payload-ringedge/src/lib.rs
+index 3dd0b5c..a7e9414 100644
+--- a/crates/payload-ringedge/src/lib.rs
++++ b/crates/payload-ringedge/src/lib.rs
+@@ -26,6 +26,7 @@ mod ffb;
+ mod happy_playground;
+ mod glscale;
+ mod gunman;
++mod hotpatch;
+ mod microtouch;
+ mod mouse;
+ mod nvasm;
+@@ -99,17 +100,16 @@ fn zero_heap() {
+     if !std::env::var("WAL_RINGEDGE_ZERO_HEAP").is_ok_and(|v| v.trim() == "1") {
+         return;
+     }
+-    match unsafe { cg::hotpatch(c"ntdll.dll", c"RtlAllocateHeap", allocate_heap as *const () as usize) } {
+-        Some(o) => {
+-            ORIG_ALLOCATE_HEAP.store(o, Ordering::Relaxed);
+-            log!("ringedge: heap blocks zeroed");
+-        }
+-        None => log!("ringedge: ntdll.dll!RtlAllocateHeap not hot patchable"),
++    // the original set before the hook is live: Windows' loader threads allocate meanwhile
++    if unsafe { cg::hotpatch(c"ntdll.dll", c"RtlAllocateHeap", allocate_heap as *const () as usize, &ORIG_ALLOCATE_HEAP) } {
++        log!("ringedge: heap blocks zeroed");
++    } else {
++        log!("ringedge: ntdll.dll!RtlAllocateHeap not hot patchable");
+     }
+ }
+ 
+ unsafe extern "system" fn allocate_heap(heap: *mut c_void, flags: u32, size: usize) -> *mut c_void {
+-    let orig: unsafe extern "system" fn(*mut c_void, u32, usize) -> *mut c_void = unsafe { std::mem::transmute(ORIG_ALLOCATE_HEAP.load(Ordering::Relaxed)) };
++    let orig: unsafe extern "system" fn(*mut c_void, u32, usize) -> *mut c_void = unsafe { std::mem::transmute(ORIG_ALLOCATE_HEAP.load(Ordering::Acquire)) };
+     // HEAP_ZERO_MEMORY
+     unsafe { orig(heap, flags | 0x8, size) }
+ }
