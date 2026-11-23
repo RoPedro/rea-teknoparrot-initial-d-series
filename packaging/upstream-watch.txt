@@ -6,8 +6,8 @@
 # owner/repo's releases upload. Moving a pin stays a human decision, made
 # after playing with the new release.
 # Each prefix is the pinned file's whole name: GE-Proton's releases upload
-# other files first (GE-Proton11-12-aarch64.sha512sum), which a shorter
+# other files first (GE-Proton11-13-aarch64.sha512sum), which a shorter
 # prefix matched, a false update every week. A new release shows up as
 # "no asset starting with …", which opens the issue all the same.
-runner GloriousEggroll/proton-ge-custom GE-Proton11-12-x86_64.tar.gz
+runner GloriousEggroll/proton-ge-custom GE-Proton11-13-x86_64.tar.gz
 flycast-win flyinghead/flycast flycast-win64-2.7.zip

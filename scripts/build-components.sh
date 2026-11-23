@@ -7,7 +7,7 @@
 #               arcade-launcher.exe (its Windows build, linked with LLD), payloads/,
 #               systemprofiles/  (needs Rust with the i686/x86_64-pc-windows-gnu targets, MinGW,
 #               LLD and mono's mcs); not rebuilt while its commit and patches are unchanged
-#   runner/     GE-Proton 11-12
+#   runner/     GE-Proton 11-13
 #   winetricks  windowsarcadeloader installs native XAudio with it
 #   flycast/    Flycast for Windows (GPL-2.0) and its licence
 #   vcredist/   Microsoft's Visual C++ 2008 SP1 Redistributable (x86), Microsoft's own download
@@ -32,7 +32,7 @@ LINDBERGH_REPO=https://github.com/lindbergh-loader/lindbergh-loader
 LINDBERGH_COMMIT=0af606d845b70339c335785c0eba68b47b78df3c
 WAL_REPO=https://github.com/aderumier/windowsarcadeloader
 WAL_COMMIT=4f42c6d86ddaaa9d2e4e8c21e0046bb3027b111d
-RUNNER=GE-Proton11-12-x86_64
+RUNNER=GE-Proton11-13-x86_64
 
 # fetch NAME: the pinned download NAME in the work folder (its path)
 fetch() {
