@@ -1,30 +1,55 @@
-diff --git a/crates/payload-alls/src/daemon.rs b/crates/payload-alls/src/daemon.rs
-index 9b362d0..5b3d2c4 100644
---- a/crates/payload-alls/src/daemon.rs
-+++ b/crates/payload-alls/src/daemon.rs
-@@ -392,6 +392,7 @@ unsafe extern "system" fn query_dos_device_w(name: *const u16, target: *mut u16,
- pub(crate) fn init() {
-     let cabinet = registry::Cabinet::from_env();
-     registry::write(&cabinet, &module_path());
-+    registry::install_hooks();
-     if let Some(kind) = std::env::var("WAL_ALLS_BILLING_TYPE").ok().and_then(|v| v.trim().parse::<u32>().ok()) {
-         KEYCHIP_STATE.lock().unwrap().nearfull = (kind << 16) + 512;
-     }
+diff --git a/crates/payload-alls/src/lib.rs b/crates/payload-alls/src/lib.rs
+index 3ee789c..20f8755 100644
+--- a/crates/payload-alls/src/lib.rs
++++ b/crates/payload-alls/src/lib.rs
+@@ -142,12 +142,14 @@ fn start() {
+         stat::init();
+         if is_daemon() {
+             daemon::init();
++            registry::install_hooks();
+             // ALL.Net's billing server (amdaemon's accounting: Initial D ARCADE STAGE Zero plays
+             // with Aime cards only after it checked in)
+             if std::env::var("WAL_ALLS_BILLING").is_ok_and(|v| v.trim() == "1") {
+                 allnet::serve_billing();
+             }
+         } else if child::is_child() {
++            registry::install_hooks();
+             // a program the game started (Initial D ARCADE STAGE Zero's store server): the
+             // cabinet's network only, its windows hidden
+             child::hide_windows();
+@@ -156,12 +158,16 @@ fn start() {
+             netenv::init_game();
+             allnet::init_redirect();
+         } else if std::env::var("WAL_ALLS_BOARD").is_ok_and(|v| v.trim() == "chuni") {
++            registry::install_hooks();
+             chuni_process();
+         } else if std::env::var("WAL_ALLS_BOARD").is_ok_and(|v| v.trim() == "cxb") {
++            registry::install_hooks();
+             cxb_process();
+         } else if std::env::var("WAL_ALLS_BOARD").is_ok_and(|v| v.trim() == "wlw") {
++            registry::install_hooks();
+             wlw_process();
+         } else {
++            registry::install_hooks();
+             let exe = unsafe { windows_sys::Win32::System::LibraryLoader::GetModuleHandleW(std::ptr::null()) } as usize;
+             // the cabinet's input comes from amdaemon's I/O board: the real keyboard and pads
+             // never reach the game
 diff --git a/crates/payload-alls/src/registry.rs b/crates/payload-alls/src/registry.rs
-index 232dfb1..d70ca7d 100644
+index 232dfb1..5d07121 100644
 --- a/crates/payload-alls/src/registry.rs
 +++ b/crates/payload-alls/src/registry.rs
-@@ -3,11 +3,22 @@
+@@ -3,11 +3,19 @@
  //! Written in the 64-bit view at each start, from the payload options. Values per segatools'
  //! `platform/` (nusec, misc, amvideo, vfs; public domain).
  
-+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
++use std::sync::atomic::{AtomicBool, Ordering};
 +
 +use wal_payload_common::{iat, log};
  use windows_sys::Win32::System::Registry::{
 -    HKEY, HKEY_LOCAL_MACHINE, KEY_WOW64_64KEY, KEY_WRITE, REG_BINARY, REG_DWORD, REG_OPTION_NON_VOLATILE, REG_SZ, RegCloseKey, RegCreateKeyExW, RegSetValueExW,
 +    HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_WOW64_64KEY, KEY_WRITE, REG_BINARY, REG_DWORD,
-+    REG_OPTION_NON_VOLATILE, REG_SZ, RegCloseKey, RegCreateKeyExW, RegSetValueExW,
++    REG_OPTION_NON_VOLATILE, REG_SZ, RegCloseKey, RegCreateKeyExA, RegCreateKeyExW, RegGetValueA,
++    RegGetValueW, RegOpenKeyExA, RegOpenKeyExW, RegSetValueExW,
  };
  
 -use wal_payload_common::log;
@@ -32,14 +57,10 @@ index 232dfb1..d70ca7d 100644
 +const HKCU_PREFIX: &str = "Software\\WAL\\ALLS\\";
 +
 +static USE_HKCU: AtomicBool = AtomicBool::new(false);
-+static REG_OPEN_KEY_EX_W: AtomicUsize = AtomicUsize::new(0);
-+static REG_OPEN_KEY_EX_A: AtomicUsize = AtomicUsize::new(0);
-+static REG_CREATE_KEY_EX_W: AtomicUsize = AtomicUsize::new(0);
-+static REG_CREATE_KEY_EX_A: AtomicUsize = AtomicUsize::new(0);
  
  pub(crate) enum Value<'a> {
      Dword(u32),
-@@ -20,10 +31,44 @@ fn wide(s: &str) -> Vec<u16> {
+@@ -20,10 +28,44 @@ fn wide(s: &str) -> Vec<u16> {
  }
  
  pub(crate) fn set(key: &str, values: &[(&str, Value)]) {
@@ -87,7 +108,7 @@ index 232dfb1..d70ca7d 100644
      };
      if rc != 0 {
          log!("alls: registry key {key}: error {rc}");
-@@ -41,6 +86,153 @@ pub(crate) fn set(key: &str, values: &[(&str, Value)]) {
+@@ -41,6 +83,231 @@ pub(crate) fn set(key: &str, values: &[(&str, Value)]) {
      unsafe { RegCloseKey(h) };
  }
  
@@ -108,17 +129,15 @@ index 232dfb1..d70ca7d 100644
 +    sam: u32,
 +    result: *mut HKEY,
 +) -> i32 {
-+    let orig: unsafe extern "system" fn(HKEY, *const u16, u32, u32, *mut HKEY) -> i32 =
-+        unsafe { std::mem::transmute(REG_OPEN_KEY_EX_W.load(Ordering::Relaxed)) };
 +    if hkey == HKEY_LOCAL_MACHINE && !subkey.is_null() {
 +        let len = (0..).take_while(|&i| unsafe { *subkey.add(i) } != 0).count();
 +        let s = String::from_utf16_lossy(unsafe { std::slice::from_raw_parts(subkey, len) });
 +        if is_sega_property(&s) {
 +            let redirected = wide(&format!("{HKCU_PREFIX}{}", s.trim_start_matches('\\')));
-+            return unsafe { orig(HKEY_CURRENT_USER, redirected.as_ptr(), options, sam, result) };
++            return unsafe { RegOpenKeyExW(HKEY_CURRENT_USER, redirected.as_ptr(), options, sam, result) as i32 };
 +        }
 +    }
-+    unsafe { orig(hkey, subkey, options, sam, result) }
++    unsafe { RegOpenKeyExW(hkey, subkey, options, sam, result) as i32 }
 +}
 +
 +unsafe extern "system" fn reg_open_key_ex_a(
@@ -128,18 +147,16 @@ index 232dfb1..d70ca7d 100644
 +    sam: u32,
 +    result: *mut HKEY,
 +) -> i32 {
-+    let orig: unsafe extern "system" fn(HKEY, *const u8, u32, u32, *mut HKEY) -> i32 =
-+        unsafe { std::mem::transmute(REG_OPEN_KEY_EX_A.load(Ordering::Relaxed)) };
 +    if hkey == HKEY_LOCAL_MACHINE && !subkey.is_null() {
 +        let len = (0..).take_while(|&i| unsafe { *subkey.add(i) } != 0).count();
 +        let s = String::from_utf8_lossy(unsafe { std::slice::from_raw_parts(subkey, len) });
 +        if is_sega_property(&s) {
 +            let mut redirected = format!("{HKCU_PREFIX}{}", s.trim_start_matches('\\')).into_bytes();
 +            redirected.push(0);
-+            return unsafe { orig(HKEY_CURRENT_USER, redirected.as_ptr(), options, sam, result) };
++            return unsafe { RegOpenKeyExA(HKEY_CURRENT_USER, redirected.as_ptr(), options, sam, result) as i32 };
 +        }
 +    }
-+    unsafe { orig(hkey, subkey, options, sam, result) }
++    unsafe { RegOpenKeyExA(hkey, subkey, options, sam, result) as i32 }
 +}
 +
 +unsafe extern "system" fn reg_create_key_ex_w(
@@ -153,28 +170,27 @@ index 232dfb1..d70ca7d 100644
 +    result: *mut HKEY,
 +    disp: *mut u32,
 +) -> i32 {
-+    let orig: unsafe extern "system" fn(
-+        HKEY,
-+        *const u16,
-+        u32,
-+        *const u16,
-+        u32,
-+        u32,
-+        *const core::ffi::c_void,
-+        *mut HKEY,
-+        *mut u32,
-+    ) -> i32 = unsafe { std::mem::transmute(REG_CREATE_KEY_EX_W.load(Ordering::Relaxed)) };
 +    if hkey == HKEY_LOCAL_MACHINE && !subkey.is_null() {
 +        let len = (0..).take_while(|&i| unsafe { *subkey.add(i) } != 0).count();
 +        let s = String::from_utf16_lossy(unsafe { std::slice::from_raw_parts(subkey, len) });
 +        if is_sega_property(&s) {
 +            let redirected = wide(&format!("{HKCU_PREFIX}{}", s.trim_start_matches('\\')));
 +            return unsafe {
-+                orig(HKEY_CURRENT_USER, redirected.as_ptr(), reserved, class, options, sam, sa, result, disp)
++                RegCreateKeyExW(
++                    HKEY_CURRENT_USER,
++                    redirected.as_ptr(),
++                    reserved,
++                    class,
++                    options,
++                    sam,
++                    sa.cast(),
++                    result,
++                    disp,
++                ) as i32
 +            };
 +        }
 +    }
-+    unsafe { orig(hkey, subkey, reserved, class, options, sam, sa, result, disp) }
++    unsafe { RegCreateKeyExW(hkey, subkey, reserved, class, options, sam, sa.cast(), result, disp) as i32 }
 +}
 +
 +unsafe extern "system" fn reg_create_key_ex_a(
@@ -188,17 +204,6 @@ index 232dfb1..d70ca7d 100644
 +    result: *mut HKEY,
 +    disp: *mut u32,
 +) -> i32 {
-+    let orig: unsafe extern "system" fn(
-+        HKEY,
-+        *const u8,
-+        u32,
-+        *const u8,
-+        u32,
-+        u32,
-+        *const core::ffi::c_void,
-+        *mut HKEY,
-+        *mut u32,
-+    ) -> i32 = unsafe { std::mem::transmute(REG_CREATE_KEY_EX_A.load(Ordering::Relaxed)) };
 +    if hkey == HKEY_LOCAL_MACHINE && !subkey.is_null() {
 +        let len = (0..).take_while(|&i| unsafe { *subkey.add(i) } != 0).count();
 +        let s = String::from_utf8_lossy(unsafe { std::slice::from_raw_parts(subkey, len) });
@@ -206,36 +211,130 @@ index 232dfb1..d70ca7d 100644
 +            let mut redirected = format!("{HKCU_PREFIX}{}", s.trim_start_matches('\\')).into_bytes();
 +            redirected.push(0);
 +            return unsafe {
-+                orig(HKEY_CURRENT_USER, redirected.as_ptr(), reserved, class, options, sam, sa, result, disp)
++                RegCreateKeyExA(
++                    HKEY_CURRENT_USER,
++                    redirected.as_ptr(),
++                    reserved,
++                    class,
++                    options,
++                    sam,
++                    sa.cast(),
++                    result,
++                    disp,
++                ) as i32
 +            };
 +        }
 +    }
-+    unsafe { orig(hkey, subkey, reserved, class, options, sam, sa, result, disp) }
++    unsafe { RegCreateKeyExA(hkey, subkey, reserved, class, options, sam, sa.cast(), result, disp) as i32 }
 +}
 +
-+/// Redirects `HKLM\SYSTEM\SEGA\SystemProperty` opens/creates to HKCU when
-+/// unelevated Windows denied writing to HKLM.
++unsafe extern "system" fn reg_get_value_w(
++    hkey: HKEY,
++    subkey: *const u16,
++    value: *const u16,
++    flags: u32,
++    pdw_type: *mut u32,
++    pv_data: *mut core::ffi::c_void,
++    pcb_data: *mut u32,
++) -> i32 {
++    if hkey == HKEY_LOCAL_MACHINE && !subkey.is_null() {
++        let len = (0..).take_while(|&i| unsafe { *subkey.add(i) } != 0).count();
++        let s = String::from_utf16_lossy(unsafe { std::slice::from_raw_parts(subkey, len) });
++        if is_sega_property(&s) {
++            let redirected = wide(&format!("{HKCU_PREFIX}{}", s.trim_start_matches('\\')));
++            return unsafe {
++                RegGetValueW(HKEY_CURRENT_USER, redirected.as_ptr(), value, flags, pdw_type, pv_data, pcb_data) as i32
++            };
++        }
++    }
++    unsafe { RegGetValueW(hkey, subkey, value, flags, pdw_type, pv_data, pcb_data) as i32 }
++}
++
++unsafe extern "system" fn reg_get_value_a(
++    hkey: HKEY,
++    subkey: *const u8,
++    value: *const u8,
++    flags: u32,
++    pdw_type: *mut u32,
++    pv_data: *mut core::ffi::c_void,
++    pcb_data: *mut u32,
++) -> i32 {
++    if hkey == HKEY_LOCAL_MACHINE && !subkey.is_null() {
++        let len = (0..).take_while(|&i| unsafe { *subkey.add(i) } != 0).count();
++        let s = String::from_utf8_lossy(unsafe { std::slice::from_raw_parts(subkey, len) });
++        if is_sega_property(&s) {
++            let mut redirected = format!("{HKCU_PREFIX}{}", s.trim_start_matches('\\')).into_bytes();
++            redirected.push(0);
++            return unsafe {
++                RegGetValueA(HKEY_CURRENT_USER, redirected.as_ptr(), value, flags, pdw_type, pv_data, pcb_data) as i32
++            };
++        }
++    }
++    unsafe { RegGetValueA(hkey, subkey, value, flags, pdw_type, pv_data, pcb_data) as i32 }
++}
++
++fn can_write_hklm() -> bool {
++    let path = wide(SYSTEM_PREFIX);
++    let mut h: HKEY = std::ptr::null_mut();
++    let rc = unsafe {
++        RegCreateKeyExW(
++            HKEY_LOCAL_MACHINE,
++            path.as_ptr(),
++            0,
++            std::ptr::null(),
++            REG_OPTION_NON_VOLATILE,
++            KEY_WRITE | KEY_WOW64_64KEY,
++            std::ptr::null(),
++            &mut h,
++            std::ptr::null_mut(),
++        )
++    };
++    if rc == 0 {
++        unsafe { RegCloseKey(h) };
++        true
++    } else {
++        false
++    }
++}
++
++/// Redirects `HKLM\SYSTEM\SEGA\SystemProperty` opens/creates/reads to HKCU
++/// when unelevated Windows denies writing to HKLM (both in `amdaemon.exe`
++/// and in the game process itself).
 +pub(crate) fn install_hooks() {
 +    if !USE_HKCU.load(Ordering::Relaxed) {
-+        return;
++        if can_write_hklm() {
++            return;
++        }
++        USE_HKCU.store(true, Ordering::Relaxed);
 +    }
++    let mut hooked = 0usize;
 +    unsafe {
-+        for dll in ["advapi32.dll", "api-ms-win-core-registry-l1-1-0.dll"] {
-+            if let Some(orig) = iat::hook(dll, "RegOpenKeyExW", reg_open_key_ex_w as *const () as usize) {
-+                REG_OPEN_KEY_EX_W.store(orig, Ordering::Relaxed);
++        for dll in [
++            "advapi32.dll",
++            "kernelbase.dll",
++            "api-ms-win-core-registry-l1-1-0.dll",
++        ] {
++            if iat::hook(dll, "RegOpenKeyExW", reg_open_key_ex_w as *const () as usize).is_some() {
++                hooked += 1;
 +            }
-+            if let Some(orig) = iat::hook(dll, "RegOpenKeyExA", reg_open_key_ex_a as *const () as usize) {
-+                REG_OPEN_KEY_EX_A.store(orig, Ordering::Relaxed);
++            if iat::hook(dll, "RegOpenKeyExA", reg_open_key_ex_a as *const () as usize).is_some() {
++                hooked += 1;
 +            }
-+            if let Some(orig) = iat::hook(dll, "RegCreateKeyExW", reg_create_key_ex_w as *const () as usize) {
-+                REG_CREATE_KEY_EX_W.store(orig, Ordering::Relaxed);
++            if iat::hook(dll, "RegCreateKeyExW", reg_create_key_ex_w as *const () as usize).is_some() {
++                hooked += 1;
 +            }
-+            if let Some(orig) = iat::hook(dll, "RegCreateKeyExA", reg_create_key_ex_a as *const () as usize) {
-+                REG_CREATE_KEY_EX_A.store(orig, Ordering::Relaxed);
++            if iat::hook(dll, "RegCreateKeyExA", reg_create_key_ex_a as *const () as usize).is_some() {
++                hooked += 1;
++            }
++            if iat::hook(dll, "RegGetValueW", reg_get_value_w as *const () as usize).is_some() {
++                hooked += 1;
++            }
++            if iat::hook(dll, "RegGetValueA", reg_get_value_a as *const () as usize).is_some() {
++                hooked += 1;
 +            }
 +        }
 +    }
-+    log!("alls: redirecting HKLM\\{SYSTEM_PREFIX} to HKCU\\{HKCU_PREFIX}{SYSTEM_PREFIX}");
++    log!("alls: redirecting HKLM\\{SYSTEM_PREFIX} to HKCU\\{HKCU_PREFIX}{SYSTEM_PREFIX} ({hooked} IAT hooks)");
 +}
 +
  /// The keychip and cabinet values.

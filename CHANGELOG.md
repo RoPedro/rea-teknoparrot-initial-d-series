@@ -6,6 +6,19 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+## 0.6.5 - 2026-11-23
+
+### Fixed
+
+- Windows: Initial D THE ARCADE Season 3 / Season 5 no longer fail with
+  Error 0032 ("Main board Malfunctioning") when run unelevated (#13).
+  `patches/wal/0005-windows-alls-hkcu-registry.patch` now installs the
+  `HKLM\SYSTEM\SEGA\SystemProperty` → `HKCU\Software\WAL\ALLS\...`
+  redirection in the game process (`GameProject-Win64-Shipping.exe`) as
+  well as `amdaemon.exe`, and hooks `RegGetValueW`/`RegGetValueA` in
+  addition to `RegOpenKeyEx*`/`RegCreateKeyEx*` across `advapi32.dll`,
+  `kernelbase.dll`, and `api-ms-win-core-registry-l1-1-0.dll`.
+
 ## 0.6.4 - 2026-11-22
 
 ### Fixed
