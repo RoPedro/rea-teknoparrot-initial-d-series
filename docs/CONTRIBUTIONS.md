@@ -9,6 +9,7 @@ status says so.
 |---|---|---|---|---|
 | C1 | [aderumier/windowsarcadeloader](https://github.com/aderumier/windowsarcadeloader): an issue with the patch (or a PR) | `readonly_sections` breaks Initial D 8 on Windows itself: the dump's import thunks are in `.rdata` and it declares no IAT directory | `docs/RUNTIME_NOTES.md`, "Issue #1, still crashing on 0.4.1"; `patches/wal/0004` | draft, for the owner. Verified on a Windows 11 PC with the header changed by hand; a build with the patch not yet run there. Not in upstream as of 2026-11-20 (`master` at `9c927a0`) |
 | C2 | [aderumier/windowsarcadeloader](https://github.com/aderumier/windowsarcadeloader): an issue with the patch (or a PR) | the RingEdge payload's hot patches go live before their original is stored: Initial D 8 (`WAL_RINGEDGE_ZERO_HEAP`) crashes at start now and then on Windows | `docs/RUNTIME_NOTES.md`, "warmup"; `patches/wal/0006` | draft, for the owner; **needs verification** (a build with the patch over many starts on Windows). Not in upstream as of 2026-11-21 (`master` at `9c927a0`, where `hotpatch` moved to `wal_payload_common::cg`: the patch needs adapting there) |
+| C3 | [aderumier/windowsarcadeloader](https://github.com/aderumier/windowsarcadeloader): an issue with the patch (or a PR) | Initial D 8 can't be closed with Alt+F4 on Windows: it only sets a flag on `WM_CLOSE`, and Alt+F4 never reaches its `WAL_WINDOW_POPUP` window; a `WAL_WINDOW_CLOSE` option ends the game on close requests | `docs/RUNTIME_NOTES.md`, "Initial D 8 ignoring Alt+F4"; `patches/wal/0007` | draft, for the owner; **needs verification** (a build with the patch on Windows). Not in upstream as of 2026-11-25 (`master` at `2bfe069`) |
 
 ## C1: windowsarcadeloader, `readonly_sections` and Windows' loader
 
@@ -81,3 +82,32 @@ Title: RingEdge payload: `RtlAllocateHeap` hook live before its original is stor
 > change applies there.
 >
 > (attach `patches/wal/0006-ringedge-hotpatch-original-before-live.patch`)
+
+## C3: windowsarcadeloader, close requests that end the game
+
+Title: Initial D 8 ignores Alt+F4 / WM_CLOSE on Windows: a `WAL_WINDOW_CLOSE` option
+
+> On Windows itself, Initial D Arcade Stage 8 Infinity
+> (`InitialD8_GLW_RE_SBZZ_redumped_.exe`, sha256
+> `ce8e3c35cf41b08c922e42400187ddd525d27c2f1aae6d634659f918c63d7fec`) can't be
+> closed with Alt+F4: the player has to stop it from the launcher or the Task
+> Manager.
+>
+> Two things. The game's window procedure (`+0x7996a0`) answers `WM_CLOSE`
+> only by setting bit `0x2` of a flags word (`0x1438c18`) and returning 0;
+> its message loop ends the game on other bits, never that one. And with the
+> profile's `WAL_WINDOW_POPUP` the window has no `WS_SYSMENU`, so Alt+F4
+> doesn't become a `WM_CLOSE` there at all. Read live on Windows 11 (the
+> word sampled every 50 ms): Alt+F4 left bit `0x2` clear; a posted
+> `WM_CLOSE` set it within 60 ms and the game kept running.
+>
+> The patch below adds `WAL_WINDOW_CLOSE=1` to `payload-common`'s
+> `window.rs`: the payload puts a procedure in front of the game's top-level
+> windows when they're created (the window's ANSI or Unicode kind kept), and
+> Alt+F4 (`WM_SYSKEYDOWN` F4 with Alt held), `SC_CLOSE` or `WM_CLOSE` end the
+> process, as stopping it from the launcher does. The message classification
+> is in a std-only `close_request.rs` with tests. The ID8 profile turns it
+> on; ID6 and ID7 probably share the window code but weren't checked.
+>
+> (attach `patches/wal/0007-window-close-request-ends-the-game.patch`, made
+> against `4f42c6d` on top of this repository's other patches)

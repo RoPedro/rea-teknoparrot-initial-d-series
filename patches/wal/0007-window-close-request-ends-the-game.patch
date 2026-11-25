@@ -1,0 +1,181 @@
+diff --git a/crates/payload-common/src/close_request.rs b/crates/payload-common/src/close_request.rs
+new file mode 100644
+index 0000000..2d50524
+--- /dev/null
++++ b/crates/payload-common/src/close_request.rs
+@@ -0,0 +1,53 @@
++//! Which window messages ask a game to quit ([`crate::window`], `WAL_WINDOW_CLOSE`).
++//!
++//! Alt+F4 counts as its key press itself: on a popup made without a system menu
++//! (`WAL_WINDOW_POPUP`) Windows never turns it into `SC_CLOSE` / `WM_CLOSE` (Initial D 8: Alt+F4
++//! left its close flag unset, a `WM_CLOSE` posted to the window set it).
++
++const WM_CLOSE: u32 = 0x10;
++const WM_SYSKEYDOWN: u32 = 0x104;
++const WM_SYSCOMMAND: u32 = 0x112;
++const SC_CLOSE: usize = 0xF060;
++const VK_F4: usize = 0x73;
++/// `WM_SYSKEYDOWN`'s lParam bit 29 (context code): Alt held.
++const ALT_HELD: isize = 1 << 29;
++
++/// Whether the message `msg` (`wparam`, `lparam`) to a top-level window asks the game to quit:
++/// `WM_CLOSE`, the close command (`WM_SYSCOMMAND` `SC_CLOSE`, its low 4 bits the system's) or
++/// Alt+F4 (`WM_SYSKEYDOWN` F4 with Alt held).
++pub(crate) fn is_close_request(msg: u32, wparam: usize, lparam: isize) -> bool {
++    match msg {
++        WM_CLOSE => true,
++        WM_SYSCOMMAND => wparam & 0xFFF0 == SC_CLOSE,
++        WM_SYSKEYDOWN => wparam == VK_F4 && lparam & ALT_HELD != 0,
++        _ => false,
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    const WM_KEYDOWN: u32 = 0x100;
++    const ALT: isize = ALT_HELD;
++
++    #[test]
++    fn alt_f4_wm_close_and_the_close_command_ask_to_quit() {
++        assert!(is_close_request(WM_SYSKEYDOWN, VK_F4, ALT | 0x003E_0001));
++        assert!(is_close_request(WM_CLOSE, 0, 0));
++        // SC_CLOSE, its low 4 bits reserved for the system
++        assert!(is_close_request(WM_SYSCOMMAND, 0xF060, 0));
++        assert!(is_close_request(WM_SYSCOMMAND, 0xF063, 0));
++    }
++
++    #[test]
++    fn other_keys_and_commands_do_not() {
++        // F4 without Alt, Alt with another key, a plain F4 key press
++        assert!(!is_close_request(WM_SYSKEYDOWN, VK_F4, 0x003E_0001));
++        assert!(!is_close_request(WM_SYSKEYDOWN, 0x73 + 1, ALT));
++        assert!(!is_close_request(WM_KEYDOWN, VK_F4, 0));
++        // SC_MINIMIZE, SC_KEYMENU (Alt alone)
++        assert!(!is_close_request(WM_SYSCOMMAND, 0xF020, 0));
++        assert!(!is_close_request(WM_SYSCOMMAND, 0xF100, 0));
++    }
++}
+diff --git a/crates/payload-common/src/lib.rs b/crates/payload-common/src/lib.rs
+index 0bd15c8..7c13660 100644
+--- a/crates/payload-common/src/lib.rs
++++ b/crates/payload-common/src/lib.rs
+@@ -123,6 +123,8 @@ pub mod webcam;
+ #[cfg(windows)]
+ pub mod window;
+ #[cfg(windows)]
++pub(crate) mod close_request;
++#[cfg(windows)]
+ pub mod workarea;
+ 
+ use std::io::Write;
+diff --git a/crates/payload-common/src/window.rs b/crates/payload-common/src/window.rs
+index 73eb62d..87bcce3 100644
+--- a/crates/payload-common/src/window.rs
++++ b/crates/payload-common/src/window.rs
+@@ -33,6 +33,13 @@
+ //! `WAL_HIDE_CURSOR=1`: no mouse cursor over the game (a cabinet has none; Battle Gear 4 shows
+ //! the arrow of its window class): `LoadCursorA/W` return no cursor and `SetCursor` sets none.
+ //!
++//! `WAL_WINDOW_CLOSE=1`: a close request to the game's top-level windows (Alt+F4, the close
++//! command, `WM_CLOSE`: [`crate::close_request`]) ends the game, as stopping it from the
++//! launcher does. Arcade games have no way to quit: Initial D 8's window procedure only sets a
++//! flag on `WM_CLOSE` (its main loop never ends for it), and on its popup (`WAL_WINDOW_POPUP`,
++//! no system menu) Alt+F4 never became a `WM_CLOSE` at all; on Windows the player then had to
++//! end it in the Task Manager.
++//!
+ //! Always: Direct3D (DXVK's d3d9, also behind its d3d8, and wined3d) minimizes a fullscreen
+ //! window when it is deactivated. A game started while another fullscreen window keeps the
+ //! focus (a terminal) was minimized at once, out of the taskbar, and stopped presenting. Their
+@@ -73,6 +80,10 @@ static POPUP: AtomicBool = AtomicBool::new(false);
+ static ORIG_SET_MENU: AtomicUsize = AtomicUsize::new(0);
+ /// `SetWindowLongA`, `SetWindowLongW`, `SetWindowLongPtrA`, `SetWindowLongPtrW`.
+ static ORIG_SET_WINDOW_LONG: [AtomicUsize; 4] = [const { AtomicUsize::new(0) }; 4];
++/// `WAL_WINDOW_CLOSE`: close requests end the game.
++static CLOSE: AtomicBool = AtomicBool::new(false);
++/// The window procedures [`close_proc`] is in front of: window, original, Unicode window.
++static CLOSE_PROCS: std::sync::Mutex<Vec<(usize, usize, bool)>> = std::sync::Mutex::new(Vec::new());
+ 
+ pub fn init() {
+     init_options();
+@@ -109,6 +120,11 @@ fn init_options() {
+         }
+         log!("window: top-level windows created as popups");
+     }
++    if std::env::var("WAL_WINDOW_CLOSE").is_ok_and(|v| v.trim() == "1") {
++        CLOSE.store(true, Ordering::Relaxed);
++        hook_create();
++        log!("window: close requests (Alt+F4, WM_CLOSE) end the game");
++    }
+     let Some((w, h)) = std::env::var("WAL_WINDOW_SIZE").ok().or_else(|| crate::border::config().map(|_| "screen".into())).and_then(|v| {
+         if v.trim() == "screen" {
+             // primary monitor size (no display mode change in window mode)
+@@ -514,9 +530,53 @@ pub(crate) fn remember_created(hwnd: HWND, parent: HWND, style: u32, w: i32, h:
+ 
+ fn created_window(hwnd: HWND, parent: HWND, style: u32, w: i32, h: i32, forced: (i32, i32)) -> HWND {
+     remember_created(hwnd, parent, style, w, h, forced);
++    if CLOSE.load(Ordering::Relaxed) && !hwnd.is_null() && top_level(parent) && style & WS_CHILD == 0 {
++        end_on_close(hwnd);
++    }
+     drop_menu(hwnd, parent)
+ }
+ 
++/// Puts [`close_proc`] in front of a new top-level window's procedure (its ANSI or Unicode
++/// kind kept). Done on the window's own thread inside its `CreateWindowEx`, before it handles
++/// any message: the original is recorded before the window can call [`close_proc`].
++fn end_on_close(hwnd: HWND) {
++    #[cfg(target_pointer_width = "64")]
++    use windows_sys::Win32::UI::WindowsAndMessaging::{SetWindowLongPtrA as set_long_a, SetWindowLongPtrW as set_long_w};
++    #[cfg(target_pointer_width = "32")]
++    use windows_sys::Win32::UI::WindowsAndMessaging::{SetWindowLongA as set_long_a, SetWindowLongW as set_long_w};
++    use windows_sys::Win32::UI::WindowsAndMessaging::{GWLP_WNDPROC, IsWindowUnicode};
++    let unicode = unsafe { IsWindowUnicode(hwnd) } != 0;
++    let mut procs = CLOSE_PROCS.lock().unwrap();
++    if procs.iter().any(|p| p.0 == hwnd as usize) {
++        return;
++    }
++    let ours = close_proc as *const () as usize as _;
++    let orig = unsafe { if unicode { set_long_w(hwnd, GWLP_WNDPROC, ours) } else { set_long_a(hwnd, GWLP_WNDPROC, ours) } } as usize;
++    if orig != 0 {
++        procs.push((hwnd as usize, orig, unicode));
++        log!("window: {hwnd:?}: a close request ends the game");
++    }
++}
++
++/// A close request ([`crate::close_request::is_close_request`]) ends the game at once, as the
++/// launcher's stop does (its saves are written by the launcher afterwards); every other message
++/// goes to the window's own procedure.
++unsafe extern "system" fn close_proc(hwnd: HWND, msg: u32, wparam: usize, lparam: isize) -> isize {
++    use windows_sys::Win32::System::Threading::{GetCurrentProcess, TerminateProcess};
++    use windows_sys::Win32::UI::WindowsAndMessaging::{CallWindowProcA, CallWindowProcW, DefWindowProcW};
++    let Some((orig, unicode)) = CLOSE_PROCS.lock().unwrap().iter().find(|p| p.0 == hwnd as usize).map(|p| (p.1, p.2)) else {
++        return unsafe { DefWindowProcW(hwnd, msg, wparam, lparam) };
++    };
++    if crate::close_request::is_close_request(msg, wparam, lparam) {
++        log!("window: close request (message {msg:#x}, {wparam:#x}) on {hwnd:?}: the game ends");
++        unsafe { TerminateProcess(GetCurrentProcess(), 0) };
++    }
++    unsafe {
++        let orig = Some(std::mem::transmute::<usize, unsafe extern "system" fn(HWND, u32, usize, isize) -> isize>(orig));
++        if unicode { CallWindowProcW(orig, hwnd, msg, wparam, lparam) } else { CallWindowProcA(orig, hwnd, msg, wparam, lparam) }
++    }
++}
++
+ type CreateWindow<T> = unsafe extern "system" fn(u32, *const T, *const T, u32, i32, i32, i32, i32, HWND, P, P, P) -> HWND;
+ type P = *mut c_void;
+ 
+diff --git a/systemprofiles/ringedge/initial-d-arcade-stage-8.yaml b/systemprofiles/ringedge/initial-d-arcade-stage-8.yaml
+index f634540..d2d5304 100644
+--- a/systemprofiles/ringedge/initial-d-arcade-stage-8.yaml
++++ b/systemprofiles/ringedge/initial-d-arcade-stage-8.yaml
+@@ -57,6 +57,9 @@ env:
+   WAL_RINGEDGE_GL_SCALE: 1360x768
+   WAL_WINDOW_POPUP: "1"
+   WAL_HIDE_CURSOR: "1"
++  # Alt+F4 (or a close request to its window) ends the game: its window procedure only sets a
++  # flag on WM_CLOSE, and on the popup Alt+F4 never became one (Windows)
++  WAL_WINDOW_CLOSE: "1"
+   # its NVIDIA OpenGL shaders and behaviors on other GPUs (Mesa: AMD, Intel), see the
+   # payload's cg.rs; NVIDIA GPUs keep the originals
+   WAL_RINGEDGE_CG_FIX: auto

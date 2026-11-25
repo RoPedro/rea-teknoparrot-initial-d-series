@@ -6,6 +6,14 @@ All notable changes to this launcher. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- Windows: Alt+F4 (or closing the game's window) now ends Initial D 8, as
+  the launcher's Stop does. The game only noted the request and kept
+  running, and on its borderless window Alt+F4 never reached it.
+  `patches/wal/0007` adds windowsarcadeloader's `WAL_WINDOW_CLOSE`, on in
+  the ID8 profile.
+
 ## 0.6.6 - 2026-11-23
 
 ### Changed
