@@ -317,6 +317,52 @@ end at `Create seqInitialize`.
   many starts: the race was about one in two to one in ten), and the
   failures in `seqInitWheel`.
 
+### Initial D 8 ignoring Alt+F4 on Windows (2026-11-25)
+
+On the same Windows 11 PC with 0.6.6: Alt+F4 on the game's window did
+nothing (four presses, the game in front); only the launcher's Stop or the
+Task Manager ended it.
+
+- The window (`InitialD 8 - WGL_RE_FINAL`): style `0x94000000`, a popup
+  without `WS_SYSMENU` (the profile's `WAL_WINDOW_POPUP`), class style 0 (no
+  `CS_NOCLOSE`), no system menu.
+- Its procedure (`InitialD8_GLW_RE_SBZZ_redumped_.exe+0x7996a0`, read with
+  objdump): `WM_CLOSE` only sets bit `0x2` of a flags word (`0x1438c18`)
+  and returns 0 (no `DefWindowProc`, the window never destroyed);
+  `WM_DESTROY` posts the quit; other messages go to `DefWindowProcA`. The
+  message loop ends the game on bits `0x4` / `0x8` of that word, never on
+  `0x2`.
+- Read live (`.work/altf4/flags.ps1`, the word read every 50 ms, nothing
+  written): before 45 s, with Alt+F4 pressed, bit `0x2` stayed clear; a
+  `WM_CLOSE` posted to the window set it within 60 ms, and the game kept
+  running (15 s more, until stopped). So on that popup Alt+F4 never became a
+  `WM_CLOSE`, and the game ignores `WM_CLOSE` anyway.
+- Fix: `patches/wal/0007`, windowsarcadeloader's `WAL_WINDOW_CLOSE=1` (in
+  the ID8 profile): the payload puts a procedure in front of the game's
+  top-level windows, and Alt+F4 (`WM_SYSKEYDOWN` F4 with Alt held), the
+  close command (`SC_CLOSE`) or `WM_CLOSE` end the game with
+  `TerminateProcess`, as the launcher's Stop does; the launcher then writes
+  the saves. Tests: which messages are close requests (`close_request.rs`,
+  the first test failed before the classifier). The payload type-checks for
+  x86-64 Windows with the patch.
+- Checked on that PC with a CI build of the branch (the fork's `build`
+  workflow, its `packages` job: 0.6.6 with 0001–0007): Alt+F4 ended the
+  game. The payload logged `window: close request (message 0x104, 0x73)
+  on 0x4f0ba4: the game ends` (Alt+F4 itself), `winhost` `game exited
+  (exit code: 0)`, the session `exit code: 0 after 18 s; stopped 0
+  leftover process(es)`, the saves written (`SRAM.bin`). Two more starts
+  captured (`.work/altf4/capture.ps1`): Alt+F4 at 39 s and at 16 s, the
+  same close request logged, the game process gone 45 ms and 21 ms after
+  it, `exit code: 0`, 0 leftovers, saves written each time.
+- Left for later: a quit within 20 s of the start is still reported by the
+  launcher as a start that failed ("the game closed by itself 18 s after
+  starting (exit code: 0)"): the SDK's `session::early_end` counts any
+  self-ended run before 20 s, and the close request is only in
+  `wal-ringedge.log`, not in the `session.log` it reads. Quits after 20 s
+  show nothing.
+- Not checked yet: ID6 / ID7 (same RingEdge window code likely, not read;
+  the option is only in ID8's profile).
+
 ## On the SDK's hub pieces (rea-launcher-sdk v0.10.0, 2026-11-17)
 
 The launcher moved onto the SDK's shared hub code (window, command line,
@@ -358,6 +404,7 @@ run's private null sink `probe-null`; none on the desktop's server.
 | Stop (the window's Stop button, `--seconds`, SIGINT/SIGTERM to `initiald-launcher --play`: one stop flag) | ID6, ID1, ID5 above: everything the session started is gone, 0 leftovers. Linux, Flycast: only Flycast is asked first (gamescope's reaper used to kill it before it saved: the save now lands, `nvmem` written at the stop) |
 | The game itself closes (the player closes the game's window; here SIGTERM to Flycast, or to `id6_dump_.exe`) | ID1 after 77 s, ID6 after 103 s: Flycast saved (`nvmem`), windowsarcadeloader ended with its game, then gamescope 3.17 crashed on its own way out (`SIGSEGV`, also before this change; nothing of the game left); 0 leftovers, no "couldn't start" message (it ran longer than 20 s) |
 | Quit from the game's menu | none of these arcade games has one |
+| Alt+F4 on the game's window (Windows) | ID8 on 0.6.6: ignored (see "Initial D 8 ignoring Alt+F4"); with `patches/wal/0007` it ends the game: exit code 0, 0 leftovers, saves written (a quit within 20 s is still reported as a failed start) |
 | The launcher's window closed (or Alt+F4) while a game runs | the window stops the game first and closes once it has ended (headless window test `closing_the_window_stops_the_game_first`) |
 | The launcher killed (`kill -9` while the game runs) | ID1, ID5, ID6 (feat/hub 860e4da): every process of the session (5, 7 and 20 of them: gamescope, bwrap, Flycast / lindbergh-loader / windowsarcadeloader, Wine and its services) gone within 12 s |
 

@@ -68,7 +68,9 @@ ran into setting these games up, especially on Linux (details in
   `patches/wal/0004` declares them. It also failed to open now and then
   (the next try worked): the payload's heap hook went live a moment before
   it knew where the real function was, and Windows' loader threads could
-  land in that gap. `patches/wal/0006` closes it.
+  land in that gap. `patches/wal/0006` closes it. And Alt+F4 did nothing:
+  the game only notes a close request, and its borderless window never got
+  one. `patches/wal/0007` makes Alt+F4 end it, as Stop does.
 - **Season 5's first boot**: the launcher sees the cabinet's system file
   appear and starts the game again by itself.
 - **Sound that doesn't crash**: the Wine prefix gets Microsoft's XAudio2
