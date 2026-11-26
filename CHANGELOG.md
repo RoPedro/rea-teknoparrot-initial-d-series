@@ -4,6 +4,16 @@ All notable changes to this launcher. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- Windows: Initial D 8 no longer fails to start now and then about 13 s in
+  (`0xc0000005`). Its network thread could read a manager the main thread
+  had not created yet; `patches/wal/0008` adds windowsarcadeloader's
+  `WAL_RINGEDGE_WAIT_GLOBALS`, on in the ID8 profile, which makes that read
+  wait for it.
+
 ## 0.6.7 - 2026-11-26
 
 ### Fixed

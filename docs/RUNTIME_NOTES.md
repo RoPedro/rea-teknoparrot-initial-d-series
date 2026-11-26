@@ -314,8 +314,8 @@ end at `Create seqInitialize`.
   starts; seven starts without the hub (`arcade-launcher run`, no input
   pipe) all booted, RTSS running.
 - Not checked yet: a build with 0006 on Windows (it can only show over
-  many starts: the race was about one in two to one in ten), and the
-  failures in `seqInitWheel`.
+  many starts: the race was about one in two to one in ten). The failures
+  in `seqInitWheel`: another race, see "a singleton read too early" below.
 
 ### Initial D 8 ignoring Alt+F4 on Windows (2026-11-25)
 
@@ -362,6 +362,53 @@ Task Manager ended it.
   show nothing.
 - Not checked yet: ID6 / ID7 (same RingEdge window code likely, not read;
   the option is only in ID8's profile).
+
+### Initial D 8 crashing about 13 s in on Windows: a singleton read too early (2026-11-26)
+
+On the same Windows 11 PC with 0.6.7: ID8 failed to start several times in
+a row ("closed by itself … `0xc0000005`" at 0, 3, 13–14 s), then booted.
+These are the failures "in `seqInitWheel`" left open in "warmup" above; the
+Alt+F4 patch (0007) was not the cause.
+
+- The game writes a minidump per crash (`Y:\<date>.dmp`). Read with a small
+  minidump reader (exception stream, module list): 19 of 22, from 2026-11-20
+  (0.6.3) to 2026-11-26, are the same access violation reading `0x0` at
+  `exe+0x754856`; the other three (`exe+0x29243` once, and twice an address
+  outside the modules, those two during a race) are different crashes. RTSS was closed; ProtonVPN,
+  Tailscale, Discord and Steam were running, and none of them shows in the
+  crash.
+- `wal-ringedge.log` of the last failure: the crash 26 ms after the game's
+  second `mxgcatcher` / `mxkeychip` connection (13.7 s after the payload
+  loaded), before its first `isupdate` request. In a start that booted
+  (`.work/warmup/hub/start02`) the same connections came at 13.0 s and the
+  request 30 ms later. The crashing thread: a `msvcr90` thread started by
+  the game (`exe+0x71c4c0`), in `yabukita_vc90_x86.dll`, calling back into
+  the game.
+- The code (objdump): `exe+0x754790` is a constructor that the network
+  callback (a factory at `exe+0x7546d0`) runs; it ends by registering the
+  new object with a manager singleton read straight from its global
+  (`mov ecx, [0x1463830]` at `exe+0x754846`, then a call through its vtable:
+  the read of 0). The singleton is created on first use by its
+  `GetInstance` (`exe+0x754580`: `-1` stored while it builds, then the
+  object), called by the constructors of objects made on the main thread
+  (`exe+0x712840`, `0x7884a0`, `0x788d00`); the three stores of 0 are
+  destructors. When the network reply came before the main thread's first
+  `GetInstance`, the global was still 0.
+- Fix: `patches/wal/0008`, windowsarcadeloader's
+  `WAL_RINGEDGE_WAIT_GLOBALS` (in the ID8 profile: `0x754846`). The payload
+  checks the site is a `mov ecx, [global]` (`8B 0D`), replaces it with a call
+  (and a `nop`) to a thunk that waits until the global is neither 0 nor -1,
+  1 ms sleeps, at most 15 s, then loads it into ecx; eax, edx and the flags
+  are kept. Waiting, not creating it from the network thread:
+  `GetInstance` has no lock. Logged: `wait-globals: +0x754846 waits for
+  [0x1463830]` at start and, only when it waited, `waited N ms for
+  [0x1463830]: set (…)`. Tests (`wait_globals.rs`): the site and thunk
+  bytes (also read back with objdump as 32-bit code), the wait (0, then -1,
+  then set; its limit), run on x86-64 through a harness crate
+  (`.work/race-harness`: the payload crate has 32-bit inline asm and doesn't
+  build there; no i686 target on that PC).
+- Not checked yet: a build with 0008 on Windows over many starts (the
+  `waited` line shows the race being caught); ID6 / ID7.
 
 ## On the SDK's hub pieces (rea-launcher-sdk v0.10.0, 2026-11-17)
 

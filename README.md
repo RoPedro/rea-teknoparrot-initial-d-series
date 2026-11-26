@@ -70,7 +70,10 @@ ran into setting these games up, especially on Linux (details in
   it knew where the real function was, and Windows' loader threads could
   land in that gap. `patches/wal/0006` closes it. And Alt+F4 did nothing:
   the game only notes a close request, and its borderless window never got
-  one. `patches/wal/0007` makes Alt+F4 end it, as Stop does.
+  one. `patches/wal/0007` makes Alt+F4 end it, as Stop does. It also
+  crashed now and then about 13 s in: its network thread could use a
+  manager the main thread hadn't created yet. `patches/wal/0008` makes it
+  wait for it.
 - **Season 5's first boot**: the launcher sees the cabinet's system file
   appear and starts the game again by itself.
 - **Sound that doesn't crash**: the Wine prefix gets Microsoft's XAudio2

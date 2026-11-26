@@ -1,0 +1,262 @@
+diff --git a/crates/payload-ringedge/src/lib.rs b/crates/payload-ringedge/src/lib.rs
+index a7e9414..37d1fe9 100644
+--- a/crates/payload-ringedge/src/lib.rs
++++ b/crates/payload-ringedge/src/lib.rs
+@@ -15,6 +15,8 @@
+ //! * Medal cabinet boards: Medal no Gunman's (`gunman.rs`), Lady Luck's (`satellite.rs`).
+ //! * Profile code patches (`WAL_PATCHES`); `WAL_RINGEDGE_CWD`: the game's working directory,
+ //!   relative to its own.
++//! * Game code reading a global another thread creates waits for it
++//!   (`WAL_RINGEDGE_WAIT_GLOBALS`, `wait_globals.rs`).
+ 
+ #![allow(non_snake_case)]
+ 
+@@ -34,6 +36,7 @@ mod pcp;
+ mod rfid;
+ mod satellite;
+ mod touch;
++mod wait_globals;
+ 
+ use std::ffi::c_void;
+ use std::sync::atomic::Ordering;
+@@ -65,6 +68,8 @@ pub extern "system" fn DllMain(_module: HINSTANCE, reason: u32, _reserved: *mut
+             log!("ringedge: offline cabinet");
+             patches::apply_list(&list);
+         }
++        // before the game's entry point: its threads start later
++        wait_globals::init();
+         amlog::init();
+         // JVS sense line: amJvs reads DSR (0x20) as "board addressed"
+         serial::MODEM_STATUS[0].store(0x10, Ordering::Relaxed);
+diff --git a/crates/payload-ringedge/src/wait_globals.rs b/crates/payload-ringedge/src/wait_globals.rs
+new file mode 100644
+index 0000000..a96c082
+--- /dev/null
++++ b/crates/payload-ringedge/src/wait_globals.rs
+@@ -0,0 +1,210 @@
++//! Code that reads a game global another thread creates waits for it
++//! (`WAL_RINGEDGE_WAIT_GLOBALS`: the sites' addresses, relative to the executable, comma
++//! separated).
++//!
++//! Initial D 8: a constructor run on the game's network thread (`exe+0x754790`, from a
++//! `yabukita` callback) reads a manager singleton straight from its global (`[0x1463830]`)
++//! instead of through its `GetInstance` (`exe+0x754580`), which objects made on the main thread
++//! call while the game starts. When the network reply (the second `mxgcatcher` / `mxkeychip`
++//! connection, about 13 s in) came first, the global was still 0 and the game read address 0
++//! (`exe+0x754856`: 19 of 22 crash dumps on a Windows 11 PC, starts failing several times in
++//! a row). Each site, a `mov ecx, [global]` (`8B 0D`, 6 bytes), becomes a call to a thunk that
++//! waits until the global is set (neither 0 nor the -1 `GetInstance` stores while it builds
++//! the object), at most [`LIMIT_MS`], then loads it into ecx as the game did; eax, edx and the
++//! flags are kept.
++
++use wal_payload_common::log;
++
++/// The longest wait: past it the game goes on with what the global holds (and crashes as it
++/// did without the wait).
++const LIMIT_MS: u64 = 15_000;
++
++/// A site's address from the option (`0x754846`).
++fn parse_rva(entry: &str) -> Option<usize> {
++    let hex = entry.trim().strip_prefix("0x")?;
++    usize::from_str_radix(hex, 16).ok()
++}
++
++/// The global a `mov ecx, [global]` at the start of `code` reads.
++fn mov_ecx_global(code: &[u8]) -> Option<u32> {
++    match *code {
++        [0x8B, 0x0D, a, b, c, d, ..] => Some(u32::from_le_bytes([a, b, c, d])),
++        _ => None,
++    }
++}
++
++/// The site's 6 bytes: `call thunk; nop`.
++fn site_bytes(site: u32, thunk: u32) -> [u8; 6] {
++    let [a, b, c, d] = thunk.wrapping_sub(site.wrapping_add(5)).to_le_bytes();
++    [0xE8, a, b, c, d, 0x90]
++}
++
++/// The thunk at `at`: `ecx = wait(global)` (`wait` a cdecl function of one argument), eax, edx
++/// and the flags kept.
++fn thunk_bytes(at: u32, global: u32, wait: u32) -> Vec<u8> {
++    // pushfd; push eax; push edx; push global
++    let mut t = vec![0x9C, 0x50, 0x52, 0x68];
++    t.extend(global.to_le_bytes());
++    // call wait
++    t.push(0xE8);
++    let next = at.wrapping_add(t.len() as u32 + 4);
++    t.extend(wait.wrapping_sub(next).to_le_bytes());
++    // add esp, 4; mov ecx, eax; pop edx; pop eax; popfd; ret
++    t.extend([0x83, 0xC4, 0x04, 0x89, 0xC1, 0x5A, 0x58, 0x9D, 0xC3]);
++    t
++}
++
++/// Waits for a global's value (`read`): neither 0 (not created yet) nor -1 (being created),
++/// sleeping (`sleep`) between reads, at most `limit` ms (`now`: a clock in ms). The value and
++/// the ms waited.
++fn wait_for(read: impl Fn() -> u32, mut sleep: impl FnMut(), now: impl Fn() -> u64, limit: u64) -> (u32, u64) {
++    let start = now();
++    loop {
++        let value = read();
++        let waited = now() - start;
++        if (value != 0 && value != u32::MAX) || waited >= limit {
++            return (value, waited);
++        }
++        sleep();
++    }
++}
++
++/// Patches the listed sites (`WAL_RINGEDGE_WAIT_GLOBALS`).
++pub(crate) fn init() {
++    let Ok(list) = std::env::var("WAL_RINGEDGE_WAIT_GLOBALS") else { return };
++    for entry in list.split(',').filter(|e| !e.trim().is_empty()) {
++        match parse_rva(entry) {
++            Some(rva) => install(rva),
++            None => log!("wait-globals: {:?} is not an address (0x...)", entry.trim()),
++        }
++    }
++}
++
++#[cfg(target_arch = "x86")]
++fn install(rva: usize) {
++    use windows_sys::Win32::System::Diagnostics::Debug::FlushInstructionCache;
++    use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
++    use windows_sys::Win32::System::Memory::{MEM_COMMIT, MEM_RESERVE, PAGE_EXECUTE_READWRITE, VirtualAlloc, VirtualProtect};
++    use windows_sys::Win32::System::Threading::GetCurrentProcess;
++
++    let site = unsafe { GetModuleHandleW(std::ptr::null()) } as usize + rva;
++    let code = unsafe { std::slice::from_raw_parts(site as *const u8, 6) };
++    let Some(global) = mov_ecx_global(code) else {
++        log!("wait-globals: +{rva:#x} is not a mov ecx, [global] ({code:02x?}): left as is");
++        return;
++    };
++    let thunk = unsafe { VirtualAlloc(std::ptr::null(), 64, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE) } as usize;
++    if thunk == 0 {
++        log!("wait-globals: +{rva:#x}: no memory for its thunk");
++        return;
++    }
++    let bytes = thunk_bytes(thunk as u32, global, wait_global as *const () as u32);
++    let call = site_bytes(site as u32, thunk as u32);
++    let mut old = 0;
++    unsafe {
++        std::ptr::copy_nonoverlapping(bytes.as_ptr(), thunk as *mut u8, bytes.len());
++        VirtualProtect(site as *const _, 6, PAGE_EXECUTE_READWRITE, &mut old);
++        std::ptr::copy_nonoverlapping(call.as_ptr(), site as *mut u8, call.len());
++        VirtualProtect(site as *const _, 6, old, &mut old);
++        FlushInstructionCache(GetCurrentProcess(), site as *const _, 6);
++    }
++    log!("wait-globals: +{rva:#x} waits for [{global:#x}]");
++}
++
++#[cfg(not(target_arch = "x86"))]
++fn install(rva: usize) {
++    log!("wait-globals: +{rva:#x}: 32-bit games only");
++}
++
++/// The thunks' wait: the value of the global at `global`, once set.
++#[cfg_attr(not(target_arch = "x86"), allow(dead_code))]
++extern "C" fn wait_global(global: usize) -> usize {
++    let start = std::time::Instant::now();
++    let (value, waited) = wait_for(
++        || unsafe { std::ptr::read_volatile(global as *const u32) },
++        || std::thread::sleep(std::time::Duration::from_millis(1)),
++        || start.elapsed().as_millis() as u64,
++        LIMIT_MS,
++    );
++    if waited > 0 {
++        let outcome = if value == 0 || value == u32::MAX { "still not set" } else { "set" };
++        log!("wait-globals: waited {waited} ms for [{global:#x}]: {outcome} ({value:#x})");
++    }
++    value as usize
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use std::cell::Cell;
++
++    #[test]
++    fn sites_are_addresses_relative_to_the_executable() {
++        assert_eq!(parse_rva(" 0x754846"), Some(0x754846));
++        assert_eq!(parse_rva("754846"), None);
++        assert_eq!(parse_rva("0xzz"), None);
++    }
++
++    #[test]
++    fn only_a_mov_ecx_from_a_global_is_patched() {
++        // Initial D 8, exe+0x754846: mov ecx, [0x1463830]
++        assert_eq!(mov_ecx_global(&[0x8B, 0x0D, 0x30, 0x38, 0x46, 0x01]), Some(0x1463830));
++        // mov edx, [0x1463830]
++        assert_eq!(mov_ecx_global(&[0x8B, 0x15, 0x30, 0x38, 0x46, 0x01]), None);
++        assert_eq!(mov_ecx_global(&[0x8B, 0x0D, 0x30]), None);
++    }
++
++    #[test]
++    fn the_site_calls_the_thunk_and_keeps_its_length() {
++        // the call's target is relative to the next instruction (site + 5)
++        assert_eq!(site_bytes(0xB54846, 0x0200_0000), [0xE8, 0xB5, 0xB7, 0x4A, 0x01, 0x90]);
++        // a thunk below the site
++        assert_eq!(site_bytes(0x0200_0000, 0x0100_0000), [0xE8, 0xFB, 0xFF, 0xFF, 0xFE, 0x90]);
++    }
++
++    #[test]
++    fn the_thunk_loads_ecx_from_the_wait_and_keeps_the_other_registers() {
++        let t = thunk_bytes(0x1000, 0x1463830, 0x5000);
++        assert_eq!(t, [
++            0x9C, 0x50, 0x52, // pushfd; push eax; push edx
++            0x68, 0x30, 0x38, 0x46, 0x01, // push 0x1463830
++            0xE8, 0xF3, 0x3F, 0x00, 0x00, // call 0x5000 (from 0x100d)
++            0x83, 0xC4, 0x04, // add esp, 4
++            0x89, 0xC1, // mov ecx, eax
++            0x5A, 0x58, 0x9D, 0xC3, // pop edx; pop eax; popfd; ret
++        ]);
++    }
++
++    /// A clock that `sleep` advances by a millisecond.
++    fn run(values: &[u32], limit: u64) -> (u32, u64, usize) {
++        let clock = Cell::new(0u64);
++        let reads = Cell::new(0usize);
++        let (value, waited) = wait_for(
++            || {
++                let i = reads.get();
++                reads.set(i + 1);
++                values[i.min(values.len() - 1)]
++            },
++            || clock.set(clock.get() + 1),
++            || clock.get(),
++            limit,
++        );
++        (value, waited, reads.get())
++    }
++
++    #[test]
++    fn a_set_global_is_read_at_once() {
++        assert_eq!(run(&[0x06a3_9030], 15_000), (0x06a3_9030, 0, 1));
++    }
++
++    #[test]
++    fn a_global_not_created_or_being_created_is_waited_for() {
++        // 0 until the main thread calls GetInstance, -1 while it builds the object
++        assert_eq!(run(&[0, 0, u32::MAX, 0x06a3_9030], 15_000), (0x06a3_9030, 3, 4));
++    }
++
++    #[test]
++    fn the_wait_gives_up_at_its_limit() {
++        assert_eq!(run(&[0], 5), (0, 5, 6));
++    }
++}
+diff --git a/systemprofiles/ringedge/initial-d-arcade-stage-8.yaml b/systemprofiles/ringedge/initial-d-arcade-stage-8.yaml
+index d2d5304..c5fb94e 100644
+--- a/systemprofiles/ringedge/initial-d-arcade-stage-8.yaml
++++ b/systemprofiles/ringedge/initial-d-arcade-stage-8.yaml
+@@ -84,6 +84,11 @@ env:
+   # Wine's is not): without it, a null render object crashed it at start (seqInitWheel,
+   # exe+0x7096ce) in most runs
+   WAL_RINGEDGE_ZERO_HEAP: "1"
++  # its network thread waits for a manager the main thread creates at start: a constructor
++  # there (exe+0x754790) reads it from its global ([0x1463830]) instead of through its
++  # GetInstance, and when the network reply came first the game read address 0 about 13 s in
++  # (exe+0x754856), now and then (Windows)
++  WAL_RINGEDGE_WAIT_GLOBALS: "0x754846"
+   # platform id AAL2: amBackup's RingEdge 2 SRAM layout
+   WAL_RINGEDGE_BOARD: ringedge2
+   WAL_RINGEDGE_DS_FILE: SBZZ_Table.dat

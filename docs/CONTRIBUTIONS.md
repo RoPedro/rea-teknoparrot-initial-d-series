@@ -10,6 +10,7 @@ status says so.
 | C1 | [aderumier/windowsarcadeloader](https://github.com/aderumier/windowsarcadeloader): an issue with the patch (or a PR) | `readonly_sections` breaks Initial D 8 on Windows itself: the dump's import thunks are in `.rdata` and it declares no IAT directory | `docs/RUNTIME_NOTES.md`, "Issue #1, still crashing on 0.4.1"; `patches/wal/0004` | draft, for the owner. Verified on a Windows 11 PC with the header changed by hand; a build with the patch not yet run there. Not in upstream as of 2026-11-20 (`master` at `9c927a0`) |
 | C2 | [aderumier/windowsarcadeloader](https://github.com/aderumier/windowsarcadeloader): an issue with the patch (or a PR) | the RingEdge payload's hot patches go live before their original is stored: Initial D 8 (`WAL_RINGEDGE_ZERO_HEAP`) crashes at start now and then on Windows | `docs/RUNTIME_NOTES.md`, "warmup"; `patches/wal/0006` | draft, for the owner; **needs verification** (a build with the patch over many starts on Windows). Not in upstream as of 2026-11-21 (`master` at `9c927a0`, where `hotpatch` moved to `wal_payload_common::cg`: the patch needs adapting there) |
 | C3 | [aderumier/windowsarcadeloader](https://github.com/aderumier/windowsarcadeloader): an issue with the patch (or a PR) | Initial D 8 can't be closed with Alt+F4 on Windows: it only sets a flag on `WM_CLOSE`, and Alt+F4 never reaches its `WAL_WINDOW_POPUP` window; a `WAL_WINDOW_CLOSE` option ends the game on close requests | `docs/RUNTIME_NOTES.md`, "Initial D 8 ignoring Alt+F4"; `patches/wal/0007` | draft, for the owner. Verified on a Windows 11 PC with a CI build of the patch (Alt+F4 ended ID8, exit code 0, no leftovers). Not in upstream as of 2026-11-25 (`master` at `2bfe069`) |
+| C4 | [aderumier/windowsarcadeloader](https://github.com/aderumier/windowsarcadeloader): an issue with the patch (or a PR) | Initial D 8 crashes about 13 s in on Windows, now and then: its network thread reads a manager singleton from its global before the main thread creates it; a `WAL_RINGEDGE_WAIT_GLOBALS` option makes that read wait | `docs/RUNTIME_NOTES.md`, "a singleton read too early"; `patches/wal/0008` | draft, for the owner; **needs verification** (a build with the patch over many starts on Windows) |
 
 ## C1: windowsarcadeloader, `readonly_sections` and Windows' loader
 
@@ -111,3 +112,31 @@ Title: Initial D 8 ignores Alt+F4 / WM_CLOSE on Windows: a `WAL_WINDOW_CLOSE` op
 >
 > (attach `patches/wal/0007-window-close-request-ends-the-game.patch`, made
 > against `4f42c6d` on top of this repository's other patches)
+
+## C4: windowsarcadeloader, Initial D 8's singleton read too early
+
+Title: Initial D 8 crashes about 13 s in on Windows: a `WAL_RINGEDGE_WAIT_GLOBALS` option
+
+> On Windows itself, Initial D Arcade Stage 8 Infinity
+> (`InitialD8_GLW_RE_SBZZ_redumped_.exe`) fails to start now and then, often
+> several times in a row: an access violation reading address 0 at
+> `+0x754856`, about 13 s after start (19 of 22 of the game's own crash
+> dumps on a Windows 11 PC).
+>
+> A constructor run from a `yabukita` network callback (`+0x754790`)
+> registers its object with a manager singleton it reads straight from the
+> global (`mov ecx, [0x1463830]` at `+0x754846`), while the singleton is
+> only created by its `GetInstance` (`+0x754580`), which objects made on the
+> main thread call at start. When the second `mxgcatcher` / `mxkeychip`
+> reply arrives first, the global is still 0.
+>
+> The patch below adds `WAL_RINGEDGE_WAIT_GLOBALS` to the RingEdge payload
+> (`wait_globals.rs`): each listed site, checked to be a
+> `mov ecx, [global]`, becomes a call to a thunk that waits (1 ms sleeps, at
+> most 15 s) until the global is neither 0 nor the -1 `GetInstance` stores
+> while it builds, then loads it into ecx, the other registers and flags
+> kept. It waits rather than creating the singleton, as `GetInstance` has no
+> lock. The ID8 profile lists `0x754846`.
+>
+> (attach `patches/wal/0008-ringedge-wait-for-globals.patch`, made against
+> `4f42c6d` on top of this repository's other patches)
