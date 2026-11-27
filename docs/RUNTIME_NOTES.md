@@ -365,6 +365,10 @@ Task Manager ended it.
 
 ### Initial D 8 crashing about 13 s in on Windows: a singleton read too early (2026-11-26)
 
+(The first analysis below took the global for a manager not yet created;
+it is a class descriptor cleared under a live one, see the end of this
+section.)
+
 On the same Windows 11 PC with 0.6.7: ID8 failed to start several times in
 a row ("closed by itself … `0xc0000005`" at 0, 3, 13–14 s), then booted.
 These are the failures "in `seqInitWheel`" left open in "warmup" above; the
@@ -407,8 +411,45 @@ Alt+F4 patch (0007) was not the cause.
   then set; its limit), run on x86-64 through a harness crate
   (`.work/race-harness`: the payload crate has 32-bit inline asm and doesn't
   build there; no i686 target on that PC).
-- Not checked yet: a build with 0008 on Windows over many starts (the
-  `waited` line shows the race being caught); ID6 / ID7.
+- Checked on that PC with that build (CI, 0.6.7 with 0001–0008): of four
+  starts, the two with the pad connected only after the game was up
+  booted; the two with it connected from the start crashed on the card
+  cleaning screen (`seqInitCard`), the same `exe+0x754856`. The payload's
+  log of the second: `wait-globals: waited 15001 ms for [0x1463830]: still
+  not set (0x0)`, its wait starting 0.2 s after a Start press (virtual stick
+  `0x1000`) on that screen, 46 s in. So the wait was the wrong fix: the
+  global never came back.
+- What the global is (corrected; the analysis above was wrong): the names
+  the code passes and its imports (`yabukita` `ClassObject::setClassName`,
+  `ObjectSystem::registerClass`, `SelfRegister`) show `[0x1463830]` holds
+  the class descriptor of `_sSerial::_sTexture`, not a manager, and the
+  crashing thread is a loader making textures, not network code.
+  `GetInstance` creates and registers the descriptor (also from the
+  class's `SelfRegister` at start, `exe+0xb1e8f8` / `exe+0x760017`).
+  The descriptor's vtable (`0x105a148`): slot 5 `exe+0x7546d0` and slot 4
+  `exe+0x754980` are its factories, both building a texture with
+  `exe+0x754790`; slot 10 `exe+0x754b70` its destructor, which sets the
+  global to 0 whichever descriptor it destroys. In the crash the factory
+  runs on a live descriptor (`0x05fecbd8`, read off the crash's raw stack
+  at the factory's `[ebp-0x24]`) while the global is 0: it was cleared
+  under a registered descriptor, likely by a second one built in a race on
+  the lock-free `GetInstance` and destroyed (not seen directly).
+- Fix, second version (`patches/wal/0008`, renamed
+  `0008-ringedge-class-globals.patch`): windowsarcadeloader's
+  `WAL_RINGEDGE_ADOPT_GLOBALS` (ID8 profile:
+  `0x7546d0=0x1063830,0x754980=0x1063830`, method and global relative to
+  the exe). Each factory's entry (`push ebp; mov ebp, esp; push -1`,
+  checked) jumps to a thunk that calls the payload with the global and
+  `this`, all registers and flags kept, runs those 5 bytes and jumps back;
+  a global at 0 becomes `this` (compare-and-swap), one set or at -1 is left
+  alone. Logged: `adopt-globals: +0x7546d0 gives [0x1463830] its object
+  when it is 0` at start and `[0x1463830] was 0 while … was in use: set to
+  it` when it repairs. `WAL_RINGEDGE_WAIT_GLOBALS` stays for the -1 only.
+  Tests (`adopt_globals.rs`, the same harness): the thunk and jump bytes,
+  the prologue check, the compare-and-swap.
+- Not checked yet: the second version on Windows, with the pad connected
+  from the start and Start pressed on the card cleaning screen (the
+  `adopt-globals: … set to it` line shows the repair); ID6 / ID7.
 
 ## On the SDK's hub pieces (rea-launcher-sdk v0.10.0, 2026-11-17)
 

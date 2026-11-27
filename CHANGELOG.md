@@ -8,11 +8,12 @@ All notable changes to this launcher. The format follows
 
 ### Fixed
 
-- Windows: Initial D 8 no longer fails to start now and then about 13 s in
-  (`0xc0000005`). Its network thread could read a manager the main thread
-  had not created yet; `patches/wal/0008` adds windowsarcadeloader's
-  `WAL_RINGEDGE_WAIT_GLOBALS`, on in the ID8 profile, which makes that read
-  wait for it.
+- Windows: Initial D 8 no longer crashes now and then about 13 s in or
+  when Start is pressed on the card cleaning screen (`0xc0000005`). The
+  global holding its texture class could be cleared while that class was
+  in use; `patches/wal/0008` adds windowsarcadeloader's
+  `WAL_RINGEDGE_ADOPT_GLOBALS` (and `WAL_RINGEDGE_WAIT_GLOBALS`), on in the
+  ID8 profile, which gives the global back the class in use.
 
 ## 0.6.7 - 2026-11-26
 
